@@ -40,8 +40,8 @@ What exists:
 - Pixel-art presentation: self-hosted pixel type, notched 8-bit frames, the
   Zorblet mascot reacting to play, and per-universe creatures and anomalies.
 
-Still to come: sound effects, and the remaining Tier 1 polish in the design
-docs (cursed universes, Daily Reality, the endless distance run). Art assets
+Still to come: the remaining Tier 1 polish in the design docs (cursed
+universes, Daily Reality, the endless distance run), then Tier 2. Art assets
 are produced separately; anything missing from `public/` degrades to a CSS
 fallback rather than blocking play.
 
@@ -136,6 +136,9 @@ to **GitHub Actions**.
 
 The same credits are shown in-game on the intro screen, which is what the
 licence actually requires.
+
+**Sound effects** — procedurally synthesized for this game; no third-party
+samples.
 
 **Type** — [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P)
 and [Silkscreen](https://fonts.google.com/specimen/Silkscreen), both under the

@@ -352,14 +352,35 @@ body {
 
 /* --- stations --- */
 
-/* A grid, so the whole bench is comparable at a glance. Comparing what two
-   controls read as is the core act of deduction and cannot happen when half of
-   them are below the fold. */
+/* The whole bench comparable at a glance. Comparing what two controls read as
+   is the core act of deduction and cannot happen when half of them are below
+   the fold.
+
+   Masonry, because station heights genuinely differ — a checkbox group with
+   six options is far taller than a slider, and in a row-aligned grid the short
+   cards leave dead space that pushes later stations down the page.
+
+   CSS columns rather than `grid-template-rows: masonry`, which is still not
+   shipping broadly enough to rely on. The tradeoff is reading order: columns
+   flow top-to-bottom then across, so cards are numbered for anyone matching
+   them against a separate order card. */
 .wui-bench {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
-  gap: calc(var(--px) * 4);
-  align-items: start;
+  column-width: 20rem;
+  column-gap: calc(var(--px) * 4);
+}
+
+.wui-bench > * {
+  /* Without this a card can be split across a column boundary. */
+  break-inside: avoid;
+  margin-bottom: calc(var(--px) * 4);
+}
+
+/* One column is just a stack; let it breathe the same way. */
+@media (max-width: 44rem) {
+  .wui-bench {
+    column-width: auto;
+    columns: 1;
+  }
 }
 
 .wui-station {
@@ -948,12 +969,20 @@ input[type='range']::-moz-range-thumb {
    corner, behind the content, and never changes the layout. */
 .wui-specimen {
   position: absolute;
-  top: calc(var(--px) * 2);
-  right: calc(var(--px) * 2);
+  top: calc(var(--px) * -2);
+  right: calc(var(--px) * -2);
   z-index: 0;
-  opacity: 0.5;
+  opacity: 0.45;
   pointer-events: none;
   animation: wui-float 3s steps(2, end) infinite;
+}
+
+/* Magnified enough for the pixels to be visible, then clipped by the card so
+   a big sprite reads as scenery running off the corner rather than as a
+   picture pasted on top of the panel. */
+.wui-specimen img {
+  max-height: calc(var(--px) * 34);
+  width: auto;
 }
 
 .wui-station {

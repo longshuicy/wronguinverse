@@ -1,12 +1,13 @@
 // audioManager.ts
 // Background music, one looping track at a time.
 //
-// Deliberately small: load the track for the current tier, loop it, allow mute.
-// Sound effects are not here yet — the art guide (§14) suggests generating them
-// procedurally with Web Audio rather than shipping more files.
+// Deliberately small: load the track for the current level, loop it, allow
+// mute, and fire short one-shot effects. See art guide §11 (music) and §12-13
+// (the effect budget and its character).
 
 import { Howl, Howler } from 'howler';
 import { musicUrl, trackForDifficulty, type MusicTrack } from '../content/music.ts';
+import { sfxFiles, sfxUrl, type SfxId } from '../content/sfx.ts';
 import type { DifficultyId } from '../game/difficulty.ts';
 
 let current: { howl: Howl; slug: string } | null = null;
@@ -76,4 +77,67 @@ export function isMuted(): boolean {
 /** The track currently scheduled, for the credit line shown while playing. */
 export function currentTrack(difficulty: DifficultyId): MusicTrack {
   return trackForDifficulty(difficulty);
+}
+
+// --- sound effects ---
+
+/**
+ * Lazily built Howls, one per variant file.
+ *
+ * Nothing is fetched until the first effect actually plays, so a muted session
+ * never downloads them. They are tiny and cached thereafter.
+ */
+const sfxPool = new Map<string, Howl>();
+
+/** Round-robin index per effect, so repeats rotate through their variants. */
+const variantCursor = new Map<SfxId, number>();
+
+/**
+ * How close together the same effect may fire, in ms.
+ *
+ * Dragging a slider emits an interaction per pixel; without a floor the tick
+ * becomes a buzz. Throttling is per effect so a correct-answer chime is never
+ * swallowed by a run of ticks.
+ */
+const THROTTLE_MS: Partial<Record<SfxId, number>> = {
+  value_tick: 60,
+  semantic_blip: 90,
+  ui_click: 40,
+};
+
+const lastPlayed = new Map<SfxId, number>();
+
+const SFX_VOLUME = 0.4;
+
+function loadSfx(file: string): Howl {
+  let howl = sfxPool.get(file);
+  if (!howl) {
+    howl = new Howl({ src: [sfxUrl(file)], volume: SFX_VOLUME, preload: true });
+    sfxPool.set(file, howl);
+  }
+  return howl;
+}
+
+/**
+ * Play a one-shot effect.
+ *
+ * Silently does nothing when muted or throttled — a caller should be able to
+ * fire this from any game event without first asking whether sound is on.
+ */
+export function playSfx(id: SfxId): void {
+  if (muted) return;
+
+  const throttle = THROTTLE_MS[id];
+  if (throttle !== undefined) {
+    const now = Date.now();
+    const previous = lastPlayed.get(id) ?? 0;
+    if (now - previous < throttle) return;
+    lastPlayed.set(id, now);
+  }
+
+  const files = sfxFiles(id);
+  const cursor = (variantCursor.get(id) ?? 0) % files.length;
+  variantCursor.set(id, cursor + 1);
+
+  loadSfx(files[cursor]!).play();
 }

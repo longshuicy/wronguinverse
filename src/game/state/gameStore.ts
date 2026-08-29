@@ -10,7 +10,7 @@ import {
   type DifficultyConfig,
   type DifficultyId,
 } from '../difficulty.ts';
-import { playMusicFor, setMuted as setAudioMuted } from '../../audio/audioManager.ts';
+import { playMusicFor, playSfx, setMuted as setAudioMuted } from '../../audio/audioManager.ts';
 import { initialValue } from '../domains/index.ts';
 import { generateChallenge, isRequirementSatisfied } from '../generator/challengeGenerator.ts';
 import { generateRun } from '../generator/mappingGenerator.ts';
@@ -209,12 +209,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().skipCalibration();
       return;
     }
+    playSfx('selection_confirm');
     set({ calibrationIndex: next });
   },
 
   skipCalibration: () => {
     const progress = { ...get().progress, tutorialCompleted: true };
     saveProgress(progress);
+    playSfx('reality_shift');
     set({ stage: 'shift', progress });
   },
 
@@ -259,7 +261,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
 
     const completion = completionPatch(get, alreadySatisfied);
-    if (completion) set(completion);
+    if (completion) {
+      playSfx('stabilization_complete');
+      set(completion);
+    }
   },
 
   setValue: (widget, value) => {
@@ -274,6 +279,13 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     const interpreted = mapping.domain.display(value);
     const at = Date.now();
+
+    // The blip is the "weird output" sound (§13): during exploration each new
+    // reading is a small surprise, so it only fires when the value actually
+    // changed, not on every drag pixel.
+    const previous = values[widget];
+    const changed = previous === undefined || !mapping.domain.equals(previous, value);
+    if (changed) playSfx(stage === 'normal' ? 'value_tick' : 'semantic_blip');
     const nextEvents: GameEvent[] = [
       ...events,
       { type: 'interaction', widget, at, interpretedValue: interpreted },
@@ -295,7 +307,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (requirement) {
         const correct = isRequirementSatisfied(requirement, run.mappings, nextValues);
         nextEvents.push({ type: 'challenge_attempt', widget, correct, at });
-        if (correct) nextLocked = [...lockedWidgets, widget];
+        if (correct) {
+          nextLocked = [...lockedWidgets, widget];
+          playSfx('requirement_correct');
+        }
       }
     }
 
@@ -309,7 +324,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Every requirement locked = universe stabilized.
     if (stage === 'challenge' && nextLocked.length > 0) {
       const completion = completionPatch(get, nextLocked);
-      if (completion) set(completion);
+      if (completion) {
+        playSfx('stabilization_complete');
+        set(completion);
+      }
     }
   },
 
@@ -319,6 +337,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const current = hintLevels[widget] ?? 0;
     if (current >= 3) return;
     const level = (current + 1) as 1 | 2 | 3;
+    playSfx('zorblet_chirp');
     set({
       hintLevels: { ...hintLevels, [widget]: level },
       events: [...events, { type: 'hint', widget, level, at: Date.now() }],
@@ -331,14 +350,18 @@ export const useGameStore = create<GameState>((set, get) => ({
       events: [...state.events, { type: 'reveal_rules', at: Date.now() }],
     })),
 
-  giveUp: () =>
-    set((state) => ({
+  giveUp: () => {
+    // Deliberately the mismatch tone and not a failure sting: the design docs
+    // are explicit that giving up is met with sympathy, never a buzzer.
+    playSfx('mismatch');
+    return set((state) => ({
       stage: 'result',
       outcome: 'gaveUp',
       challengeEndedAt: Date.now(),
       rulesRevealed: true,
       events: [...state.events, { type: 'give_up', at: Date.now() }],
-    })),
+    }));
+  },
 
   /** Same seed, same mappings, same targets — only the attempt resets. */
   retrySameReality: () => {

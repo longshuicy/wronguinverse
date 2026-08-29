@@ -49,7 +49,8 @@ export function Specimen({ id }: SpecimenProps) {
   if (!id) return null;
   return (
     <div className="wui-specimen" aria-hidden="true">
-      <AssetImage id={id} alt="" scale={1} />
+      {/* 2x, so the pixels read as pixels rather than as a small picture. */}
+      <AssetImage id={id} alt="" scale={2} />
     </div>
   );
 }

@@ -862,31 +862,59 @@ starts a run, so a session downloads about 2MB. Loading is deliberately
 deferred to that click: browsers block audio until a user gesture, and
 starting a run is the natural one.
 
-### Still to come
+### Sound effects
 
-Sound effects (§12--13) are not implemented. The art guide's own
-recommendation stands: generate the small UI blips procedurally with the
-Web Audio API rather than shipping ten more files.
+Implemented — see §12. The pack is procedurally synthesized short mono
+WAVs in `public/sound/sound-effect/`, about 300KB for the set.
+
+Left uncompressed deliberately: a WAV decodes instantly, and a click that
+arrives a frame late feels broken in a way a slightly larger download
+does not.
 
 ## 12. Sound Effect Budget
 
-Keep it tiny: roughly 10 reusable SFX.
+Keep it tiny: roughly 10 reusable SFX. What ships, and where each fires:
 
-1.  UI ordinary click
-2.  UI value tick
-3.  UI selection confirmation
-4.  Semantic "weird output" blip
-5.  Reality shift zap
-6.  Timer warning
-7.  Challenge item correct
-8.  Challenge complete
-9.  Failure / mismatch buzz
-10. Creature chirp
+  ----------------------------------------------------------------------
+  Effect                       Fires when
+  ---------------------------- -----------------------------------------
+  `ui_click`                   generic UI press
 
-Optional:
+  `value_tick`                 a control changes value during
+                               calibration --- ordinary, mechanical
 
-11. New universe boot
-12. Result stamp
+  `selection_confirm`          a calibration task is confirmed
+
+  `semantic_blip`              a control changes value once shifted ---
+                               the "weird output" sound, and the audible
+                               difference between Stage 1 and Stage 2
+
+  `reality_shift`              the shift transition
+
+  `requirement_correct`        a requirement locks
+
+  `stabilization_complete`     every requirement locked
+
+  `mismatch`                   the player gives up. Deliberately not a
+                               failure sting: giving up is met with
+                               sympathy, never a buzzer (game design §4)
+
+  `zorblet_chirp`              a hint is requested --- the answer comes
+                               from the creature
+  ----------------------------------------------------------------------
+
+**No timer warning.** Exploration is untimed, so there is no deadline to
+warn about.
+
+Two effects ship with variants (`ui_click`, `semantic_blip`). Dragging a
+slider fires an interaction per step, and one sample repeated at that rate
+becomes a machine-gun rattle; the manager rotates variants and throttles
+each effect to a minimum gap.
+
+Optional, not yet made:
+
+- New universe boot
+- Result stamp
 
 Each should be very short.
 
