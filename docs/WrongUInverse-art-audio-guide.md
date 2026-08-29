@@ -330,17 +330,59 @@ authored pixel lettering.
 ## 5. Asset Processing Rules
 
 Midjourney outputs are concept/source art, not guaranteed production
-sprites.
+sprites. A raw generation is roughly **100× too heavy to ship** and is
+not on a pixel grid, so `image-rendering: pixelated` is actively wrong
+for it.
 
-For each selected source:
+This pipeline is **automated** --- do not hand-edit sprites:
 
-1.  crop the chosen object/pose,
-2.  remove background,
-3.  simplify noisy details,
-4.  resize/redraw to a consistent logical pixel grid,
-5.  export PNG with transparency where appropriate,
-6.  use integer scaling in the browser,
-7.  set `image-rendering: pixelated`.
+``` bash
+npm run art:clean    # process art-source/ into public/
+npm run art:check    # verify shipped sprites are within budget (runs in CI)
+```
+
+### Where art lives
+
+-   `art-source/creatures/`, `art-source/props/` --- raw generations.
+    **Untracked**: they are heavy, and only the cleaned output ships.
+    Keep your own copies; they are the master.
+-   `public/creatures/`, `public/props/` --- cleaned sprites, committed.
+
+Drop a new generation into `art-source/` with the exact filename from the
+manifest in §4 and re-run `npm run art:clean`. Unchanged files are
+skipped.
+
+### What the script does
+
+Implementing steps 1--5 below in `scripts/clean-sprites.mjs`:
+
+1.  **crop** --- trims the empty margin around the subject,
+2.  **background** --- already transparent in practice; alpha is
+    preserved,
+3.  **simplify noisy details** --- deletes detached blobs under four
+    pixels. Generated art is full of faint sparkles that survive the
+    downscale as orphaned specks. Removal is by *connected component*, so
+    anything joined to the body (Zorblet's thin antennae, a satellite's
+    mast) is kept however spindly,
+4.  **logical pixel grid** --- longest side to 48px for creatures, 32px
+    for props, aspect preserved; then a hard alpha cutoff so silhouettes
+    stay crisp when magnified, then quantisation to a limited palette
+    with dithering off (dithering scatters noise at this size),
+5.  **export** --- palette PNG with transparency.
+
+Steps 6--7 are the renderer's job and now hold, because the input is
+finally a real sprite: `AssetImage` magnifies by a whole number from the
+source's true dimensions, and `.wui-sprite` sets
+`image-rendering: pixelated`.
+
+Typical result: **3.2 MB of raw art becomes 24 KB**, with every sprite on
+grid.
+
+### Budget
+
+`npm run art:check` fails if any shipped sprite exceeds its category size
+or 12 KB. It runs in CI, where `art-source/` does not exist, so it checks
+the outputs --- which is the property that actually matters.
 
 Do not spend time producing large animation sheets. CSS should handle
 bobbing, shaking, floating, glow, glitch, and success bounce.

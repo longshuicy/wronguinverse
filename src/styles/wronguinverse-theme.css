@@ -739,10 +739,12 @@ input[type='range']::-moz-range-thumb {
 
 /* --- sprites --- */
 
-/* Rendering mode is set per asset by AssetImage — see the note there on why
-   `pixelated` is wrong for sources not yet reduced to a pixel grid. */
+/* Shipped sprites are reduced to a logical pixel grid by
+   scripts/clean-sprites.mjs and magnified by whole numbers, which is exactly
+   the case `pixelated` is for (art guide §8). */
 .wui-sprite {
   display: block;
+  image-rendering: pixelated;
 }
 
 /* --- mascot ---

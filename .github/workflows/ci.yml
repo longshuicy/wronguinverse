@@ -39,5 +39,9 @@ jobs:
       - name: Test
         run: npm run test
 
+      # Guards the asset budget: raw generated art is ~100x too heavy to ship.
+      - name: Check sprite budget
+        run: npm run art:check
+
       - name: Build
         run: npm run build

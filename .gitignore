@@ -1,3 +1,8 @@
+# Raw generated art. These are concept sources, not sprites — hundreds of KB
+# each, and ~100x heavier than what ships. `npm run art:clean` reduces them
+# into public/, and those cleaned sprites are what is committed.
+art-source
+
 # Dependencies
 node_modules
 

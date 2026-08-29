@@ -15,7 +15,9 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "art:clean": "node scripts/clean-sprites.mjs",
+    "art:check": "node scripts/clean-sprites.mjs --check"
   },
   "dependencies": {
     "howler": "^2.2.4",
@@ -32,6 +34,7 @@
     "jsdom": "^25.0.1",
     "oxlint": "^1.79.0",
     "prettier": "^3.4.2",
+    "sharp": "^0.35.4",
     "typescript": "~6.0.2",
     "vite": "^8.2.2",
     "vitest": "^4.1.11"

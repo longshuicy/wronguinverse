@@ -18,7 +18,8 @@ export function Mascot() {
 
   return (
     <div className={`wui-mascot wui-mascot-${state}`} aria-hidden={false}>
-      <AssetImage id={mascotAsset(state)} alt={mascotAltText(state)} height={112} />
+      {/* 3x a 48px sprite: crisp, and big enough to read at a glance. */}
+      <AssetImage id={mascotAsset(state)} alt={mascotAltText(state)} scale={3} />
     </div>
   );
 }
