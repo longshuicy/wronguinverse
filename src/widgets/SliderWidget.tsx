@@ -15,11 +15,24 @@ const CONTINUOUS_STEPS = 100;
  * Shared by the component and by `sliderPositions` so the control's rendered
  * resolution and its advertised reachability can never drift apart.
  */
+/** Guard against a domain with an absurdly fine grid producing a useless track. */
+const MAX_STEPS = 400;
+
 function sliderSteps(domain: AnyDomain): number {
   // One detent per value for discrete domains, so every option is reachable by
   // dragging and no two detents collapse onto the same value.
-  const steps = isDiscrete(domain) ? enumerateDomain(domain).length - 1 : CONTINUOUS_STEPS;
-  return Math.max(1, steps);
+  if (isDiscrete(domain)) {
+    return Math.max(1, enumerateDomain(domain).length - 1);
+  }
+
+  // A ranged domain publishes its own grid; matching it means every value is
+  // reachable and the slider lands exactly on steps instead of between them.
+  const { min, max, step } = domain;
+  if (typeof min === 'number' && typeof max === 'number' && typeof step === 'number' && step > 0) {
+    return Math.max(1, Math.min(MAX_STEPS, Math.round((max - min) / step)));
+  }
+
+  return CONTINUOUS_STEPS;
 }
 
 /** Every normalized position this control can emit. */

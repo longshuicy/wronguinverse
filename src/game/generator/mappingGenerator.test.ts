@@ -3,7 +3,7 @@
 // invariants from technical design §18 — including the randomized/property pass.
 
 import { describe, expect, it } from 'vitest';
-import { implementedSemantics } from '../domains/index.ts';
+import { implementedSemantics, initialValue } from '../domains/index.ts';
 import { implementedWidgets, reachableValues, supports } from '../../widgets/registry.ts';
 import { conventionalSemantic, getCompatibility, pairsWithCompatibility } from './compatibility.ts';
 import { generateRun, MappingGenerationError, maxMappingCount } from './mappingGenerator.ts';
@@ -63,6 +63,21 @@ describe('generateRun', () => {
       for (const { widget, domain } of run.mappings) {
         const reachable = reachableValues(widget, domain);
         expect(reachable.some((value) => domain.equals(value, domain.target))).toBe(true);
+      }
+    }
+  });
+
+  it('never targets the value a widget already rests on', () => {
+    // Regression: 54% of runs contained a requirement that satisfied itself
+    // before the player touched anything — an auto-locked free win in the
+    // challenge, and a calibration task with nothing to do.
+    for (const run of RUNS) {
+      for (const { widget, domain } of run.mappings) {
+        const resting = initialValue(domain);
+        // Only enforced where the control has somewhere else to go; a
+        // single-value domain has no honest alternative.
+        if (reachableValues(widget, domain).length < 2) continue;
+        expect(domain.equals(resting, domain.target)).toBe(false);
       }
     }
   });

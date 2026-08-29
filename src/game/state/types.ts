@@ -90,6 +90,10 @@ export interface Mapping {
   domain: AnyDomain;
 }
 
+/**
+ * How a widget should present itself. A deliberately small subset of `StageId`:
+ * adapters care whether feedback is rich or reduced, not which screen is up.
+ */
 export type Stage = 'normal' | 'explore' | 'challenge';
 
 /** The full generated ruleset for a single universe. */
@@ -98,6 +102,39 @@ export interface RunConfig {
   mappings: Mapping[];
   stage: Stage;
 }
+
+/** Screens in the run loop. See docs/WrongUInverse-technical-design.md §12. */
+export type StageId = 'intro' | 'normal' | 'shift' | 'explore' | 'challenge' | 'result';
+
+/** One line of the compound objective, e.g. `COMPANION: QUONK`. */
+export interface Requirement {
+  /** The widget that must be driven to satisfy this line. */
+  widget: WidgetType;
+  /** Fictional field name shown to the player. */
+  label: string;
+  /** Pre-rendered target, so the card never re-derives it. */
+  targetDisplay: string;
+}
+
+/** How far a hint has been unwound for one mapping: 0 = none, 3 = full reveal. */
+export type HintLevel = 0 | 1 | 2 | 3;
+
+/**
+ * Gameplay telemetry, held in memory for the duration of a run and used to
+ * derive the result screen's (entirely unserious) diagnosis. Never leaves the
+ * browser. See technical design §15.
+ */
+export type GameEvent =
+  | { type: 'interaction'; widget: WidgetType; at: number; interpretedValue: unknown }
+  | { type: 'hint'; widget: WidgetType; level: 1 | 2 | 3; at: number }
+  | { type: 'mapping_discovered'; widget: WidgetType; at: number }
+  | { type: 'challenge_attempt'; widget: WidgetType; correct: boolean; at: number }
+  | { type: 'give_up'; at: number }
+  | { type: 'reveal_rules'; at: number }
+  | { type: 'retry_same'; at: number };
+
+/** How a universe ended. `null` while it is still in progress. */
+export type RunOutcome = 'stabilized' | 'gaveUp' | null;
 
 /**
  * The contract every widget adapter implements.

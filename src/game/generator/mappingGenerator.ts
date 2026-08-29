@@ -5,7 +5,12 @@
 // blind random retries, so a valid mapping is found whenever one exists.
 // See docs/WrongUInverse-technical-design.md §8.
 
-import { generateDomain, hasDomainGenerator, implementedSemantics } from '../domains/index.ts';
+import {
+  generateDomain,
+  hasDomainGenerator,
+  implementedSemantics,
+  initialValue,
+} from '../domains/index.ts';
 import type {
   Compatibility,
   Mapping,
@@ -133,9 +138,18 @@ export function generateRun(options: GenerateRunOptions): RunConfig {
         `Widget "${widget}" cannot reach any value of its "${semantic}" domain.`,
       );
     }
-    const target = reachable.some((value) => domain.equals(value, domain.target))
+
+    // Exclude the widget's resting value. A target the control already sits on
+    // is a requirement that satisfies itself before the player does anything —
+    // it locks for free in the challenge and gives a calibration task with
+    // nothing to do. Keep it only if the control has nowhere else to go.
+    const resting = initialValue(domain);
+    const candidates = reachable.filter((value) => !domain.equals(value, resting));
+    const usable = candidates.length > 0 ? candidates : reachable;
+
+    const target = usable.some((value) => domain.equals(value, domain.target))
       ? domain.target
-      : rng.pick(reachable);
+      : rng.pick(usable);
 
     return { widget, semantic, domain: { ...domain, target } };
   });
