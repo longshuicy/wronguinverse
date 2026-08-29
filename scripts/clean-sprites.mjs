@@ -39,16 +39,22 @@ const OUTPUT_DIR = path.join(ROOT, 'public');
 const CATEGORIES = [
   {
     dir: 'creatures',
-    // The mascot and creatures are the largest things on screen, so they get
-    // the top of the §8 range.
-    size: 48,
-    colors: 32,
+    // 96, not the 48 this started at. At 48 the downscale destroyed Zorblet's
+    // antennae outright — they thinned below one pixel, broke into fragments,
+    // and the despeckle then swept the fragments away. Magnifying what was
+    // left just produced large soft blobs, which is what "blurry" actually
+    // means here: the detail was lost on the way DOWN, not on the way up.
+    size: 96,
+    colors: 48,
+    sharpen: 1,
   },
   {
     dir: 'props',
-    // Props are background decoration and never larger than a creature.
-    size: 32,
-    colors: 24,
+    // Props are background decoration and never larger than a creature, but
+    // several have thin masts and antennae with the same problem.
+    size: 64,
+    colors: 32,
+    sharpen: 1,
   },
 ];
 
@@ -66,7 +72,7 @@ const ALPHA_CUTOFF = 128;
 const MIN_COMPONENT_PIXELS = 4;
 
 /** Fail the budget check above this, in KB. A cleaned sprite is a few KB. */
-const MAX_SPRITE_KB = 12;
+const MAX_SPRITE_KB = 16;
 
 function log(...args) {
   console.log(...args);
@@ -143,10 +149,10 @@ function despeckle(data, info) {
   }
 }
 
-async function cleanOne(sourcePath, outputPath, { size, colors }) {
+async function cleanOne(sourcePath, outputPath, { size, colors, sharpen }) {
   const raw = await readFile(sourcePath);
 
-  const resized = await sharp(raw)
+  let pipeline = sharp(raw)
     // 1. Crop away the empty margin the generator leaves around the subject.
     //    Threshold is generous: these edges are transparent, not merely pale.
     .trim({ threshold: 10 })
@@ -158,13 +164,16 @@ async function cleanOne(sourcePath, outputPath, { size, colors }) {
       fit: 'inside',
       kernel: 'lanczos3',
       withoutEnlargement: true,
-    })
-    .png()
-    .toBuffer();
+    });
 
-  const hardened = await hardenAlpha(resized);
+  // 3. Restore the edge definition lanczos softens. Without this the result is
+  //    technically on-grid but every boundary is a gradient, which magnifies
+  //    into mush rather than into pixels.
+  if (sharpen) pipeline = pipeline.sharpen({ sigma: sharpen });
 
-  // 3. Quantise to a limited palette, which is what makes it read as pixel art
+  const hardened = await hardenAlpha(await pipeline.png().toBuffer());
+
+  // 4. Quantise to a limited palette, which is what makes it read as pixel art
   //    rather than a tiny photograph. Dithering is disabled deliberately: it
   //    scatters stray pixels that look like noise at this size.
   const output = await sharp(hardened)

@@ -198,7 +198,7 @@ Zorblet is the primary reactive observer.
 -   `creatures/mascot_zorblet_success.png`
 
 **Priority:** REQUIRED\
-**Target:** 32×32 or 48×48 logical sprite after cleanup; 2--4 animation
+**Target:** 96px logical sprite after cleanup (see §8); 2--4 animation
 frames per state if practical.
 
 **Midjourney prompt:**
@@ -364,7 +364,7 @@ Implementing steps 1--5 below in `scripts/clean-sprites.mjs`:
     downscale as orphaned specks. Removal is by *connected component*, so
     anything joined to the body (Zorblet's thin antennae, a satellite's
     mast) is kept however spindly,
-4.  **logical pixel grid** --- longest side to 48px for creatures, 32px
+4.  **logical pixel grid** --- longest side to 96px for creatures, 64px
     for props, aspect preserved; then a hard alpha cutoff so silhouettes
     stay crisp when magnified, then quantisation to a limited palette
     with dithering off (dithering scatters noise at this size),
@@ -375,13 +375,13 @@ finally a real sprite: `AssetImage` magnifies by a whole number from the
 source's true dimensions, and `.wui-sprite` sets
 `image-rendering: pixelated`.
 
-Typical result: **3.2 MB of raw art becomes 24 KB**, with every sprite on
+Typical result: **3.2 MB of raw art becomes 56 KB**, with every sprite on
 grid.
 
 ### Budget
 
 `npm run art:check` fails if any shipped sprite exceeds its category size
-or 12 KB. It runs in CI, where `art-source/` does not exist, so it checks
+or 16 KB. It runs in CI, where `art-source/` does not exist, so it checks
 the outputs --- which is the property that actually matters.
 
 Do not spend time producing large animation sheets. CSS should handle
@@ -647,9 +647,29 @@ consistency is enforced during sprite cleanup and in CSS.
     been through the §5 cleanup.
 -   Avoid fractional sprite scaling.
 -   Never force an aspect ratio. Set one dimension, let the other follow.
--   Keep character sprites roughly 24×24, 32×32, or 48×48 logical
-    pixels.
--   Keep animations 2--4 frames when possible.
+-   **Creatures 96px on the longest side; props 64px.** Keep animations
+    2--4 frames when possible.
+
+### Why not 24/32/48
+
+This guide originally called for 24--48px character sprites, and that
+turned out to be too small for art of this kind. At 48px Zorblet's
+antennae thinned below one pixel, broke into fragments, and the
+despeckle pass then swept the fragments away --- the character lost a
+defining feature, and what remained magnified into soft blobs.
+
+The lesson generalises: **"blurry" almost always means detail was lost on
+the way DOWN, not on the way up.** Reach for a larger logical grid before
+reaching for a different scaling filter.
+
+96px is the ceiling, not a floor to keep raising. At 128px the sprite
+stops reading as pixel art and starts looking like a shrunken
+illustration, because the pixels are no longer large enough to see.
+
+Downscaling with a smooth kernel also softens every boundary, so the
+pipeline sharpens after the resize. Without that the result is
+technically on-grid but every edge is a gradient, which magnifies into
+mush rather than into pixels.
 
 ### The CSS is what makes it look like pixel art
 
