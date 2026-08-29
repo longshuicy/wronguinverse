@@ -1,15 +1,11 @@
 // App.tsx
-// Scaffolding placeholder — no game logic yet.
-// See docs/WrongUInverse-technical-design.md for the intended architecture
-// (Domain / Widget Adapter / Mapping Generator / Round State / Stage Controller).
+// Milestone 1 renders the mechanics sandbox directly. The stage controller
+// (Intro → Normal → Shift → Explore → Challenge → Result) arrives in Milestone 2.
+
+import { DebugScreen } from './debug/DebugScreen.tsx';
 
 function App() {
-  return (
-    <main className="scaffold-placeholder">
-      <h1>WrongUIᴎverse</h1>
-      <p>Project scaffold ready. Game logic not implemented yet.</p>
-    </main>
-  );
+  return <DebugScreen />;
 }
 
 export default App;

@@ -1,3 +1,6 @@
+# Authored design docs — kept exactly as written, not reflowed by Prettier.
+docs
+
 dist
 node_modules
 coverage
