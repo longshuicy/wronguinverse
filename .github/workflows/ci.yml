@@ -43,5 +43,8 @@ jobs:
       - name: Check sprite budget
         run: npm run art:check
 
+      - name: Check audio budget
+        run: npm run audio:check
+
       - name: Build
         run: npm run build

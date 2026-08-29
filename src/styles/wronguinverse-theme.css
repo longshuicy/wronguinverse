@@ -94,14 +94,112 @@ body {
   );
 }
 
+/* Full-bleed. The old fixed 46rem column wasted most of a desktop screen and
+   forced the bench into a single scrolling stack. */
 .wui-screen {
   position: relative;
-  max-width: 46rem;
+  width: 100%;
+  max-width: 88rem;
   margin: 0 auto;
-  padding: calc(var(--px) * 8) calc(var(--px) * 4) calc(var(--px) * 16);
+  padding: calc(var(--px) * 4) calc(var(--px) * 6) calc(var(--px) * 10);
   display: flex;
   flex-direction: column;
+  gap: calc(var(--px) * 4);
+}
+
+/* The objective and the clock are what a player checks constantly; both used
+   to scroll away behind the bench. */
+.wui-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 2);
+  padding: calc(var(--px) * 3) 0 calc(var(--px) * 3);
+  background: var(--bg-page);
+  box-shadow: 0 var(--border) 0 0 var(--stage-edge, var(--line));
+}
+
+.wui-topbar-main {
+  display: flex;
   gap: calc(var(--px) * 6);
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.wui-topbar-main > div:first-child {
+  flex: 1 1 22rem;
+}
+
+.wui-topbar .wui-timer-label,
+.wui-topbar .wui-timer-track {
+  min-width: 16rem;
+}
+
+.wui-stage-title {
+  margin: 0 0 calc(var(--px) * 2);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.wui-footer {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 4);
+  margin-top: calc(var(--px) * 2);
+}
+
+/* --- stage rail ---
+   Names the five steps and marks the current one. A colour tint alone told the
+   player that something had changed, not what or where they were. */
+
+.wui-rail {
+  display: flex;
+  gap: calc(var(--px) * 2);
+  flex-wrap: wrap;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.wui-rail-step {
+  padding: var(--px) calc(var(--px) * 2);
+  color: var(--line-strong);
+  border: var(--border) solid transparent;
+}
+
+.wui-rail-step.is-done {
+  color: var(--text-secondary);
+}
+
+.wui-rail-step.is-current {
+  color: var(--stage-ink, var(--accent-primary));
+  border-color: var(--stage-edge, var(--accent-primary));
+  background: var(--bg-panel);
+}
+
+/* --- progress tally --- */
+
+.wui-tally {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--px);
+}
+
+.wui-tally-count {
+  font-size: 32px;
+  line-height: 1;
+  color: var(--accent-success);
+}
+
+.wui-tally-label {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
 }
 
 .wui-screen-head h1 {
@@ -254,10 +352,14 @@ body {
 
 /* --- stations --- */
 
+/* A grid, so the whole bench is comparable at a glance. Comparing what two
+   controls read as is the core act of deduction and cannot happen when half of
+   them are below the fold. */
 .wui-bench {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
   gap: calc(var(--px) * 4);
+  align-items: start;
 }
 
 .wui-station {
@@ -288,6 +390,37 @@ body {
   color: var(--accent-success);
   font-size: 12px;
   letter-spacing: 0.05em;
+}
+
+/* The objective, printed on the control that answers it. */
+.wui-station-goal {
+  display: flex;
+  gap: calc(var(--px) * 2);
+  align-items: baseline;
+  flex-wrap: wrap;
+  margin: 0 0 calc(var(--px) * 3);
+  padding-bottom: calc(var(--px) * 2);
+  border-bottom: var(--border) solid var(--line);
+}
+
+.wui-station-goal-arrow {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.wui-station-goal-value {
+  font-size: 18px;
+  color: var(--accent-hint);
+}
+
+.wui-station-locked .wui-station-goal-value {
+  color: var(--accent-success);
+  text-decoration: line-through;
+}
+
+.wui-station-name {
+  color: var(--text-primary);
 }
 
 .wui-station-output {
@@ -818,4 +951,169 @@ input[type='range']::-moz-range-thumb {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* --- difficulty tiers --- */
+
+.wui-tiers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: calc(var(--px) * 2);
+  width: 100%;
+  max-width: 52rem;
+}
+
+.wui-tier {
+  --frame-color: var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: var(--px);
+  padding: calc(var(--px) * 3);
+  font: inherit;
+  border: none;
+  border-radius: 0;
+  background: var(--bg-panel);
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  box-shadow:
+    0 calc(-1 * var(--border)) 0 0 var(--frame-color),
+    0 var(--border) 0 0 var(--frame-color),
+    calc(-1 * var(--border)) 0 0 0 var(--frame-color),
+    var(--border) 0 0 0 var(--frame-color);
+}
+
+.wui-tier.is-active {
+  --frame-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.wui-tier-name {
+  font-size: 13px;
+  letter-spacing: 0.05em;
+}
+
+.wui-tier-detail {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* --- credits ---
+   CC BY 4.0 obliges attribution wherever the work is used, so this ships in
+   the game rather than living only in the repository. */
+
+.wui-credits {
+  max-width: 44rem;
+  padding: calc(var(--px) * 4);
+  background: var(--bg-panel);
+  box-shadow: 0 0 0 var(--border) var(--line);
+  text-align: left;
+}
+
+.wui-credits h2 {
+  margin: 0 0 calc(var(--px) * 2);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.wui-credits h2:not(:first-child) {
+  margin-top: calc(var(--px) * 4);
+}
+
+.wui-credits ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 2);
+}
+
+.wui-credits li {
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--text-secondary);
+}
+
+.wui-credits a,
+.wui-link {
+  color: var(--accent-primary);
+}
+
+.wui-link {
+  font: inherit;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* --- Layer C decoration ---
+   Creatures and anomalies in the margins beside the terminal. Never over a
+   control, and gone entirely once the viewport is narrow enough that the
+   margins disappear. */
+
+.wui-decor {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.wui-decor-item {
+  position: absolute;
+  opacity: 0.75;
+  animation-name: wui-drift;
+  animation-timing-function: steps(3, end);
+  animation-iteration-count: infinite;
+}
+
+@keyframes wui-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(calc(var(--px) * -3));
+  }
+}
+
+/* Below this the content column reaches the edges and there is no room
+   for anything beside it. */
+@media (max-width: 72rem) {
+  .wui-decor {
+    display: none;
+  }
+}
+
+/* --- stage identity ---
+   Each stage gets its own accent so the screen reads differently at a glance,
+   reinforcing the named step in the rail. */
+
+[data-stage='normal'] {
+  --stage-ink: var(--accent-primary);
+}
+
+[data-stage='explore'] {
+  --stage-ink: var(--accent-anomaly);
+  --stage-edge: color-mix(in srgb, var(--accent-anomaly) 55%, var(--line));
+}
+
+[data-stage='challenge'] {
+  --stage-ink: var(--accent-primary);
+  --stage-edge: color-mix(in srgb, var(--accent-primary) 55%, var(--line));
+}
+
+[data-stage='result'] {
+  --stage-ink: var(--accent-success);
+  --stage-edge: color-mix(in srgb, var(--accent-success) 55%, var(--line));
+}
+
+/* The stage title carries the stage colour — the single loudest cue that the
+   screen has changed. */
+.wui-stage-title {
+  color: var(--stage-ink, var(--text-primary));
 }

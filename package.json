@@ -17,7 +17,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "art:clean": "node scripts/clean-sprites.mjs",
-    "art:check": "node scripts/clean-sprites.mjs --check"
+    "art:check": "node scripts/clean-sprites.mjs --check",
+    "audio:clean": "node scripts/clean-audio.mjs",
+    "audio:check": "node scripts/clean-audio.mjs --check"
   },
   "dependencies": {
     "howler": "^2.2.4",

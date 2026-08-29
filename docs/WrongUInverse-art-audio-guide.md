@@ -800,33 +800,70 @@ Avoid:
 
 The music should tolerate looping for many short runs.
 
-## 11. Music Asset Budget
+## 11. Music
 
-V0 needs only 2--3 loops.
+V0 ships three loops. They are keyed to **difficulty tier**, not to stage:
+a track that changed every 40 seconds as the player moved from Explore to
+Challenge would be restless, and re-cueing audio mid-run draws attention
+to itself. Tier is the right axis because it is chosen once and lasts the
+whole session, and it lets the score get less calm as the game gets
+harder.
 
-### 1. Calibration Loop
+  ---------------------------------------------------------------------
+  Tier                          Track
+  ----------------------------- ---------------------------------------
+  HOME / SLIGHTLY WRONG         **Airship Serenity** --- slow and
+                                unhurried, for a player still learning
+                                that sliders slide
 
-Normal, orderly, slightly sterile.
+  WRONGER / DEEPLY WRONG        **Video Dungeon Boss** --- a dungeon
+                                theme; the universe is now clearly
+                                against you
 
-Approx. 45--90 second seamless loop.
+  UX HELL / THE WrongUIᴎverse   **Club Diver** --- driving percussion
+                                for the tiers with the least help
+  ---------------------------------------------------------------------
 
-### 2. Shift / Exploration Loop
+All three are by **Kevin MacLeod** (incompetech.com), licensed
+**Creative Commons BY 4.0**.
 
-Same musical identity but stranger:
+### Attribution is a licence obligation
 
--   syncopation
--   warped synth
--   slightly unstable pitch texture
--   more playful bass
+CC BY 4.0 requires attribution **wherever the work is used**. A line in
+the repository is not sufficient --- the credit ships inside the game, on
+the intro screen's CREDITS panel, and is generated from
+`src/content/music.ts`. Do not add a track without adding its credit
+there, and do not remove the panel.
 
-### 3. Challenge Loop --- optional
+Required form:
 
-Faster or more rhythmic version of the exploration loop.
+> "TRACK NAME" Kevin MacLeod (incompetech.com)\
+> Licensed under Creative Commons: By Attribution 4.0 License\
+> http://creativecommons.org/licenses/by/4.0/
 
-Alternatively, reuse exploration music and add a ticking/percussion
-layer during Challenge.
+### Delivery
 
-This is cheaper and creates continuity.
+Sources are 256--320kbps masters of several megabytes; three of them
+would be an 18MB download for a browser game.
+
+``` bash
+npm run audio:clean    # transcode audio-source/music into public/sound/music
+npm run audio:check    # verify the shipped budget (runs in CI)
+```
+
+-   `audio-source/music/` --- masters. **Untracked**, like `art-source/`.
+-   `public/sound/music/` --- 96kbps AAC `.m4a`, committed. 18MB → 6MB.
+
+Only the track for the selected tier is fetched, and only once the player
+starts a run, so a session downloads about 2MB. Loading is deliberately
+deferred to that click: browsers block audio until a user gesture, and
+starting a run is the natural one.
+
+### Still to come
+
+Sound effects (§12--13) are not implemented. The art guide's own
+recommendation stands: generate the small UI blips procedurally with the
+Web Audio API rather than shipping ten more files.
 
 ## 12. Sound Effect Budget
 

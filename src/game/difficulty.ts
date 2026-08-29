@@ -27,6 +27,15 @@ export interface DifficultyConfig {
    * a requirement locking when its widget lands on target.
    */
   interpretedOutputInChallenge: boolean;
+  /**
+   * Whether each requirement is shown ON the control that satisfies it.
+   *
+   * Paired, the player still has to work out HOW to make that control produce
+   * the value — but not WHICH control to use. Unpaired, the order is a separate
+   * list and matching it to the bench is part of the puzzle. Gentle tiers pair;
+   * harder tiers separate.
+   */
+  pairRequirementsWithWidgets: boolean;
 }
 
 const LADDER: DifficultyConfig[] = [
@@ -39,6 +48,7 @@ const LADDER: DifficultyConfig[] = [
     notebookDetail: 'full',
     hintPolicy: 'generous',
     interpretedOutputInChallenge: true,
+    pairRequirementsWithWidgets: true,
   },
   {
     id: 'wronger',
@@ -49,6 +59,7 @@ const LADDER: DifficultyConfig[] = [
     notebookDetail: 'full',
     hintPolicy: 'normal',
     interpretedOutputInChallenge: false,
+    pairRequirementsWithWidgets: true,
   },
   {
     id: 'deeplyWrong',
@@ -59,6 +70,7 @@ const LADDER: DifficultyConfig[] = [
     notebookDetail: 'reduced',
     hintPolicy: 'normal',
     interpretedOutputInChallenge: false,
+    pairRequirementsWithWidgets: false,
   },
   {
     id: 'uxHell',
@@ -69,6 +81,7 @@ const LADDER: DifficultyConfig[] = [
     notebookDetail: 'minimal',
     hintPolicy: 'limited',
     interpretedOutputInChallenge: false,
+    pairRequirementsWithWidgets: false,
   },
   {
     id: 'wronguinverse',
@@ -79,6 +92,7 @@ const LADDER: DifficultyConfig[] = [
     notebookDetail: 'minimal',
     hintPolicy: 'limited',
     interpretedOutputInChallenge: false,
+    pairRequirementsWithWidgets: false,
   },
 ];
 

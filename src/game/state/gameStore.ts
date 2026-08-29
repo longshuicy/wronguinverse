@@ -4,7 +4,13 @@
 // See docs/WrongUInverse-technical-design.md §12.
 
 import { create } from 'zustand';
-import { DEFAULT_DIFFICULTY, getDifficulty, type DifficultyConfig } from '../difficulty.ts';
+import {
+  DEFAULT_DIFFICULTY,
+  getDifficulty,
+  type DifficultyConfig,
+  type DifficultyId,
+} from '../difficulty.ts';
+import { playMusicFor, setMuted as setAudioMuted } from '../../audio/audioManager.ts';
 import { initialValue } from '../domains/index.ts';
 import { generateChallenge, isRequirementSatisfied } from '../generator/challengeGenerator.ts';
 import { generateRun } from '../generator/mappingGenerator.ts';
@@ -78,6 +84,8 @@ interface GameState {
   retrySameReality: () => void;
   nextUniverse: () => void;
   returnToIntro: () => void;
+  setDifficulty: (id: DifficultyId) => void;
+  setMuted: (muted: boolean) => void;
 }
 
 function freshValues(mappings: Mapping[]): WidgetValues {
@@ -158,8 +166,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   distance: 0,
 
   beginRun: (seed) => {
-    const { difficulty } = get();
+    const { difficulty, progress } = get();
     const runSeed = seed ?? createSeed();
+
+    // Browsers block audio until a user gesture; starting a run is one.
+    setAudioMuted(progress.audioMuted);
+    if (!progress.audioMuted) playMusicFor(difficulty.id);
     const { run, requirements } = buildUniverse(runSeed, difficulty);
 
     // Conventional pairings only — this is the universe the player already
@@ -386,4 +398,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   returnToIntro: () => set({ stage: 'intro' }),
+
+  /** Only meaningful from the intro; a run's tier is fixed once it starts. */
+  setDifficulty: (id) => set({ difficulty: getDifficulty(id) }),
+
+  setMuted: (muted) => {
+    const progress = { ...get().progress, audioMuted: muted };
+    saveProgress(progress);
+    setAudioMuted(muted);
+    set({ progress });
+  },
 }));

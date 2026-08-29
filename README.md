@@ -12,7 +12,7 @@ domains are independent systems, randomly paired at runtime. See
 
 **Play it:** <https://longshuicy.github.io/wronguinverse/>
 
-**Status: Milestone 3 — full V0 vocabulary.** The game is playable end to end.
+**Status: playable end to end**, with four difficulty tiers, music and art.
 
 What exists:
 
@@ -23,15 +23,18 @@ What exists:
   number, text, date, colour), paired by a data-driven compatibility table.
   Roughly 2,700 distinct universe shapes at the opening tier.
 - Seeded generation — a seed reproduces the mapping, labels and targets exactly.
+  Add `?seed=REALITY-XXXX` to replay a specific universe.
+- Four difficulty tiers, each scoring itself with its own music track.
 - Progressive hints (nudge → category → reveal), a field-notes panel that
   records observed values but never semantic labels, and a result screen that
   diagnoses how you argued with the interface.
-- The token palette from the art guide, with per-stage treatment and
-  seed-derived universe palette variants.
+- Pixel-art presentation: self-hosted pixel type, notched 8-bit frames, the
+  Zorblet mascot reacting to play, and per-universe creatures and anomalies.
 
-Still to come (Milestone 4): the pixel-art terminal shell over NES.css, the
-Zorblet mascot, music and SFX. Art assets are produced separately; anything
-missing from `public/` degrades to a CSS fallback rather than blocking play.
+Still to come: sound effects, and the remaining Tier 1 polish in the design
+docs (cursed universes, Daily Reality, the endless distance run). Art assets
+are produced separately; anything missing from `public/` degrades to a CSS
+fallback rather than blocking play.
 
 ## Stack
 
@@ -66,6 +69,8 @@ npm run dev
 | `npm run typecheck`    | `tsc` project-references check, no emit |
 | `npm run test`         | Run the Vitest suite once               |
 | `npm run test:watch`   | Run Vitest in watch mode                |
+| `npm run art:clean`    | Process raw art into shippable sprites  |
+| `npm run audio:clean`  | Transcode source music for the web      |
 
 ## Project structure
 
@@ -78,7 +83,7 @@ src/
     state/       # game store + shared types
   widgets/       # slider, checkbox, radio, dropdown, number, text, date, color
   content/       # word banks, colour palette, flavor text, asset manifest
-  audio/         # audio manager (Howler) — Milestone 4
+  audio/         # audio manager (Howler)
   components/    # shell, bench, timer, notebook, challenge card
   styles/        # universe-variables / nes-overrides / wronguinverse-theme
   test/          # Vitest setup
@@ -104,9 +109,38 @@ palette variants cost nothing.
 ## CI/CD
 
 - [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — on every push/PR to
-  `main`: format check, lint, typecheck, test, build.
+  `main`: format check, lint, typecheck, test, asset budgets, build.
 - [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) — on push to
   `main`: builds and deploys `dist/` to GitHub Pages.
 
 To enable Pages deployment, set the repository's **Settings → Pages → Source**
 to **GitHub Actions**.
+
+## Credits
+
+**Music** — all three tracks by Kevin MacLeod (incompetech.com), licensed under
+[Creative Commons: By Attribution 4.0](http://creativecommons.org/licenses/by/4.0/):
+
+- "Airship Serenity" Kevin MacLeod (incompetech.com)
+- "Video Dungeon Boss" Kevin MacLeod (incompetech.com)
+- "Club Diver" Kevin MacLeod (incompetech.com)
+
+The same credits are shown in-game on the intro screen, which is what the
+licence actually requires.
+
+**Type** — [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P)
+and [Silkscreen](https://fonts.google.com/specimen/Silkscreen), both under the
+SIL Open Font License 1.1 and self-hosted.
+
+## Working with assets
+
+Raw art and music are **untracked**; only the processed versions ship.
+
+```bash
+npm run art:clean      # art-source/ -> public/  (sprites, ~100x smaller)
+npm run audio:clean    # audio-source/ -> public/sound/music  (96kbps AAC)
+```
+
+Both have a `:check` counterpart that runs in CI and fails if anything
+oversized reaches `public/`. See the art guide
+[§5](docs/WrongUInverse-art-audio-guide.md) and §11.

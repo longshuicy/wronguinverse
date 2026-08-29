@@ -6,6 +6,7 @@
 import { useEffect } from 'react';
 import { ChallengeCard } from '../../components/ChallengeCard.tsx';
 import { ObservationLog } from '../../components/ObservationLog.tsx';
+import { StageRail } from '../../components/StageRail.tsx';
 import { Timer } from '../../components/Timer.tsx';
 import { WidgetBench } from '../../components/WidgetBench.tsx';
 import { EXPLORE_INTRO } from '../../content/flavorText.ts';
@@ -32,23 +33,33 @@ export function ExploreStage() {
 
   if (!run) return null;
 
+  const paired = difficulty.pairRequirementsWithWidgets;
+
   return (
     <main className="wui-screen">
-      <header className="wui-screen-head">
+      {/* Sticky: the objective and the clock are what the player checks most,
+          and both used to scroll away behind the bench. */}
+      <header className="wui-topbar">
+        <StageRail stage="explore" />
+        <div className="wui-topbar-main">
+          <div>
+            <h1 className="wui-stage-title">Semantic drift detected</h1>
+            <p className="wui-lede">{EXPLORE_INTRO}</p>
+          </div>
+          <Timer remainingMs={remaining} totalMs={difficulty.explorationSeconds * 1000} />
+        </div>
         <p className="wui-eyebrow">SHIFTED · {run.seed}</p>
-        <h1>Semantic drift detected</h1>
-        <p className="wui-lede">{EXPLORE_INTRO}</p>
       </header>
 
-      <Timer remainingMs={remaining} totalMs={difficulty.explorationSeconds * 1000} />
-
-      {/* Shown early and unsolved: knowing what will be asked is what makes
-          exploration purposeful rather than aimless poking. */}
-      <ChallengeCard
-        title="INCOMING STABILIZATION ORDER"
-        requirements={requirements}
-        lockedWidgets={[]}
-      />
+      {/* Unpaired tiers keep the order as its own card, since the bench cannot
+          show which station answers which line. */}
+      {!paired && (
+        <ChallengeCard
+          title="INCOMING STABILIZATION ORDER"
+          requirements={requirements}
+          lockedWidgets={[]}
+        />
+      )}
 
       <WidgetBench
         mappings={run.mappings}
@@ -56,18 +67,20 @@ export function ExploreStage() {
         mode="explore"
         onChange={setValue}
         showInterpreted
+        requirements={paired ? requirements : undefined}
         hintLevels={hintLevels}
         onHint={useHint}
         hintsEnabled={difficulty.hintPolicy !== 'limited'}
       />
 
-      <ObservationLog observations={observations} detail={difficulty.notebookDetail} />
-
-      <div className="wui-actions">
-        <button type="button" className="wui-primary" onClick={beginChallenge}>
-          I understand this universe
-        </button>
-      </div>
+      <footer className="wui-footer">
+        <ObservationLog observations={observations} detail={difficulty.notebookDetail} />
+        <div className="wui-actions">
+          <button type="button" className="wui-primary" onClick={beginChallenge}>
+            I understand this universe
+          </button>
+        </div>
+      </footer>
     </main>
   );
 }

@@ -6,6 +6,7 @@
 // run. See docs/WrongUInverse-game-design.md §4, §10.
 
 import { ChallengeCard } from '../../components/ChallengeCard.tsx';
+import { StageRail } from '../../components/StageRail.tsx';
 import { WidgetBench } from '../../components/WidgetBench.tsx';
 import {
   CHALLENGE_INTRO,
@@ -27,19 +28,36 @@ export function ChallengeStage() {
 
   if (!run) return null;
 
+  const paired = difficulty.pairRequirementsWithWidgets;
+  const done = requirements.filter((r) => lockedWidgets.includes(r.widget)).length;
+
   return (
     <main className="wui-screen">
-      <header className="wui-screen-head">
+      <header className="wui-topbar">
+        <StageRail stage="challenge" />
+        <div className="wui-topbar-main">
+          <div>
+            <h1 className="wui-stage-title">Stabilize this dimension</h1>
+            <p className="wui-lede">{CHALLENGE_INTRO}</p>
+          </div>
+          {/* Progress is the one thing that must always be visible. */}
+          <p className="wui-tally">
+            <span className="wui-tally-count">
+              {done}/{requirements.length}
+            </span>
+            <span className="wui-tally-label">LOCKED</span>
+          </p>
+        </div>
         <p className="wui-eyebrow">STABILIZATION PROTOCOL · {run.seed}</p>
-        <h1>Stabilize this dimension</h1>
-        <p className="wui-lede">{CHALLENGE_INTRO}</p>
       </header>
 
-      <ChallengeCard
-        title="STABILIZATION ORDER"
-        requirements={requirements}
-        lockedWidgets={lockedWidgets}
-      />
+      {!paired && (
+        <ChallengeCard
+          title="STABILIZATION ORDER"
+          requirements={requirements}
+          lockedWidgets={lockedWidgets}
+        />
+      )}
 
       <WidgetBench
         mappings={run.mappings}
@@ -49,33 +67,36 @@ export function ChallengeStage() {
         // Easy tiers keep the readout; harder ones leave the requirement lock
         // as the only signal (technical design §15).
         showInterpreted={difficulty.interpretedOutputInChallenge}
+        requirements={paired ? requirements : undefined}
         lockedWidgets={lockedWidgets}
       />
 
-      {rulesRevealed && (
-        <section className="wui-rules">
-          <h2>UNIVERSE RULES</h2>
-          <ul>
-            {run.mappings.map((mapping) => (
-              <li key={mapping.widget}>
-                {WIDGET_DISPLAY_NAME[mapping.widget] ?? mapping.widget.toUpperCase()} →{' '}
-                {SEMANTIC_DISPLAY_NAME[mapping.semantic] ?? mapping.semantic.toUpperCase()}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <div className="wui-actions">
-        {!rulesRevealed && (
-          <button type="button" className="wui-ghost" onClick={revealRules}>
-            Reveal rules
-          </button>
+      <footer className="wui-footer">
+        {rulesRevealed && (
+          <section className="wui-rules">
+            <h2>UNIVERSE RULES</h2>
+            <ul>
+              {run.mappings.map((mapping) => (
+                <li key={mapping.widget}>
+                  {WIDGET_DISPLAY_NAME[mapping.widget] ?? mapping.widget.toUpperCase()} →{' '}
+                  {SEMANTIC_DISPLAY_NAME[mapping.semantic] ?? mapping.semantic.toUpperCase()}
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
-        <button type="button" className="wui-ghost" onClick={giveUp}>
-          Give up
-        </button>
-      </div>
+
+        <div className="wui-actions">
+          {!rulesRevealed && (
+            <button type="button" className="wui-ghost" onClick={revealRules}>
+              Reveal rules
+            </button>
+          )}
+          <button type="button" className="wui-ghost" onClick={giveUp}>
+            Give up
+          </button>
+        </div>
+      </footer>
     </main>
   );
 }

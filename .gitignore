@@ -3,6 +3,11 @@
 # into public/, and those cleaned sprites are what is committed.
 art-source
 
+# Raw music. Source tracks are 256-320kbps masters of several megabytes;
+# `npm run audio:clean` transcodes them into public/sound/music, and those
+# transcoded files are what is committed.
+audio-source
+
 # Dependencies
 node_modules
 
