@@ -877,14 +877,32 @@ runtime (technical design §1). Total cost is about 11 KB.
 
 -   **Press Start 2P** --- the wordmark, and nothing else. Gloriously
     chunky and nearly unreadable in quantity.
--   **Silkscreen** --- all interface chrome: headings, labels, values,
-    form controls, buttons. A pixel face that stays legible small, which
-    is the entire requirement.
--   **System UI font** --- running prose only (the stage lede, result
-    blurbs). A paragraph of any pixel face is a chore.
+-   **Silkscreen** --- **everything else, with no exceptions**: headings,
+    labels, values, form controls, buttons, and running prose.
 
-Set `-webkit-font-smoothing: none` on the pixel faces so they stay
-crisp, and re-enable antialiasing on the prose.
+Set `-webkit-font-smoothing: none` so the pixel faces stay crisp.
+
+### No system-font escape hatch
+
+There is **no fallback to a system UI font anywhere in the theme**, not
+even for descriptive paragraphs. A single sans-serif paragraph in the
+middle of a pixel interface is instantly legible as "this part is a
+website" and undoes the illusion the rest of the screen is building. The
+world is a terminal in another universe; its terminal does not have
+system-ui.
+
+This overrides the usual advice to reach for a readable UI font in body
+copy. Prose is set in Silkscreen and made readable by *typesetting*
+rather than by changing typeface:
+
+-   **Leading of about 2.0.** Rows of pixels merge without it; this is
+    the single most important setting.
+-   **No added letter-spacing.** The face already carries its own.
+-   **Line length capped around 58ch.**
+-   14px minimum for paragraphs.
+
+Silkscreen renders as small caps, so prose reads as uppercase terminal
+output. That is the intended voice, not a defect.
 
 ### Legibility floor
 
@@ -896,8 +914,11 @@ way:
     face separates glyphs into unreadable fragments; it does not look
     more "terminal".
 -   Size on the `--px` grid: 12, 14, 16, 20.
+-   De-emphasised text needs **more** contrast than it would in a system
+    face, not less. A pixel glyph has no anti-aliased edge to help it.
 
-Do not sacrifice readability for retro aesthetics.
+Readability is bought with size, leading and contrast --- never by
+abandoning the typeface.
 
 ## 17. Animation Budget
 
