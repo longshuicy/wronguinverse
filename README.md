@@ -10,23 +10,28 @@ domains are independent systems, randomly paired at runtime. See
 - [Technical design](docs/WrongUInverse-technical-design.md)
 - [Art & audio guide](docs/WrongUInverse-art-audio-guide.md)
 
-**Live sandbox:** <https://longshuicy.github.io/wronguinverse/>
+**Play it:** <https://longshuicy.github.io/wronguinverse/>
 
-**Status: Milestone 1 — mechanics sandbox.** The core mechanic works: a seed
-generates a universe in which each widget means something other than what it
-looks like, and every value is reachable through the control it landed on.
+**Status: Milestone 3 — full V0 vocabulary.** The game is playable end to end.
 
 What exists:
 
-- Seeded generation — the same seed reproduces the mapping, labels and targets.
-- 4 widgets (slider, checkbox group, dropdown, date picker) and 4 semantics
-  (boolean, choice, quantity, date), paired by a data-driven compatibility table.
-- A debug screen exposing every interpreted value.
+- The full run loop: calibration → shift → timed exploration → compound
+  challenge → result, with retry-same-reality and escape-to-another-universe.
+- The complete V0 vocabulary: 8 widgets (slider, checkbox, radio, dropdown,
+  number, text, date, colour) against 7 semantics (boolean, choice, quantity,
+  number, text, date, colour), paired by a data-driven compatibility table.
+  Roughly 2,700 distinct universe shapes at the opening tier.
+- Seeded generation — a seed reproduces the mapping, labels and targets exactly.
+- Progressive hints (nudge → category → reveal), a field-notes panel that
+  records observed values but never semantic labels, and a result screen that
+  diagnoses how you argued with the interface.
+- The token palette from the art guide, with per-stage treatment and
+  seed-derived universe palette variants.
 
-What does not exist yet: the Normal → Shift → Explore → Challenge → Result loop
-(Milestone 2), the remaining widgets and semantics (Milestone 3), and all
-presentation (Milestone 4). The live sandbox deliberately reveals the mappings
-that the real game exists to make you deduce.
+Still to come (Milestone 4): the pixel-art terminal shell over NES.css, the
+Zorblet mascot, music and SFX. Art assets are produced separately; anything
+missing from `public/` degrades to a CSS fallback rather than blocking play.
 
 ## Stack
 
@@ -72,17 +77,29 @@ src/
     stages/      # Normal / Explore / Challenge / Result stage components
     state/       # game store + shared types
   widgets/       # slider, checkbox, radio, dropdown, number, text, date, color
-  content/       # procedural word banks, color palette, flavor text
-  audio/         # audio manager (Howler)
-  components/    # Terminal, Timer, ObservationLog, ChallengeCard
-  styles/
-  test/          # Vitest setup + tests
+  content/       # word banks, colour palette, flavor text, asset manifest
+  audio/         # audio manager (Howler) — Milestone 4
+  components/    # shell, bench, timer, notebook, challenge card
+  styles/        # universe-variables / nes-overrides / wronguinverse-theme
+  test/          # Vitest setup
 ```
 
 This mirrors the structure in the
-[technical design doc](docs/WrongUInverse-technical-design.md#19-suggested-repository-structure).
-Files under these directories are currently placeholders (`export {}` stubs)
-marking where each module will live.
+[technical design doc](docs/WrongUInverse-technical-design.md#20-suggested-repository-structure).
+
+Two ideas carry most of the architecture:
+
+- **The normalized layer.** Every domain projects onto `[0, 1]`, so a widget
+  drives a domain without knowing what it means. A date picker mapped to a
+  boolean simply reports a position and snaps to two.
+- **Two independent gates.** `generator/compatibility.ts` decides whether a
+  pairing is a good idea; `widgets/registry.ts` decides whether it is
+  renderable. A mapping needs both, so an unbuildable pairing can never reach a
+  player.
+
+Colours come from role tokens in `styles/universe-variables.css` — components
+never write a literal hex, which is what makes stage treatments and per-universe
+palette variants cost nothing.
 
 ## CI/CD
 

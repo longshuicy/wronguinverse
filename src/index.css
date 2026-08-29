@@ -1,25 +1,17 @@
+/* index.css
+   Document-level reset only. All theming lives in styles/ — see
+   universe-variables.css for the token palette. */
+
 :root {
   color-scheme: dark;
-  font-family: system-ui, sans-serif;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
-  min-height: 100vh;
-  background: #0b0d10;
-  color: #e6e6e6;
-}
-
-.scaffold-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 100vh;
-  text-align: center;
+  padding: 0;
 }

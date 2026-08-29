@@ -1,7 +1,9 @@
 // App.tsx
 // Stage router. The store owns which screen is up; this only maps stage to
-// component. See docs/WrongUInverse-technical-design.md §12.
+// component and wraps it in the terminal shell.
+// See docs/WrongUInverse-technical-design.md §12.
 
+import { TerminalShell } from './components/TerminalShell.tsx';
 import { ChallengeStage } from './game/stages/ChallengeStage.tsx';
 import { ExploreStage } from './game/stages/ExploreStage.tsx';
 import { IntroStage } from './game/stages/IntroStage.tsx';
@@ -9,9 +11,13 @@ import { NormalStage } from './game/stages/NormalStage.tsx';
 import { ResultStage } from './game/stages/ResultStage.tsx';
 import { ShiftTransition } from './game/stages/ShiftTransition.tsx';
 import { useGameStore } from './game/state/gameStore.ts';
-import './styles/wronguinverse.css';
 
-function App() {
+// Order matters: variables first, then the NES layer, then our theme on top.
+import './styles/universe-variables.css';
+import './styles/nes-overrides.css';
+import './styles/wronguinverse-theme.css';
+
+function CurrentStage() {
   const stage = useGameStore((s) => s.stage);
 
   switch (stage) {
@@ -28,6 +34,17 @@ function App() {
     case 'result':
       return <ResultStage />;
   }
+}
+
+function App() {
+  const stage = useGameStore((s) => s.stage);
+  const seed = useGameStore((s) => s.run?.seed ?? null);
+
+  return (
+    <TerminalShell stage={stage} seed={seed}>
+      <CurrentStage />
+    </TerminalShell>
+  );
 }
 
 export default App;

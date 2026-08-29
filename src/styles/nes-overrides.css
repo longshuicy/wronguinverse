@@ -1,0 +1,15 @@
+/* nes-overrides.css
+   Reserved for the NES.css layer (art guide §6, technical design §19).
+
+   NES.css is not installed yet — it is part of the Milestone 4 presentation
+   pass. This file exists so that when it lands, its overrides have an obvious
+   home and do not get scattered through the theme.
+
+   When adding it:
+   - import NES.css BEFORE this file so these rules win
+   - override its palette to the tokens in universe-variables.css; do not let
+     it introduce literal hexes
+   - keep gameplay controls as real DOM elements (§6). NES.css restyles
+     checkboxes and radios via ::before on a sibling label, which can hide the
+     real input — make sure focus and keyboard operation survive, since the
+     whole game depends on those controls staying programmable. */

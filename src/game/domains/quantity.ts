@@ -11,16 +11,23 @@ interface Range {
   min: number;
   max: number;
   step: number;
-  unit?: string;
+  unit: string;
 }
 
+/**
+ * Every quantity carries a unit.
+ *
+ * This is what keeps Quantity readable apart from Number on a challenge card:
+ * a quantity is a measurement ("73%", "12 KV"), a number is a bare integer.
+ * Two lines reading `REACTOR: 40` and `BERTH: 40` would be needlessly cruel.
+ */
 const RANGES: Range[] = [
-  { min: 0, max: 10, step: 1 },
-  { min: 0, max: 20, step: 1 },
+  { min: 0, max: 10, step: 1, unit: ' KV' },
+  { min: 0, max: 20, step: 1, unit: ' LM' },
   { min: 0, max: 100, step: 1, unit: '%' },
   { min: 0, max: 100, step: 5, unit: '%' },
-  { min: -10, max: 10, step: 1 },
-  { min: 0, max: 50, step: 5 },
+  { min: -10, max: 10, step: 1, unit: '°' },
+  { min: 0, max: 50, step: 5, unit: ' UNITS' },
 ];
 
 export function generateQuantityDomain(rng: Rng): AnyDomain {
@@ -41,7 +48,7 @@ export function generateQuantityDomain(rng: Rng): AnyDomain {
     min,
     max,
     step,
-    display: (value) => `${value}${unit ?? ''}`,
+    display: (value) => `${value}${unit}`,
     normalize: (value) => clamp01((value - min) / (max - min)),
     denormalize: snap,
     equals: (a, b) => a === b,

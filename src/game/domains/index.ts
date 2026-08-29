@@ -6,9 +6,12 @@ import type { Rng } from '../generator/seededRandom.ts';
 import type { AnyDomain, SemanticType } from '../state/types.ts';
 import { generateBooleanDomain } from './boolean.ts';
 import { generateChoiceDomain } from './choice.ts';
+import { generateColorDomain } from './color.ts';
 import { generateDateDomain } from './date.ts';
 import { indexToPosition } from './defineDomain.ts';
+import { generateNumberDomain } from './number.ts';
 import { generateQuantityDomain } from './quantity.ts';
+import { generateTextDomain } from './text.ts';
 
 export type DomainGenerator = (rng: Rng) => AnyDomain;
 
@@ -17,11 +20,15 @@ export type DomainGenerator = (rng: Rng) => AnyDomain;
  * on anything missing, and `implementedSemantics()` is what the mapping
  * generator draws from, so an unimplemented semantic can never reach a player.
  */
+/** The full V0 semantic vocabulary — game design §7. */
 const DOMAIN_GENERATORS: Partial<Record<SemanticType, DomainGenerator>> = {
   boolean: generateBooleanDomain,
   choice: generateChoiceDomain,
   quantity: generateQuantityDomain,
+  number: generateNumberDomain,
+  text: generateTextDomain,
   date: generateDateDomain,
+  color: generateColorDomain,
 };
 
 export function implementedSemantics(): SemanticType[] {

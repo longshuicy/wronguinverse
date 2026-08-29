@@ -1,0 +1,98 @@
+/* universe-variables.css
+   The WrongUIᴎverse token palette — HOME / ELECTRIC LAB.
+   Authoritative source: docs/WrongUInverse-art-audio-guide.md §7.
+
+   Components must reference the ROLE tokens (--accent-primary, --bg-panel, …)
+   rather than the raw palette tokens. That indirection is what makes stage
+   treatments and Cursed Universe palette variants cost nothing but a data
+   attribute. Never write a literal hex in a component. */
+
+:root {
+  /* --- raw palette --- */
+  --space-950: #090b18;
+  --space-900: #11152a;
+  --space-800: #1a2040;
+
+  --terminal-ink: #f4f2e8;
+  --terminal-muted: #a9b0c7;
+
+  --electric-cyan: #38e8ff;
+  --inverse-lime: #c8ff4d;
+  --anomaly-violet: #b46cff;
+  --warning-coral: #ff6b72;
+  --flux-amber: #ffc857;
+  --void-mint: #72f2c2;
+
+  /* --- semantic roles ---
+     The game lies about what a slider MEANS. It must not also lie about what
+     a colour means, so these stay consistent across every stage (§7). */
+  --bg-page: var(--space-950);
+  --bg-panel: var(--space-900);
+  --bg-control: var(--space-800);
+  --text-primary: var(--terminal-ink);
+  --text-secondary: var(--terminal-muted);
+
+  --accent-primary: var(--electric-cyan); /* interactive / selected / focus */
+  --accent-success: var(--inverse-lime); /* discovery / correct / stabilized */
+  --accent-anomaly: var(--anomaly-violet); /* reality shift / semantic drift */
+  --accent-danger: var(--warning-coral); /* mismatch / urgency / unstable */
+  --accent-hint: var(--flux-amber); /* hint / clue / observation */
+
+  /* --- derived --- */
+  --line-soft: #262c48;
+  --glow-strength: 0.35;
+  --shell-radius: 2px;
+}
+
+/* --- Stage treatment (§7 "Stage Treatment") ---
+   The universe should feel changed without becoming a different website, so
+   stages shift accent PRESENCE rather than swapping the palette. */
+
+/* Stage 1 — orderly and trustworthy: navy, cyan, off-white. */
+[data-stage='normal'] {
+  --stage-tint: transparent;
+}
+
+/* Shift — violet and coral briefly take over. */
+[data-stage='shift'] {
+  --accent-primary: var(--anomaly-violet);
+  --stage-tint: color-mix(in srgb, var(--anomaly-violet) 12%, transparent);
+}
+
+/* Stage 2 — same base, more violet, amber for hints. */
+[data-stage='explore'] {
+  --stage-tint: color-mix(in srgb, var(--anomaly-violet) 7%, transparent);
+}
+
+/* Stage 3 — cyan returns to the foreground, coral carries the pressure. */
+[data-stage='challenge'] {
+  --stage-tint: color-mix(in srgb, var(--electric-cyan) 4%, transparent);
+}
+
+[data-stage='result'] {
+  --stage-tint: color-mix(in srgb, var(--inverse-lime) 6%, transparent);
+}
+
+/* --- Universe palette variants (§7 "Universe Palette Variants") ---
+   Different universes remap accent ROLES; they never need new art. */
+
+[data-universe='voidMint'] {
+  --accent-primary: var(--void-mint);
+  --accent-anomaly: var(--anomaly-violet);
+}
+
+[data-universe='fluxAmber'] {
+  --accent-primary: var(--flux-amber);
+  --accent-anomaly: var(--warning-coral);
+}
+
+[data-universe='inverseViolet'] {
+  --accent-primary: var(--anomaly-violet);
+  --accent-success: var(--inverse-lime);
+}
+
+/* Desaturated until the player finds the single wrong mapping. */
+[data-universe='mostlyNormal'] {
+  --accent-anomaly: var(--terminal-muted);
+  --glow-strength: 0.12;
+}

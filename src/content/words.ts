@@ -35,12 +35,46 @@ export const BOOLEAN_LABEL_PAIRS: { whenTrue: string; whenFalse: string }[] = [
   { whenTrue: 'AWAKE', whenFalse: 'SLEEPING' },
 ];
 
+/** Short code fragments for the text domain — sector designations, not names. */
+const CODE_STEMS = ['SEC', 'NODE', 'VX', 'QR', 'LX', 'DK', 'ZP', 'MK', 'TR', 'HX'];
+
+/**
+ * Build a short typeable code, e.g. `VX-7`, `NODE9`, `QR-42`.
+ *
+ * Kept to 2-8 characters and uppercase: the text widget expects the player to
+ * type these, and long strings turn a deduction puzzle into a typing test.
+ */
+export function buildCode(rng: Rng): string {
+  const stem = rng.pick(CODE_STEMS);
+  const number = rng.int(1, 99);
+  return rng.bool() ? `${stem}-${number}` : `${stem}${number}`;
+}
+
+/** `count` distinct codes. */
+export function buildCodeSet(rng: Rng, count: number): string[] {
+  const out = new Set<string>();
+  let guard = 0;
+  while (out.size < count && guard < 500) {
+    out.add(buildCode(rng));
+    guard += 1;
+  }
+  let suffix = 0;
+  while (out.size < count) {
+    out.add(`RX-${suffix}`);
+    suffix += 1;
+  }
+  return rng.shuffle([...out]).slice(0, count);
+}
+
 /** Field labels the challenge screen uses when phrasing a requirement. */
 export const CHALLENGE_FIELD_LABELS: Record<string, string[]> = {
   boolean: ['CONTAINMENT', 'AIRLOCK', 'BEACON', 'SHIELD'],
   choice: ['COMPANION', 'PASSENGER', 'SPECIMEN', 'WITNESS'],
   quantity: ['REACTOR', 'FLUX', 'PRESSURE', 'CHARGE'],
+  number: ['BERTH', 'CHANNEL', 'CREW', 'ORBIT'],
+  text: ['SECTOR', 'CALLSIGN', 'MANIFEST', 'ROUTE'],
   date: ['ARRIVAL', 'DEPARTURE', 'ECLIPSE', 'THAW'],
+  color: ['SIGNAL', 'BEAM', 'PLUME', 'AURA'],
 };
 
 /**

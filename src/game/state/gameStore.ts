@@ -84,6 +84,39 @@ function freshValues(mappings: Mapping[]): WidgetValues {
   return Object.fromEntries(mappings.map((m) => [m.widget, initialValue(m.domain)]));
 }
 
+/**
+ * The single place a universe is declared stabilized.
+ *
+ * Shared by `setValue` and `beginChallenge` so completion cannot depend on
+ * which of them happened to notice — returns the state patch, or null if there
+ * is still something left to do.
+ */
+function completionPatch(
+  get: () => GameState,
+  lockedWidgets: WidgetType[],
+): Partial<GameState> | null {
+  const { requirements, distance, progress } = get();
+  const allDone =
+    requirements.length > 0 &&
+    requirements.every((requirement) => lockedWidgets.includes(requirement.widget));
+  if (!allDone) return null;
+
+  const nextProgress = {
+    ...progress,
+    universesStabilized: progress.universesStabilized + 1,
+    furthestDistance: Math.max(progress.furthestDistance, distance + 1),
+  };
+  saveProgress(nextProgress);
+
+  return {
+    stage: 'result',
+    outcome: 'stabilized',
+    challengeEndedAt: Date.now(),
+    distance: distance + 1,
+    progress: nextProgress,
+  };
+}
+
 /** Build the shifted universe plus its challenge card from one seed. */
 function buildUniverse(seed: string, difficulty: DifficultyConfig) {
   const run = generateRun({ seed, count: difficulty.mappingCount });
@@ -199,11 +232,37 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   beginChallenge: () => {
+    const at = Date.now();
+    set({ stage: 'challenge', exploreEndsAt: null, challengeStartedAt: at });
+
+    const { run, requirements, values, events } = get();
+    if (!run) return;
+
+    // A player who worked a mapping out during exploration may leave the widget
+    // sitting on the answer. Evaluate on entry so that counts: locking used to
+    // happen only inside setValue, which stranded already-correct requirements
+    // and — if every one of them was correct — left the run unwinnable.
+    const alreadySatisfied = requirements
+      .filter((requirement) => isRequirementSatisfied(requirement, run.mappings, values))
+      .map((requirement) => requirement.widget);
+
+    if (alreadySatisfied.length === 0) return;
+
     set({
-      stage: 'challenge',
-      exploreEndsAt: null,
-      challengeStartedAt: Date.now(),
+      lockedWidgets: alreadySatisfied,
+      events: [
+        ...events,
+        ...alreadySatisfied.map((widget): GameEvent => ({
+          type: 'challenge_attempt',
+          widget,
+          correct: true,
+          at,
+        })),
+      ],
     });
+
+    const completion = completionPatch(get, alreadySatisfied);
+    if (completion) set(completion);
   },
 
   setValue: (widget, value) => {
@@ -252,22 +311,8 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     // Every requirement locked = universe stabilized.
     if (stage === 'challenge' && nextLocked.length > 0) {
-      const allDone = requirements.every((r) => nextLocked.includes(r.widget));
-      if (allDone) {
-        const progress = {
-          ...get().progress,
-          universesStabilized: get().progress.universesStabilized + 1,
-          furthestDistance: Math.max(get().progress.furthestDistance, get().distance + 1),
-        };
-        saveProgress(progress);
-        set({
-          stage: 'result',
-          outcome: 'stabilized',
-          challengeEndedAt: Date.now(),
-          distance: get().distance + 1,
-          progress,
-        });
-      }
+      const completion = completionPatch(get, nextLocked);
+      if (completion) set(completion);
     }
   },
 

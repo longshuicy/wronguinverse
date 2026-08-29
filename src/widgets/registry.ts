@@ -6,6 +6,9 @@
 //   - this registry says whether it is BUILDABLE TODAY (implementation reality)
 // The generator requires both, so an unimplemented pairing can never reach a
 // player. See docs/WrongUInverse-technical-design.md §11.
+//
+// `supports` describes genuine rendering capability only. Whether a pairing is
+// DESIRABLE is the compatibility table's business — do not encode policy here.
 
 import type { ComponentType } from 'react';
 import type {
@@ -15,9 +18,13 @@ import type {
   WidgetType,
 } from '../game/state/types.ts';
 import { CheckboxWidget, checkboxPositions } from './CheckboxWidget.tsx';
+import { ColorWidget, colorPositions } from './ColorWidget.tsx';
 import { DateWidget, datePositions } from './DateWidget.tsx';
 import { DropdownWidget, dropdownPositions } from './DropdownWidget.tsx';
+import { NumberWidget, numberPositions } from './NumberWidget.tsx';
+import { RadioWidget, radioPositions } from './RadioWidget.tsx';
 import { SliderWidget, sliderPositions } from './SliderWidget.tsx';
+import { TextWidget, textPositions } from './TextWidget.tsx';
 
 export interface WidgetDefinition {
   type: WidgetType;
@@ -36,39 +43,71 @@ export interface WidgetDefinition {
   positions: (domain: AnyDomain) => number[];
 }
 
-const DISCRETE_AND_RANGED: SemanticType[] = ['boolean', 'choice', 'quantity', 'number', 'date'];
+/** Everything except free text, which needs a keyboard to enter. */
+const NON_TEXT: SemanticType[] = ['boolean', 'choice', 'quantity', 'number', 'date', 'color'];
 
-/** Milestone 1 vocabulary: slider, checkbox, dropdown, date. */
+/** The full V0 widget vocabulary — game design §7. */
 const WIDGETS: Partial<Record<WidgetType, WidgetDefinition>> = {
   slider: {
     type: 'slider',
     label: 'Slider',
     component: SliderWidget,
-    supports: [...DISCRETE_AND_RANGED, 'color'],
+    // No text: a track cannot spell a code.
+    supports: NON_TEXT,
     positions: sliderPositions,
   },
   checkbox: {
     type: 'checkbox',
     label: 'Checkbox group',
     component: CheckboxWidget,
-    // No date: a checkbox group cannot express a full calendar legibly.
-    supports: ['boolean', 'choice', 'quantity', 'number'],
+    // No date: a checkbox group cannot express a calendar legibly.
+    supports: ['boolean', 'choice', 'quantity', 'number', 'text', 'color'],
     positions: checkboxPositions,
+  },
+  radio: {
+    type: 'radio',
+    label: 'Radio group',
+    component: RadioWidget,
+    // Pure discrete selection, so anything enumerable works.
+    supports: [...NON_TEXT, 'text'],
+    positions: radioPositions,
   },
   dropdown: {
     type: 'dropdown',
     label: 'Dropdown',
     component: DropdownWidget,
-    // A dropdown can list anything that can be enumerated.
-    supports: [...DISCRETE_AND_RANGED, 'text', 'color'],
+    supports: [...NON_TEXT, 'text'],
     positions: dropdownPositions,
+  },
+  number: {
+    type: 'number',
+    label: 'Number input',
+    component: NumberWidget,
+    // No text: a number field cannot accept letters.
+    supports: NON_TEXT,
+    positions: numberPositions,
+  },
+  text: {
+    type: 'text',
+    label: 'Text input',
+    component: TextWidget,
+    // Parsing makes this the only universally capable control.
+    supports: [...NON_TEXT, 'text'],
+    positions: textPositions,
   },
   date: {
     type: 'date',
     label: 'Date picker',
     component: DateWidget,
-    supports: [...DISCRETE_AND_RANGED],
+    supports: ['boolean', 'choice', 'quantity', 'number', 'date'],
     positions: datePositions,
+  },
+  color: {
+    type: 'color',
+    label: 'Colour picker',
+    component: ColorWidget,
+    supports: NON_TEXT,
+    positions: colorPositions,
   },
 };
 
