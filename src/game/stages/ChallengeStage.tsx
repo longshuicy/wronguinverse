@@ -6,6 +6,7 @@
 // run. See docs/WrongUInverse-game-design.md §4, §10.
 
 import { ChallengeCard } from '../../components/ChallengeCard.tsx';
+import { Mascot } from '../../components/Mascot.tsx';
 import { StageRail } from '../../components/StageRail.tsx';
 import { WidgetBench } from '../../components/WidgetBench.tsx';
 import {
@@ -36,9 +37,12 @@ export function ChallengeStage() {
       <header className="wui-topbar">
         <StageRail stage="challenge" />
         <div className="wui-topbar-main">
-          <div>
-            <h1 className="wui-stage-title">Stabilize this dimension</h1>
-            <p className="wui-lede">{CHALLENGE_INTRO}</p>
+          <div className="wui-goal">
+            <Mascot />
+            <div>
+              <h1 className="wui-stage-title">Stabilize this dimension</h1>
+              <p className="wui-lede">{CHALLENGE_INTRO}</p>
+            </div>
           </div>
           {/* Progress is the one thing that must always be visible. */}
           <p className="wui-tally">
@@ -64,6 +68,7 @@ export function ChallengeStage() {
         values={values}
         mode="challenge"
         onChange={setValue}
+        seed={run.seed}
         // Easy tiers keep the readout; harder ones leave the requirement lock
         // as the only signal (technical design §15).
         showInterpreted={difficulty.interpretedOutputInChallenge}

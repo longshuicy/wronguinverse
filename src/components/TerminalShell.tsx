@@ -6,8 +6,6 @@
 // a wrapper as data attributes. See art guide §3, §7.
 
 import type { StageId } from '../game/state/types.ts';
-import { Mascot } from './Mascot.tsx';
-import { SceneDecor } from './SceneDecor.tsx';
 
 /** Accent remaps a universe can adopt. Art guide §7 "Universe Palette Variants". */
 const UNIVERSE_VARIANTS = ['standard', 'voidMint', 'fluxAmber', 'inverseViolet'] as const;
@@ -46,9 +44,7 @@ export function TerminalShell({ stage, seed, children }: TerminalShellProps) {
           painting was retired: it fought the pixel controls in front of it and
           pulled the screen away from the palette. See art guide §4 A001. */}
       <div className="wui-shell-veil" />
-      <SceneDecor seed={seed} />
       {children}
-      <Mascot />
     </div>
   );
 }

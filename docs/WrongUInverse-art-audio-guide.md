@@ -802,26 +802,29 @@ The music should tolerate looping for many short runs.
 
 ## 11. Music
 
-V0 ships three loops. They are keyed to **difficulty tier**, not to stage:
-a track that changed every 40 seconds as the player moved from Explore to
-Challenge would be restless, and re-cueing audio mid-run draws attention
-to itself. Tier is the right axis because it is chosen once and lasts the
-whole session, and it lets the score get less calm as the game gets
-harder.
+V0 ships three loops, one per **difficulty LEVEL**.
+
+> **Level, not tier.** A *tier* is which rules are broken (Tier 1
+> Semantic Shift, later Operation and Gesture) and is not selectable. A
+> *level* is how hard a Tier 1 run is, and is what the player picks. See
+> game design §3. The music follows the **level**.
+
+It is also not keyed to *stage*: a track that re-cued every time the
+player moved from Explore to Challenge would be restless and would draw
+attention to itself. A level is chosen once and lasts the session.
 
   ---------------------------------------------------------------------
-  Tier                          Track
-  ----------------------------- ---------------------------------------
-  HOME / SLIGHTLY WRONG         **Airship Serenity** --- slow and
-                                unhurried, for a player still learning
-                                that sliders slide
+  Level                     Track
+  ------------------------- -------------------------------------------
+  SLIGHTLY WRONG (4)        **Airship Serenity** --- slow and unhurried,
+                            for a player still learning that sliders
+                            slide
 
-  WRONGER / DEEPLY WRONG        **Video Dungeon Boss** --- a dungeon
-                                theme; the universe is now clearly
-                                against you
+  DEEPLY WRONG (6)          **Video Dungeon Boss** --- a dungeon theme;
+                            the universe is now clearly against you
 
-  UX HELL / THE WrongUIᴎverse   **Club Diver** --- driving percussion
-                                for the tiers with the least help
+  THE WrongUIᴎverse (8)     **Club Diver** --- driving percussion for
+                            the level with the least help
   ---------------------------------------------------------------------
 
 All three are by **Kevin MacLeod** (incompetech.com), licensed

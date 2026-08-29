@@ -46,23 +46,23 @@ export const MUSIC_TRACKS: Record<string, MusicTrack> = {
 };
 
 /**
- * Which track scores which tier.
+ * Which track scores which difficulty LEVEL — one per level, not per Tier.
  *
- * The ladder gets less calm as it gets harder: a slow, unhurried piece for the
- * gentle tiers, a dungeon theme in the middle, and something driving at the
- * top. Tiers above those reuse the hardest track rather than going silent.
+ * "Tier" means which rules are broken (Tier 1 Semantic Shift, and later
+ * Operation and Gesture); "level" means how hard a Tier 1 run is. The music
+ * follows the level, because that is what the player chooses and what lasts a
+ * whole session. See src/game/difficulty.ts.
+ *
+ * The score gets less calm as the level gets harder.
  */
-const TIER_MUSIC: Record<DifficultyId, string> = {
-  home: 'airship-serenity',
+const LEVEL_MUSIC: Record<DifficultyId, string> = {
   slightlyWrong: 'airship-serenity',
-  wronger: 'video-dungeon-boss',
   deeplyWrong: 'video-dungeon-boss',
-  uxHell: 'club-diver',
   wronguinverse: 'club-diver',
 };
 
 export function trackForDifficulty(id: DifficultyId): MusicTrack {
-  return MUSIC_TRACKS[TIER_MUSIC[id]] ?? MUSIC_TRACKS['airship-serenity']!;
+  return MUSIC_TRACKS[LEVEL_MUSIC[id]] ?? MUSIC_TRACKS['airship-serenity']!;
 }
 
 export function musicUrl(track: MusicTrack): string {

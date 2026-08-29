@@ -52,8 +52,6 @@ interface GameState {
   run: RunConfig | null;
   values: WidgetValues;
 
-  exploreEndsAt: number | null;
-  exploreRemainingMs: number;
   hintLevels: Partial<Record<WidgetType, HintLevel>>;
   /** Interpreted values the player has seen per widget, oldest first. */
   observations: Partial<Record<WidgetType, string[]>>;
@@ -75,7 +73,6 @@ interface GameState {
   advanceCalibration: () => void;
   setCalibrationValue: (widget: WidgetType, value: unknown) => void;
   beginExplore: () => void;
-  tickExplore: () => void;
   beginChallenge: () => void;
   setValue: (widget: WidgetType, value: unknown) => void;
   useHint: (widget: WidgetType) => void;
@@ -150,8 +147,6 @@ export const useGameStore = create<GameState>((set, get) => ({
   run: null,
   values: {},
 
-  exploreEndsAt: null,
-  exploreRemainingMs: 0,
   hintLevels: {},
   observations: {},
 
@@ -200,8 +195,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       rulesRevealed: false,
       outcome: null,
       events: [],
-      exploreEndsAt: null,
-      exploreRemainingMs: difficulty.explorationSeconds * 1000,
     });
   },
 
@@ -225,27 +218,19 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ stage: 'shift', progress });
   },
 
-  beginExplore: () => {
-    const { difficulty } = get();
-    const durationMs = difficulty.explorationSeconds * 1000;
-    set({
-      stage: 'explore',
-      exploreEndsAt: Date.now() + durationMs,
-      exploreRemainingMs: durationMs,
-    });
-  },
-
-  tickExplore: () => {
-    const { exploreEndsAt, stage } = get();
-    if (stage !== 'explore' || exploreEndsAt === null) return;
-    const remaining = Math.max(0, exploreEndsAt - Date.now());
-    set({ exploreRemainingMs: remaining });
-    if (remaining === 0) get().beginChallenge();
-  },
+  /**
+   * Exploration is untimed on purpose.
+   *
+   * A countdown turned deduction into a race and punished the players most
+   * likely to be enjoying it — the ones reading the readouts and forming a
+   * theory. The run ends when the player says they understand the universe.
+   * Effort is still measured, by counting interactions rather than seconds.
+   */
+  beginExplore: () => set({ stage: 'explore' }),
 
   beginChallenge: () => {
     const at = Date.now();
-    set({ stage: 'challenge', exploreEndsAt: null, challengeStartedAt: at });
+    set({ stage: 'challenge', challengeStartedAt: at });
 
     const { run, requirements, values, events } = get();
     if (!run) return;
@@ -357,7 +342,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   /** Same seed, same mappings, same targets — only the attempt resets. */
   retrySameReality: () => {
-    const { run, difficulty } = get();
+    const { run } = get();
     if (!run) return;
     set({
       stage: 'challenge',
@@ -367,7 +352,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       challengeEndedAt: null,
       outcome: null,
       rulesRevealed: false,
-      exploreRemainingMs: difficulty.explorationSeconds * 1000,
       events: [...get().events, { type: 'retry_same', at: Date.now() }],
     });
   },
@@ -390,8 +374,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       rulesRevealed: false,
       outcome: null,
       events: [],
-      exploreEndsAt: null,
-      exploreRemainingMs: difficulty.explorationSeconds * 1000,
       // Giving up ends the streak without blocking play (game design §12).
       distance: outcome === 'stabilized' ? distance : 0,
     });

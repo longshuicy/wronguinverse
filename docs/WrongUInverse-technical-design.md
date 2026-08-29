@@ -66,7 +66,10 @@ Suggested conceptual types:
 type WidgetType =
   'slider' | 'checkbox' | 'radio' | 'dropdown' | 'number' | 'text' | 'date' | 'color';
 
-type SemanticType = 'boolean' | 'choice' | 'quantity' | 'number' | 'text' | 'date' | 'color';
+// Eight of each: a run gives every widget a distinct semantic, so eight
+// widgets need eight semantics for a full-size run.
+type SemanticType =
+  'boolean' | 'choice' | 'quantity' | 'number' | 'text' | 'date' | 'time' | 'color';
 
 type Compatibility = 'yes' | 'maybe' | 'no' | 'normal';
 
@@ -191,6 +194,17 @@ Generate safe dates within a configured range.
 
 Avoid locale ambiguity in goals: display month names,
 e.g. `AUG 29, 2097`.
+
+### TimeDomain
+
+Generate clock readings on a five-minute grid, e.g. `07:40`, `18:15`.
+
+Values are minutes since midnight and display in 24-hour form, for the
+same reason dates display a month name: never depend on locale for a
+value the player has to match exactly.
+
+This is the eighth semantic, and the one that makes an eight-mapping run
+possible at all.
 
 ### ColorDomain
 
@@ -422,11 +436,11 @@ NEXT_REALITY
 
 ### EXPLORE
 
-- 30--45 second timer
+- **no timer** --- the player advances when they choose to
 - all selected widgets available
 - current interpreted value visible
 - no correctness requirement
-- log interactions
+- count interactions, and show the running count
 
 ### CHALLENGE
 
@@ -508,31 +522,50 @@ The player must use all four widgets.
 Do not generate a challenge value that was impossible to discover or
 input.
 
-## 15. Difficulty Within Tier 1
+## 15. Difficulty Levels Within Tier 1
 
-Difficulty can scale without Tier 2.
+A **tier** is which rules are broken; a **level** is how hard a run within
+that tier is. See game design §3 for the distinction and §11.1 for the
+player-facing table. Levels scale by widening the mapping set and
+narrowing the player's aids --- never by adding mechanics.
 
-### Easy
+```ts
+interface DifficultyConfig {
+  id: 'slightlyWrong' | 'deeplyWrong' | 'wronguinverse';
+  label: string;
+  blurb: string;
+  mappingCount: number;
+  challengeRequirementCount: number;
+  notebookDetail: 'full' | 'reduced' | 'minimal';
+  hintPolicy: 'generous' | 'normal' | 'limited';
+  interpretedOutputInChallenge: boolean;
+  pairRequirementsWithWidgets: boolean;
+}
+```
 
-- 3 mappings
-- 45 sec exploration
-- one-part challenge
-- interpreted output remains visible
+### SLIGHTLY WRONG --- 4 mappings
 
-### Medium
+- every objective printed on the control that answers it
+- interpreted output visible throughout
+- generous hints, full notebook
 
-- 4 mappings
-- 35 sec exploration
-- 2--3 challenge requirements
-- output visible only during exploration
+### DEEPLY WRONG --- 6 mappings
 
-### Hard
+- order is a separate list; matching it to the bench is part of the puzzle
+- interpreted output still visible
+- reduced notebook
 
-- 5--6 mappings
-- 25 sec exploration
-- 3--5 requirements
-- fewer notebook observations
-- tighter challenge timer
+### THE WrongUIᴎverse --- 8 mappings
+
+- every widget in play
+- the challenge does not show what a control reads as; a requirement
+  locking is the only feedback
+- minimal notebook, limited hints
+
+**There is no timer at any level.** Difficulty comes from the size of the
+mapping set and from what the game declines to tell you, not from haste.
+Eight mappings is the ceiling: a run assigns every widget a distinct
+semantic, and there are eight of each.
 
 ## 16. Persistence
 

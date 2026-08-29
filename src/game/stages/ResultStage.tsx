@@ -10,7 +10,7 @@ import {
   SEMANTIC_DISPLAY_NAME,
   WIDGET_DISPLAY_NAME,
 } from '../../content/flavorText.ts';
-import { brainType, computeMetrics, conventionalThinking, formatDuration } from '../metrics.ts';
+import { brainType, computeMetrics, conventionalThinking } from '../metrics.ts';
 import { useGameStore } from '../state/gameStore.ts';
 
 export function ResultStage() {
@@ -53,9 +53,12 @@ export function ResultStage() {
       </section>
 
       <dl className="wui-stats">
+        {/* Interactions, not elapsed time. The run is untimed, so reporting
+            seconds would grade the player on something the game never asked
+            them to manage — and would punish anyone who stopped to think. */}
         <div>
-          <dt>Time</dt>
-          <dd>{formatDuration(metrics.challengeMs)}</dd>
+          <dt>Interactions</dt>
+          <dd>{metrics.interactions}</dd>
         </div>
         <div>
           <dt>Hints used</dt>
@@ -68,8 +71,8 @@ export function ResultStage() {
           </dd>
         </div>
         <div>
-          <dt>Interactions</dt>
-          <dd>{metrics.interactions}</dd>
+          <dt>Controls used</dt>
+          <dd>{metrics.widgetsTouched}</dd>
         </div>
         <div>
           <dt>Distance</dt>

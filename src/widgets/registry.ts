@@ -44,7 +44,15 @@ export interface WidgetDefinition {
 }
 
 /** Everything except free text, which needs a keyboard to enter. */
-const NON_TEXT: SemanticType[] = ['boolean', 'choice', 'quantity', 'number', 'date', 'color'];
+const NON_TEXT: SemanticType[] = [
+  'boolean',
+  'choice',
+  'quantity',
+  'number',
+  'date',
+  'time',
+  'color',
+];
 
 /** The full V0 widget vocabulary — game design §7. */
 const WIDGETS: Partial<Record<WidgetType, WidgetDefinition>> = {
@@ -60,7 +68,7 @@ const WIDGETS: Partial<Record<WidgetType, WidgetDefinition>> = {
     type: 'checkbox',
     label: 'Checkbox group',
     component: CheckboxWidget,
-    // No date: a checkbox group cannot express a calendar legibly.
+    // No date or time: a row of boxes cannot express a clock or a calendar.
     supports: ['boolean', 'choice', 'quantity', 'number', 'text', 'color'],
     positions: checkboxPositions,
   },
@@ -99,7 +107,7 @@ const WIDGETS: Partial<Record<WidgetType, WidgetDefinition>> = {
     type: 'date',
     label: 'Date picker',
     component: DateWidget,
-    supports: ['boolean', 'choice', 'quantity', 'number', 'date'],
+    supports: ['boolean', 'choice', 'quantity', 'number', 'date', 'time'],
     positions: datePositions,
   },
   color: {

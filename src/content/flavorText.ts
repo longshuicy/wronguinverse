@@ -88,8 +88,10 @@ export const GIVE_UP_RESPONSE = 'Understandable.';
 export const CALIBRATION_INTRO =
   'Baseline calibration. Ordinary controls, ordinary meanings. Confirm each reading.';
 
+// No deadline is implied: exploration is untimed, and promising a closing
+// window when nothing closes would be a lie the interface tells for free.
 export const EXPLORE_INTRO =
-  'The controls are not broken. Find out what they mean before the window closes.';
+  'The controls are not broken. Work out what they mean, then stabilize the dimension.';
 
 export const CHALLENGE_INTRO = 'Set every reading to stabilize this dimension.';
 

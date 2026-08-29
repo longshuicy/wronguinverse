@@ -12,19 +12,28 @@ domains are independent systems, randomly paired at runtime. See
 
 **Play it:** <https://longshuicy.github.io/wronguinverse/>
 
-**Status: playable end to end**, with four difficulty tiers, music and art.
+**WrongUIᴎverse 1.0 — Tier 1, Semantic Shift.** Playable end to end, with
+three difficulty levels, music and art.
+
+> **Tier vs level.** A _tier_ is which rules are broken — Tier 1 Semantic
+> Shift (this release), Tier 2 Operation Shift, Tier 3 Gesture Shift. A
+> _level_ is how hard a run within a tier is. The player picks a level; tiers
+> ship over time. See [game design §3](docs/WrongUInverse-game-design.md).
 
 What exists:
 
 - The full run loop: calibration → shift → timed exploration → compound
   challenge → result, with retry-same-reality and escape-to-another-universe.
-- The complete V0 vocabulary: 8 widgets (slider, checkbox, radio, dropdown,
-  number, text, date, colour) against 7 semantics (boolean, choice, quantity,
-  number, text, date, colour), paired by a data-driven compatibility table.
-  Roughly 2,700 distinct universe shapes at the opening tier.
+- The full V0 vocabulary: 8 widgets (slider, checkbox, radio, dropdown,
+  number, text, date, colour) against 8 semantics (boolean, choice, quantity,
+  number, text, date, time, colour), paired by a data-driven compatibility
+  table. Thousands of distinct universe shapes.
 - Seeded generation — a seed reproduces the mapping, labels and targets exactly.
   Add `?seed=REALITY-XXXX` to replay a specific universe.
-- Four difficulty tiers, each scoring itself with its own music track.
+- Three difficulty levels — 4, 6 and 8 mappings — each with its own music.
+  Eight is the ceiling: a run gives every widget a distinct semantic.
+- Exploration is untimed. Effort is measured by counting interactions, which
+  is what the result screen reports.
 - Progressive hints (nudge → category → reveal), a field-notes panel that
   records observed values but never semantic labels, and a result screen that
   diagnoses how you argued with the interface.

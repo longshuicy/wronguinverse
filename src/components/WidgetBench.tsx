@@ -10,6 +10,7 @@
 import { hintText } from '../content/flavorText.ts';
 import type { HintLevel, Mapping, Requirement, Stage, WidgetType } from '../game/state/types.ts';
 import { getWidgetDefinition } from '../widgets/registry.ts';
+import { planSpecimens, Specimen } from './SceneDecor.tsx';
 
 interface WidgetBenchProps {
   mappings: Mapping[];
@@ -32,6 +33,8 @@ interface WidgetBenchProps {
   hintLevels?: Partial<Record<WidgetType, HintLevel>>;
   onHint?: (widget: WidgetType) => void;
   hintsEnabled?: boolean;
+  /** Run seed, used to give each station a stable specimen. */
+  seed?: string;
 }
 
 export function WidgetBench({
@@ -45,7 +48,10 @@ export function WidgetBench({
   hintLevels = {},
   onHint,
   hintsEnabled = false,
+  seed,
 }: WidgetBenchProps) {
+  const specimens = seed ? planSpecimens(seed, mappings.length) : [];
+
   return (
     <div className="wui-bench">
       {mappings.map((mapping, index) => {
@@ -69,6 +75,9 @@ export function WidgetBench({
                     name is visible in the control itself and adds nothing. */}
                 {requirement ? requirement.label : `STATION ${index + 1}`}
               </span>
+              {/* One inhabitant per station — decoration that belongs to
+                  something, rather than floating loose on the page. */}
+              <Specimen id={specimens[index]} />
               {locked && <span className="wui-station-lock">✓ LOCKED</span>}
             </header>
 

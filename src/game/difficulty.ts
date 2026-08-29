@@ -1,30 +1,38 @@
 // difficulty.ts
-// The Tier 1 difficulty ladder. Difficulty scales by widening the mapping set
-// and narrowing the player's aids — no new mechanics.
-// See docs/WrongUInverse-technical-design.md §15.
+// The three difficulty LEVELS of Tier 1.
+//
+// Two different ideas in the design docs were both called "tier", which was a
+// steady source of confusion. They are named apart now, and the code uses only
+// the second:
+//
+//   TIER  — which rules are broken. Tier 1 Semantic Shift (this release),
+//           Tier 2 Operation Shift, Tier 3 Gesture Shift. Not selectable.
+//   LEVEL — how hard a Tier 1 run is: how many mappings, how much help.
+//           This is what the player picks, and what the music follows.
+//
+// See docs/WrongUInverse-game-design.md §3 (tiers) and §12 (levels).
 
 import { implementedSemantics } from './domains/index.ts';
 import { maxMappingCount } from './generator/mappingGenerator.ts';
 import { implementedWidgets } from '../widgets/registry.ts';
 
-export type DifficultyId =
-  'home' | 'slightlyWrong' | 'wronger' | 'deeplyWrong' | 'uxHell' | 'wronguinverse';
+export type DifficultyId = 'slightlyWrong' | 'deeplyWrong' | 'wronguinverse';
 
 export interface DifficultyConfig {
   id: DifficultyId;
-  /** Player-facing tier name. */
+  /** Player-facing level name. */
   label: string;
+  /** One line describing what changes, shown on the level picker. */
+  blurb: string;
   mappingCount: number;
-  explorationSeconds: number;
   challengeRequirementCount: number;
   notebookDetail: 'full' | 'reduced' | 'minimal';
   hintPolicy: 'generous' | 'normal' | 'limited';
   /**
    * Whether the challenge still shows what each widget currently reads as.
    *
-   * Technical design §15 makes this the main step between Easy and Medium:
-   * "output visible only during exploration". With it off, the only feedback is
-   * a requirement locking when its widget lands on target.
+   * With it off, the only feedback is a requirement locking when its widget
+   * lands on target.
    */
   interpretedOutputInChallenge: boolean;
   /**
@@ -32,62 +40,45 @@ export interface DifficultyConfig {
    *
    * Paired, the player still has to work out HOW to make that control produce
    * the value — but not WHICH control to use. Unpaired, the order is a separate
-   * list and matching it to the bench is part of the puzzle. Gentle tiers pair;
-   * harder tiers separate.
+   * list and matching it to the bench is part of the puzzle.
    */
   pairRequirementsWithWidgets: boolean;
 }
 
-const LADDER: DifficultyConfig[] = [
+/**
+ * Three levels, at 4, 6 and 8 mappings.
+ *
+ * Eight is the ceiling: a run gives every widget a distinct semantic, and there
+ * are eight of each. A ninth level would need a ninth semantic implemented.
+ */
+const LEVELS: DifficultyConfig[] = [
   {
     id: 'slightlyWrong',
     label: 'SLIGHTLY WRONG',
-    mappingCount: 3,
-    explorationSeconds: 45,
-    challengeRequirementCount: 3,
+    blurb: 'Four controls. Each objective is written on the control that answers it.',
+    mappingCount: 4,
+    challengeRequirementCount: 4,
     notebookDetail: 'full',
     hintPolicy: 'generous',
     interpretedOutputInChallenge: true,
     pairRequirementsWithWidgets: true,
   },
   {
-    id: 'wronger',
-    label: 'WRONGER',
-    mappingCount: 4,
-    explorationSeconds: 35,
-    challengeRequirementCount: 3,
-    notebookDetail: 'full',
-    hintPolicy: 'normal',
-    interpretedOutputInChallenge: false,
-    pairRequirementsWithWidgets: true,
-  },
-  {
     id: 'deeplyWrong',
     label: 'DEEPLY WRONG',
+    blurb: 'Six controls, and the order no longer says which one to use.',
     mappingCount: 6,
-    explorationSeconds: 30,
-    challengeRequirementCount: 4,
+    challengeRequirementCount: 5,
     notebookDetail: 'reduced',
     hintPolicy: 'normal',
-    interpretedOutputInChallenge: false,
-    pairRequirementsWithWidgets: false,
-  },
-  {
-    id: 'uxHell',
-    label: 'UX HELL',
-    mappingCount: 7,
-    explorationSeconds: 25,
-    challengeRequirementCount: 5,
-    notebookDetail: 'minimal',
-    hintPolicy: 'limited',
-    interpretedOutputInChallenge: false,
+    interpretedOutputInChallenge: true,
     pairRequirementsWithWidgets: false,
   },
   {
     id: 'wronguinverse',
     label: 'THE WrongUIᴎverse',
+    blurb: 'All eight controls, and nothing tells you what they read as.',
     mappingCount: 8,
-    explorationSeconds: 25,
     challengeRequirementCount: 6,
     notebookDetail: 'minimal',
     hintPolicy: 'limited',
@@ -96,21 +87,20 @@ const LADDER: DifficultyConfig[] = [
   },
 ];
 
-/**
- * The largest run the current vocabulary can actually build.
- *
- * Only four widgets and four semantics exist so far, so the upper tiers cannot
- * be generated yet. Rather than let them fail at runtime, tiers are clamped to
- * what is buildable and `availableDifficulties()` hides the ones that would
- * collapse into a duplicate of a lower tier.
- */
+/** The largest run the current vocabulary can actually build. */
 function buildableCeiling(): number {
   return maxMappingCount(implementedWidgets(), implementedSemantics(), ['yes']);
 }
 
+/**
+ * Clamp a level to what is buildable.
+ *
+ * A level asking for more mappings than there are semantics would fail at
+ * runtime, so it is trimmed instead. Nothing is clamped today; this exists so
+ * that removing a semantic degrades the ladder rather than breaking the game.
+ */
 function clampToVocabulary(config: DifficultyConfig): DifficultyConfig {
-  const ceiling = buildableCeiling();
-  const mappingCount = Math.min(config.mappingCount, ceiling);
+  const mappingCount = Math.min(config.mappingCount, buildableCeiling());
   return {
     ...config,
     mappingCount,
@@ -118,23 +108,13 @@ function clampToVocabulary(config: DifficultyConfig): DifficultyConfig {
   };
 }
 
-/** Tiers that are distinct and buildable with the vocabulary implemented today. */
 export function availableDifficulties(): DifficultyConfig[] {
-  const ceiling = buildableCeiling();
-  const out: DifficultyConfig[] = [];
-  for (const config of LADDER) {
-    // Once a tier needs more mappings than exist, every tier above it would
-    // clamp to the same size; keep the first and stop.
-    const clamped = clampToVocabulary(config);
-    out.push(clamped);
-    if (config.mappingCount >= ceiling) break;
-  }
-  return out;
+  return LEVELS.map(clampToVocabulary);
 }
 
 export function getDifficulty(id: DifficultyId): DifficultyConfig {
-  const found = LADDER.find((config) => config.id === id);
-  if (!found) throw new Error(`Unknown difficulty "${id}"`);
+  const found = LEVELS.find((config) => config.id === id);
+  if (!found) throw new Error(`Unknown difficulty level "${id}"`);
   return clampToVocabulary(found);
 }
 

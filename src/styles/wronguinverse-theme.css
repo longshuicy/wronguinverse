@@ -881,21 +881,13 @@ input[type='range']::-moz-range-thumb {
 }
 
 /* --- mascot ---
-   Animation is CSS rather than sprite frames (§17). Movement is in whole
+   Placed beside the objective by its parent, not fixed to a corner.
+   Animation is CSS rather than sprite frames (§17); movement is in whole
    pixels and stepped, so it reads as animation on a grid. */
 
 .wui-mascot {
-  position: fixed;
-  right: calc(var(--px) * 4);
-  bottom: calc(var(--px) * 4);
-  z-index: 2;
+  flex: none;
   pointer-events: none;
-}
-
-@media (max-width: 60rem) {
-  .wui-mascot {
-    display: none;
-  }
 }
 
 @keyframes wui-float {
@@ -943,6 +935,42 @@ input[type='range']::-moz-range-thumb {
   animation: wui-wobble 0.6s steps(2, end) infinite;
 }
 
+/* Zorblet sits next to what the player is reading. */
+.wui-goal {
+  display: flex;
+  gap: calc(var(--px) * 4);
+  align-items: flex-start;
+}
+
+/* One inhabitant per station.
+   Taken out of flow: at full size it shoved the station label around and
+   competed with the control for attention. It is scenery, so it sits in the
+   corner, behind the content, and never changes the layout. */
+.wui-specimen {
+  position: absolute;
+  top: calc(var(--px) * 2);
+  right: calc(var(--px) * 2);
+  z-index: 0;
+  opacity: 0.5;
+  pointer-events: none;
+  animation: wui-float 3s steps(2, end) infinite;
+}
+
+.wui-station {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Everything the player reads sits above the scenery. */
+.wui-station-head,
+.wui-station-goal,
+.wui-station-control,
+.wui-station-output,
+.wui-station-hint {
+  position: relative;
+  z-index: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -951,51 +979,6 @@ input[type='range']::-moz-range-thumb {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-/* --- difficulty tiers --- */
-
-.wui-tiers {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: calc(var(--px) * 2);
-  width: 100%;
-  max-width: 52rem;
-}
-
-.wui-tier {
-  --frame-color: var(--line);
-  display: flex;
-  flex-direction: column;
-  gap: var(--px);
-  padding: calc(var(--px) * 3);
-  font: inherit;
-  border: none;
-  border-radius: 0;
-  background: var(--bg-panel);
-  color: var(--text-secondary);
-  cursor: pointer;
-  text-align: left;
-  box-shadow:
-    0 calc(-1 * var(--border)) 0 0 var(--frame-color),
-    0 var(--border) 0 0 var(--frame-color),
-    calc(-1 * var(--border)) 0 0 0 var(--frame-color),
-    var(--border) 0 0 0 var(--frame-color);
-}
-
-.wui-tier.is-active {
-  --frame-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
-.wui-tier-name {
-  font-size: 13px;
-  letter-spacing: 0.05em;
-}
-
-.wui-tier-detail {
-  font-size: 12px;
-  color: var(--text-secondary);
 }
 
 /* --- credits ---
@@ -1050,45 +1033,6 @@ input[type='range']::-moz-range-thumb {
   text-decoration: underline;
 }
 
-/* --- Layer C decoration ---
-   Creatures and anomalies in the margins beside the terminal. Never over a
-   control, and gone entirely once the viewport is narrow enough that the
-   margins disappear. */
-
-.wui-decor {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.wui-decor-item {
-  position: absolute;
-  opacity: 0.75;
-  animation-name: wui-drift;
-  animation-timing-function: steps(3, end);
-  animation-iteration-count: infinite;
-}
-
-@keyframes wui-drift {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(calc(var(--px) * -3));
-  }
-}
-
-/* Below this the content column reaches the edges and there is no room
-   for anything beside it. */
-@media (max-width: 72rem) {
-  .wui-decor {
-    display: none;
-  }
-}
-
 /* --- stage identity ---
    Each stage gets its own accent so the screen reads differently at a glance,
    reinforcing the named step in the rail. */
@@ -1116,4 +1060,141 @@ input[type='range']::-moz-range-thumb {
    screen has changed. */
 .wui-stage-title {
   color: var(--stage-ink, var(--text-primary));
+}
+
+/* --- landing page ---
+   Two accents doing two different jobs: violet marks WHAT YOU CHOOSE (the
+   level), cyan marks WHAT YOU DO (start the run). Previously both were cyan
+   framed boxes, so the primary action had to compete with three chips of
+   equal weight. */
+
+.wui-release {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--accent-anomaly);
+}
+
+.wui-levels {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 2);
+  width: 100%;
+}
+
+.wui-levels-label {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.wui-level-row {
+  display: flex;
+  gap: calc(var(--px) * 2);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Compact chips rather than description cards — three boxes of prose crowded
+   the page, and only the selected level's blurb is worth showing. */
+.wui-level {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--px) * 2);
+  padding: calc(var(--px) * 2) calc(var(--px) * 3);
+  font: inherit;
+  font-size: 12px;
+  border: var(--border) solid var(--line);
+  border-radius: 0;
+  background: var(--bg-panel);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.wui-level:hover {
+  border-color: var(--accent-anomaly);
+}
+
+.wui-level.is-active {
+  border-color: var(--accent-anomaly);
+  color: var(--accent-anomaly);
+}
+
+.wui-level-count {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.wui-level-blurb {
+  margin: 0;
+  min-height: 3.4em;
+  max-width: 34rem;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* The one thing to press. Filled, not outlined, so it never reads as another
+   option in the row above it. */
+.wui-start {
+  font: inherit;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  padding: calc(var(--px) * 4) calc(var(--px) * 8);
+  border: var(--border) solid var(--accent-primary);
+  border-radius: 0;
+  background: var(--accent-primary);
+  color: var(--space-950);
+  cursor: pointer;
+}
+
+.wui-start:active {
+  transform: translateY(var(--border));
+}
+
+.wui-actions-centred {
+  justify-content: center;
+}
+
+/* --- coming soon --- */
+
+.wui-future {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 2);
+  width: 100%;
+  max-width: 34rem;
+}
+
+.wui-future-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: calc(var(--px) * 2);
+  margin: 0;
+  padding: calc(var(--px) * 2) calc(var(--px) * 3);
+  border: var(--border) dashed var(--line);
+  font-size: 12px;
+  color: var(--line-strong);
+}
+
+.wui-future-name {
+  color: var(--text-secondary);
+}
+
+.wui-future-blurb {
+  flex: 1 1 12rem;
+}
+
+.wui-future-tag {
+  margin-left: auto;
+  color: var(--accent-anomaly);
+}
+
+/* Not a countdown — the count of interactions, which is what gets reported. */
+.wui-tally-neutral {
+  color: var(--accent-primary);
 }

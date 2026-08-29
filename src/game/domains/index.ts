@@ -12,6 +12,7 @@ import { indexToPosition } from './defineDomain.ts';
 import { generateNumberDomain } from './number.ts';
 import { generateQuantityDomain } from './quantity.ts';
 import { generateTextDomain } from './text.ts';
+import { generateTimeDomain } from './time.ts';
 
 export type DomainGenerator = (rng: Rng) => AnyDomain;
 
@@ -28,6 +29,7 @@ const DOMAIN_GENERATORS: Partial<Record<SemanticType, DomainGenerator>> = {
   number: generateNumberDomain,
   text: generateTextDomain,
   date: generateDateDomain,
+  time: generateTimeDomain,
   color: generateColorDomain,
 };
 

@@ -23,6 +23,7 @@ const COMPATIBILITY: Partial<Record<WidgetType, CompatibilityRow>> = {
     number: 'yes',
     text: 'no',
     date: 'yes',
+    time: 'yes',
     color: 'yes',
   },
   checkbox: {
@@ -32,6 +33,7 @@ const COMPATIBILITY: Partial<Record<WidgetType, CompatibilityRow>> = {
     number: 'yes',
     text: 'no',
     date: 'no',
+    time: 'no',
     color: 'maybe',
   },
   radio: {
@@ -41,6 +43,7 @@ const COMPATIBILITY: Partial<Record<WidgetType, CompatibilityRow>> = {
     number: 'yes',
     text: 'maybe',
     date: 'yes',
+    time: 'yes',
     color: 'yes',
   },
   dropdown: {
@@ -50,6 +53,7 @@ const COMPATIBILITY: Partial<Record<WidgetType, CompatibilityRow>> = {
     number: 'yes',
     text: 'yes',
     date: 'yes',
+    time: 'yes',
     color: 'yes',
   },
   number: {
@@ -59,6 +63,7 @@ const COMPATIBILITY: Partial<Record<WidgetType, CompatibilityRow>> = {
     number: 'normal',
     text: 'maybe',
     date: 'yes',
+    time: 'yes',
     color: 'yes',
   },
   text: {
@@ -68,6 +73,7 @@ const COMPATIBILITY: Partial<Record<WidgetType, CompatibilityRow>> = {
     number: 'yes',
     text: 'normal',
     date: 'yes',
+    time: 'yes',
     color: 'yes',
   },
   date: {
@@ -77,6 +83,7 @@ const COMPATIBILITY: Partial<Record<WidgetType, CompatibilityRow>> = {
     number: 'yes',
     text: 'no',
     date: 'normal',
+    time: 'yes',
     color: 'maybe',
   },
   color: {
@@ -86,6 +93,7 @@ const COMPATIBILITY: Partial<Record<WidgetType, CompatibilityRow>> = {
     number: 'yes',
     text: 'no',
     date: 'maybe',
+    time: 'yes',
     color: 'normal',
   },
 };

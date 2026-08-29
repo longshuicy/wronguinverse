@@ -3,11 +3,10 @@
 // available so confusion never becomes frustration.
 // See docs/WrongUInverse-game-design.md §4, technical design §12.
 
-import { useEffect } from 'react';
 import { ChallengeCard } from '../../components/ChallengeCard.tsx';
 import { ObservationLog } from '../../components/ObservationLog.tsx';
+import { Mascot } from '../../components/Mascot.tsx';
 import { StageRail } from '../../components/StageRail.tsx';
-import { Timer } from '../../components/Timer.tsx';
 import { WidgetBench } from '../../components/WidgetBench.tsx';
 import { EXPLORE_INTRO } from '../../content/flavorText.ts';
 import { useGameStore } from '../state/gameStore.ts';
@@ -19,21 +18,15 @@ export function ExploreStage() {
   const observations = useGameStore((s) => s.observations);
   const hintLevels = useGameStore((s) => s.hintLevels);
   const useHint = useGameStore((s) => s.useHint);
-  const remaining = useGameStore((s) => s.exploreRemainingMs);
-  const tick = useGameStore((s) => s.tickExplore);
+  const events = useGameStore((s) => s.events);
   const beginChallenge = useGameStore((s) => s.beginChallenge);
   const difficulty = useGameStore((s) => s.difficulty);
   const requirements = useGameStore((s) => s.requirements);
 
-  useEffect(() => {
-    // 250ms keeps the countdown honest without re-rendering every frame.
-    const id = setInterval(tick, 250);
-    return () => clearInterval(id);
-  }, [tick]);
-
   if (!run) return null;
 
   const paired = difficulty.pairRequirementsWithWidgets;
+  const interactions = events.filter((event) => event.type === 'interaction').length;
 
   return (
     <main className="wui-screen">
@@ -42,11 +35,23 @@ export function ExploreStage() {
       <header className="wui-topbar">
         <StageRail stage="explore" />
         <div className="wui-topbar-main">
-          <div>
-            <h1 className="wui-stage-title">Semantic drift detected</h1>
-            <p className="wui-lede">{EXPLORE_INTRO}</p>
+          {/* Zorblet stands beside the objective rather than floating in a
+              corner: he reacts to what you are doing, so he belongs next to
+              the thing you are reading. */}
+          <div className="wui-goal">
+            <Mascot />
+            <div>
+              <h1 className="wui-stage-title">Semantic drift detected</h1>
+              <p className="wui-lede">{EXPLORE_INTRO}</p>
+            </div>
           </div>
-          <Timer remainingMs={remaining} totalMs={difficulty.explorationSeconds * 1000} />
+          {/* Where the countdown used to be. Exploration is untimed; what is
+              measured is how much poking it took, and saying so up front is
+              fairer than measuring something the player cannot see. */}
+          <p className="wui-tally">
+            <span className="wui-tally-count wui-tally-neutral">{interactions}</span>
+            <span className="wui-tally-label">INTERACTIONS</span>
+          </p>
         </div>
         <p className="wui-eyebrow">SHIFTED · {run.seed}</p>
       </header>
@@ -66,6 +71,7 @@ export function ExploreStage() {
         values={values}
         mode="explore"
         onChange={setValue}
+        seed={run.seed}
         showInterpreted
         requirements={paired ? requirements : undefined}
         hintLevels={hintLevels}

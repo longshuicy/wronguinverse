@@ -94,19 +94,19 @@ export interface BrainType {
  * Assign an Interface Brain Type.
  *
  * Ordered most-specific first: the first behaviour that clearly stands out
- * wins, so a player who did something distinctive gets told about that rather
- * than a generic label.
+ * wins, so a player who did something distinctive is told about that rather
+ * than given a generic label.
+ *
+ * Judged on INTERACTIONS rather than elapsed time. The run is untimed, so
+ * "spent a long time before touching anything" no longer distinguishes
+ * anybody — without a clock, everyone does. How much poking a universe took is
+ * the thing the game actually asks of the player, so it is the thing measured.
  */
 export function brainType(metrics: RunMetrics, mappingCount: number): BrainType {
-  const { interactions, hintsUsed, timeToFirstInteraction, firstAttemptHits } = metrics;
+  const { interactions, hintsUsed, firstAttemptHits, widgetsTouched } = metrics;
+  const perMapping = mappingCount > 0 ? interactions / mappingCount : interactions;
 
-  if (timeToFirstInteraction !== null && timeToFirstInteraction > 8000) {
-    return {
-      name: 'THE THEORIST',
-      blurb: 'Spent suspiciously long staring before interacting.',
-    };
-  }
-  if (interactions > mappingCount * 25) {
+  if (perMapping > 25) {
     return { name: 'THE POKER', blurb: 'Touched everything until reality gave up.' };
   }
   if (hintsUsed >= mappingCount) {
@@ -118,16 +118,12 @@ export function brainType(metrics: RunMetrics, mappingCount: number): BrainType 
   if (firstAttemptHits === mappingCount && hintsUsed === 0) {
     return { name: 'THE UX DESIGNER', blurb: 'Immediately assumed the interface was wrong.' };
   }
-  if (interactions > mappingCount * 12) {
-    return { name: 'THE ENGINEER', blurb: 'Brute-forced the semantic space.' };
+  if (perMapping > 12 && widgetsTouched >= mappingCount) {
+    return { name: 'THE ENGINEER', blurb: 'Brute-forced the semantic space, methodically.' };
+  }
+  // Worked it out with barely any poking.
+  if (perMapping < 4 && hintsUsed === 0) {
+    return { name: 'THE THEORIST', blurb: 'Barely touched anything. Just knew.' };
   }
   return { name: 'THE NORMIE', blurb: 'Attempted to use every control correctly. Adorable.' };
-}
-
-/** `1:07` */
-export function formatDuration(ms: number): string {
-  const totalSeconds = Math.max(0, Math.round(ms / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }

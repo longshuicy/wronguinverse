@@ -18,8 +18,7 @@ export function Mascot() {
 
   return (
     <div className={`wui-mascot wui-mascot-${state}`} aria-hidden={false}>
-      {/* 2x a 96px sprite. Whole-number magnification keeps every pixel square;
-          3x would put Zorblet at 288px, which is a poster, not a corner. */}
+      {/* Whole-number magnification keeps every pixel square (art guide §8). */}
       <AssetImage id={mascotAsset(state)} alt={mascotAltText(state)} scale={2} />
     </div>
   );

@@ -48,9 +48,21 @@ The desired player realization is:
 > "I know how to operate this thing, but I was wrong about what it
 > means."
 
-## 3. Three Difficulty Tiers
+## 3. Three Tiers
 
-### Tier 1 --- Semantic Shift --- V0 focus
+> **"Tier" and "level" are different things.** They were both called "tier"
+> in earlier drafts, which caused steady confusion.
+>
+> - A **TIER** is *which rules are broken*. There are three, below. They are
+>   a roadmap, not a setting: the player cannot choose one. This release is
+>   Tier 1.
+> - A **LEVEL** is *how hard a run within a tier is* --- how many mappings and
+>   how much help. There are three, in §11. This is what the player picks on
+>   the landing page, and what the music follows.
+>
+> "WrongUIᴎverse 1.0 --- Semantic Shift" is Tier 1 with three levels.
+
+### Tier 1 --- Semantic Shift --- shipped in 1.0
 
 The visual widget and its conventional semantic meaning are separated.
 
@@ -125,13 +137,23 @@ Message example:
 
 The same family of widgets now represents shuffled semantics.
 
-The player receives approximately 30--45 seconds of free
-experimentation.
+Exploration is **untimed**. The player moves on when they say they
+understand the universe.
+
+A countdown was tried and removed. It turned deduction into a race and
+punished exactly the players who were enjoying it most --- the ones
+reading the outputs and forming a theory before touching anything. The
+stage has no failure state, so a clock had nothing to enforce except
+haste.
+
+Effort is still measured, by **counting interactions** rather than
+seconds. That number is shown live during exploration and reported at the
+end, so the player always knows what is being counted.
 
 During exploration:
 
 - Every interaction gives immediate interpreted output.
-- There is no failure.
+- There is no failure and no clock.
 - The player can try widgets repeatedly.
 - The game does NOT directly state mappings such as "Slider = Choice."
 - The game can show observed output, e.g. moving a slider displays
@@ -402,15 +424,48 @@ During Stage 3:
 
 V0 scoring can be simple:
 
-- Challenge completion time
+- **Total interactions used** --- the headline number, since the run is
+  untimed
 - First-attempt correct inputs
-- Number of Stage 2 mappings successfully inferred
-- Total interactions used during exploration
+- Hints used
+- Number of controls the player actually touched
+
+Do **not** report elapsed time. Nothing in the game asks the player to
+manage a clock, so grading them on one would be measuring something they
+were never told about.
 
 Optional humorous metric:
 
 **Conventional Thinking: 68%**\
 _"You still trust calendars."_
+
+## 11.1 Difficulty Levels
+
+Three levels within Tier 1. Difficulty scales by widening the mapping set
+and narrowing the player's aids --- never by adding new mechanics, which
+is what a Tier is for.
+
+  --------------------------------------------------------------------------
+  Level                  Mappings   What changes
+  ---------------------- ---------- ----------------------------------------
+  SLIGHTLY WRONG         4          Every objective is printed on the
+                                    control that answers it.
+
+  DEEPLY WRONG           6          The order is a separate list; matching
+                                    it to the bench is now part of the
+                                    puzzle. Fewer notebook entries.
+
+  THE WrongUIᴎverse      8          Every widget is in play, and the
+                                    challenge no longer shows what a control
+                                    reads as --- a requirement locking is the
+                                    only feedback.
+  --------------------------------------------------------------------------
+
+Eight is the ceiling, not an arbitrary stopping point: a run gives every
+widget a distinct semantic, and there are eight of each. A fourth level
+needs a ninth semantic implemented first.
+
+Each level has its own music (art guide §11).
 
 ## 12. Session Length
 
