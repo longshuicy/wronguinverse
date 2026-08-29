@@ -10,9 +10,23 @@ domains are independent systems, randomly paired at runtime. See
 - [Technical design](docs/WrongUInverse-technical-design.md)
 - [Art & audio guide](docs/WrongUInverse-art-audio-guide.md)
 
-**Status:** scaffolding only — no game logic is implemented yet. This repo
-currently sets up the tech stack, project structure, linting/formatting, and
-CI/CD so implementation can start cleanly.
+**Live sandbox:** <https://longshuicy.github.io/wronguinverse/>
+
+**Status: Milestone 1 — mechanics sandbox.** The core mechanic works: a seed
+generates a universe in which each widget means something other than what it
+looks like, and every value is reachable through the control it landed on.
+
+What exists:
+
+- Seeded generation — the same seed reproduces the mapping, labels and targets.
+- 4 widgets (slider, checkbox group, dropdown, date picker) and 4 semantics
+  (boolean, choice, quantity, date), paired by a data-driven compatibility table.
+- A debug screen exposing every interpreted value.
+
+What does not exist yet: the Normal → Shift → Explore → Challenge → Result loop
+(Milestone 2), the remaining widgets and semantics (Milestone 3), and all
+presentation (Milestone 4). The live sandbox deliberately reveals the mappings
+that the real game exists to make you deduce.
 
 ## Stack
 
