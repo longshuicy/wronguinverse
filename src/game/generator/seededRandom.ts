@@ -98,6 +98,20 @@ export function createSeed(rng?: Rng): string {
 }
 
 /**
+ * A seed supplied in the URL, e.g. `?seed=REALITY-Q7M2`.
+ *
+ * Technical design §9 wants seeds so bugs can be reproduced and interesting
+ * universes shared; this is the link that makes both possible. Returns null
+ * when absent or unusable, in which case the caller draws a fresh seed.
+ */
+export function seedFromLocation(search = globalThis.location?.search ?? ''): string | null {
+  const raw = new URLSearchParams(search).get('seed')?.trim();
+  if (!raw) return null;
+  // Cap the length: the seed is echoed back on screen and only ever hashed.
+  return raw.slice(0, 64).toUpperCase();
+}
+
+/**
  * The deterministic seed for a given calendar day, e.g. `DAILY-2026-08-29`.
  *
  * Reads the LOCAL date on purpose — the player's Daily Reality should match the

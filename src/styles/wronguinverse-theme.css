@@ -575,6 +575,45 @@ input[type='number'] {
   min-width: calc(var(--px) * 48);
 }
 
+/* --- calendar regions ---
+   The calendar's detents. A discrete domain collapses a year into a few
+   values, so without these the boundaries are invisible and the control is
+   unusable by anything but luck. Shows WHERE the reading changes, never what
+   it changes to. */
+
+.wui-date-control {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 2);
+}
+
+.wui-date-regions {
+  display: flex;
+  gap: var(--border);
+  max-width: calc(var(--px) * 96);
+}
+
+/* flex-grow is set per region from its day count; see DateWidget. */
+.wui-date-region {
+  flex: 1 1 0;
+  height: calc(var(--px) * 4);
+  min-width: calc(var(--px) * 2);
+  padding: 0;
+  border: var(--border) solid var(--line-strong);
+  border-radius: 0;
+  background: var(--bg-control);
+  cursor: pointer;
+}
+
+.wui-date-region:hover {
+  border-color: var(--accent-primary);
+}
+
+.wui-date-region.is-active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
 /* Square, hard-edged checkbox. */
 input[type='checkbox'] {
   appearance: none;

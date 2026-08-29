@@ -2,12 +2,15 @@
 // Entry point. Deliberately says almost nothing about the twist — the game
 // communicates its thesis through play, not exposition (game design §2).
 
+import { useState } from 'react';
+import { seedFromLocation } from '../generator/seededRandom.ts';
 import { useGameStore } from '../state/gameStore.ts';
 
 export function IntroStage() {
   const beginRun = useGameStore((s) => s.beginRun);
   const progress = useGameStore((s) => s.progress);
   const difficulty = useGameStore((s) => s.difficulty);
+  const [urlSeed] = useState(seedFromLocation);
 
   return (
     <main className="wui-screen wui-intro">
@@ -23,7 +26,12 @@ export function IntroStage() {
       </p>
 
       <div className="wui-actions">
-        <button type="button" className="wui-primary" onClick={() => beginRun()}>
+        {/* `?seed=…` reproduces a specific universe exactly (technical §9). */}
+        <button
+          type="button"
+          className="wui-primary"
+          onClick={() => beginRun(urlSeed ?? undefined)}
+        >
           {progress.tutorialCompleted ? 'Contact a new universe' : 'Begin calibration'}
         </button>
       </div>
@@ -31,6 +39,7 @@ export function IntroStage() {
       <p className="wui-meta">
         TIER: {difficulty.label} · {difficulty.mappingCount} MAPPINGS
         {progress.universesStabilized > 0 && ` · ${progress.universesStabilized} STABILIZED`}
+        {urlSeed && ` · SEED ${urlSeed}`}
       </p>
     </main>
   );

@@ -10,6 +10,7 @@ import { generateDomain, implementedSemantics } from '../game/domains/index.ts';
 import { conventionalSemantic } from '../game/generator/compatibility.ts';
 import { createRng } from '../game/generator/seededRandom.ts';
 import { generateRun } from '../game/generator/mappingGenerator.ts';
+import { calendarRegions } from './DateWidget.tsx';
 import { implementedWidgets, reachableValues, supports } from './registry.ts';
 
 const SEEDS = Array.from({ length: 40 }, (_, i) => `widget-seed-${i}`);
@@ -76,6 +77,43 @@ describe('conventional pairings (Stage 1 calibration)', () => {
       expect(mapping.semantic).toBe(conventionalSemantic(mapping.widget));
       const reachable = reachableValues(mapping.widget, mapping.domain);
       expect(reachable.some((v) => mapping.domain.equals(v, mapping.domain.target))).toBe(true);
+    }
+  });
+});
+
+describe('calendar regions', () => {
+  // A date picker driven by a discrete domain turns a whole year into a handful
+  // of values, so most date changes do nothing and the boundaries are invisible.
+  // The region strip is the calendar's equivalent of the slider's detents.
+  it('marks one region per distinct value when the year collapses', () => {
+    for (const semantic of ['boolean', 'choice'] as const) {
+      for (const seed of SEEDS.slice(0, 12)) {
+        const domain = generateDomain(semantic, createRng(seed));
+        const regions = calendarRegions(domain);
+        const distinct = reachableValues('date', domain).length;
+
+        expect(regions.length).toBe(distinct);
+        expect(regions.length).toBeGreaterThan(1);
+        // Every region resolves to a different reading, and clicking one
+        // actually produces that reading.
+        expect(new Set(regions.map((r) => r.label)).size).toBe(regions.length);
+        for (const region of regions) {
+          expect(domain.display(domain.denormalize(region.position))).toBe(region.label);
+        }
+      }
+    }
+  });
+
+  it('stays out of the way when the calendar is dense enough to scrub', () => {
+    // A real date domain changes value almost every day, and a 0-100 quantity
+    // changes every few days. Both give continuous feedback while dragging, so
+    // a strip of hairline segments would be noise rather than help.
+    for (const seed of SEEDS.slice(0, 8)) {
+      expect(calendarRegions(generateDomain('date', createRng(seed)))).toEqual([]);
+    }
+    const dense = generateDomain('number', createRng('dense-number'));
+    if (reachableValues('date', dense).length > 32) {
+      expect(calendarRegions(dense)).toEqual([]);
     }
   });
 });

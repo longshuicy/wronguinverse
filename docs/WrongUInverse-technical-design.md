@@ -337,6 +337,30 @@ Supports:
 Supports nearly any discrete representation by converting domain values
 into options.
 
+### Date adapter
+
+Has its own fixed calendar span, independent of any date domain --- that
+independence is what lets a date picker mean something that is not a
+date. A picked day becomes a position within that span.
+
+Two rules make it playable:
+
+-   **A date domain uses its own calendar.** When the values already are
+    dates, show them directly. A picker displaying 2097 while reading as
+    2092 is simply broken, and calibration depends on the conventional
+    pairing feeling completely ordinary.
+-   **A discrete domain gets visible regions.** Otherwise a year
+    collapses into a handful of values, most date changes do nothing, and
+    the boundaries are invisible --- there is no way to tell a calendar
+    meaning five creatures from one that is ignoring you. The adapter
+    draws a strip beneath the control, one segment per distinct reading,
+    sized by its true span, with the current one highlighted.
+
+The strip shows **where** the reading changes, never **what** it changes
+to, so the deduction is untouched: it is the calendar's equivalent of the
+slider's detents. It is suppressed once values are dense enough that
+dragging gives continuous feedback on its own.
+
 ### Text adapter
 
 Can parse:
