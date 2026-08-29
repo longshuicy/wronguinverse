@@ -5,8 +5,6 @@
 // stage treatment and the current universe's accent remap — by putting them on
 // a wrapper as data attributes. See art guide §3, §7.
 
-import { useEffect, useState } from 'react';
-import { assetUrl } from '../content/assets.ts';
 import type { StageId } from '../game/state/types.ts';
 import { Mascot } from './Mascot.tsx';
 
@@ -41,29 +39,11 @@ interface TerminalShellProps {
 }
 
 export function TerminalShell({ stage, seed, children }: TerminalShellProps) {
-  const [hasArt, setHasArt] = useState(false);
-
-  // Probe the background rather than assuming it exists: art lands in public/
-  // over time, and a missing file must fall through to the CSS gradient.
-  useEffect(() => {
-    const url = assetUrl('bg_calibration_lab');
-    const image = new Image();
-    image.onload = () => setHasArt(true);
-    image.onerror = () => setHasArt(false);
-    image.src = url;
-    return () => {
-      image.onload = null;
-      image.onerror = null;
-    };
-  }, []);
-
   return (
     <div className="wui-shell" data-stage={stage} data-universe={universeVariant(seed)}>
-      <div
-        className="wui-shell-backdrop"
-        data-has-art={hasArt}
-        style={hasArt ? { backgroundImage: `url(${assetUrl('bg_calibration_lab')})` } : undefined}
-      />
+      {/* Scanlines over the flat page colour. The generated environment
+          painting was retired: it fought the pixel controls in front of it and
+          pulled the screen away from the palette. See art guide §4 A001. */}
       <div className="wui-shell-veil" />
       {children}
       <Mascot />

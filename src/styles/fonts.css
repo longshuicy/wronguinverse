@@ -1,0 +1,34 @@
+/* fonts.css
+   Self-hosted so the game has no network dependency at runtime (technical
+   design §1). Both faces are SIL OFL 1.1 — see fonts/LICENSE.md.
+
+   Two faces, two jobs, per art guide §16:
+   - Press Start 2P — the wordmark and nothing else. It is gloriously chunky
+     and almost unreadable in quantity.
+   - Silkscreen — all UI chrome, labels and values. A pixel face that stays
+     legible at small sizes, which is the whole requirement.
+   Long prose falls back to the system UI font: readability wins over theme. */
+
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('./fonts/press-start-2p-latin.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Silkscreen';
+  src: url('./fonts/silkscreen-400-latin.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Silkscreen';
+  src: url('./fonts/silkscreen-700-latin.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}

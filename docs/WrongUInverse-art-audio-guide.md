@@ -143,15 +143,35 @@ Generated art should focus on assets CSS cannot provide efficiently: one
 environment, one mascot with reactions, a handful of secondary
 creatures, and reusable anomaly props.
 
-### A001 --- `bg_calibration_lab`
+### A001 --- `bg_calibration_lab` --- RETIRED
 
 **Filename:** `backgrounds/bg_calibration_lab.png`\
-**Priority:** REQUIRED\
+**Priority:** NOT USED (was REQUIRED)\
 **Target:** wide background, compose for 16:9; final web version can be
 cropped/scaled.\
-**Usage:** shell/background behind the DOM terminal in all stages. Stage
-variations should primarily use CSS overlays rather than separate
-paintings.
+**Usage:** none. The shell is a flat `--bg-page` surface with CSS
+scanlines.
+
+**Why it was retired.** Tried in the Milestone 3 build and removed. A
+rendered environment painting worked against the game in three ways:
+
+-   It was too loud. A detailed, high-contrast image behind translucent
+    panels left nothing quiet enough for the interface to sit on, and
+    forced a darkening veil that made the art pointless anyway.
+-   It broke the palette. Generated art carries its own colours, so the
+    screen stopped obeying the §7 weighting no matter what the tokens
+    said.
+-   It was not pixel art. Next to crisp 2px frames and a pixel typeface,
+    a smooth render reads as a photograph behind a game rather than part
+    of one.
+
+A flat surface plus scanlines is both calmer and more convincingly 8-bit.
+
+**If a background returns**, it should be authored at low resolution on
+the same pixel grid as the UI, use only §7 palette colours, and stay
+near-black in the centre two thirds. Treat it as a subtle texture, not a
+picture. The manifest entry and loader fallback are still in place, so
+dropping a file back in is a one-line change.
 
 **Midjourney prompt:**
 
@@ -423,6 +443,33 @@ Approximate visual weighting:
 This keeps the screen readable and lets the "wrong" moments actually
 pop.
 
+### Saturation Means Meaning
+
+The weighting above is easy to blow accidentally. The rule that keeps it
+honest:
+
+**A saturated colour must carry information. Anything decorative is
+muted.**
+
+Practical consequences, learned by getting this wrong first:
+
+-   **Structure is never accent-coloured.** Panel borders, dividers and
+    inactive frames use `--line` or a `-dim` derivation. A panel outlined
+    in full cyan competes with the one value inside it that matters.
+-   **Large areas are dimmed even when they are meaningful.** The
+    exploration timer is a full-width bar; at full strength it is the
+    loudest thing on screen for 45 seconds. It runs dimmed and turns
+    coral only when it becomes urgent --- which also makes urgency read.
+-   **Decorative colour is desaturated.** When a colour-picker-shaped
+    control is driven by a non-colour domain, its swatches are standing
+    in for "position 1..10" and mean nothing. Those use a muted palette.
+    A colour picker driven by an actual colour domain uses the real
+    palette at full strength, because there the colour *is* the answer.
+-   **Glow is not a colour strategy.** Blurred shadows read as neon web
+    design, not pixel art. See §8.
+
+If everything is emphasised, nothing is.
+
 ### Semantic Color Roles
 
 Use colors consistently for game feedback even though widget
@@ -547,28 +594,69 @@ consistency is enforced during sprite cleanup and in CSS.
 
 ## 8. Pixel Art Implementation
 
-Recommended:
+### Sprites
 
 -   Render sprites at native low resolution.
 -   Scale with integer multiples.
--   Use `image-rendering: pixelated`.
+-   Use `image-rendering: pixelated` **only for sprites already reduced
+    to a logical pixel grid and then scaled UP.** Applied to a raw
+    high-resolution source being scaled *down* it discards pixels instead
+    of averaging them and looks harsh --- use `auto` until the asset has
+    been through the §5 cleanup.
 -   Avoid fractional sprite scaling.
+-   Never force an aspect ratio. Set one dimension, let the other follow.
 -   Keep character sprites roughly 24×24, 32×32, or 48×48 logical
     pixels.
 -   Keep animations 2--4 frames when possible.
 
-CSS can handle:
+### The CSS is what makes it look like pixel art
 
--   bobbing
--   shaking
--   floating
--   glow
+Most of the pixel-art feel comes from the interface, not the sprites.
+A dark theme with 1px hairlines, rounded corners and soft glows reads as
+an ordinary web app no matter how good the art is. The rules:
+
+1.  **No curves.** `border-radius: 0` everywhere. The single exception is
+    the radio control, which must stay round to remain identifiable as a
+    radio (§3, Layer A).
+2.  **No blur.** No `filter: blur`, no soft `box-shadow`, no gradients on
+    panels. Frames are drawn with hard, offset shadows. Flat fills only ---
+    translucency muddies a limited palette.
+3.  **One grid unit.** Define `--px: 4px` and make every size, gap,
+    padding and border a whole multiple of it. Nothing should ever land
+    on a half pixel.
+4.  **Chunky borders.** 2px minimum. A 1px hairline is invisible at this
+    scale and reads as "web".
+5.  **Step the animation.** Use `steps()` timing and move in whole
+    pixels. A smoothly interpolated 1.5px slide is just blur.
+
+### The notched frame
+
+The strongest single "8-bit" signal is a panel border with cut corners.
+Four offset shadows draw an edge on each side and leave the corners
+empty:
+
+``` css
+box-shadow:
+  0 calc(-1 * var(--border)) 0 0 var(--frame-color),
+  0 var(--border) 0 0 var(--frame-color),
+  calc(-1 * var(--border)) 0 0 0 var(--frame-color),
+  var(--border) 0 0 0 var(--frame-color);
+```
+
+Use this for panels, cards and buttons instead of `border`.
+
+### CSS-driven motion
+
+CSS can handle, without extra frames:
+
+-   bobbing, floating, shaking
+-   success bounce
 -   brief chromatic offset
 -   screen flicker
--   scan line
--   success bounce
+-   scanlines (a `repeating-linear-gradient` on whole-pixel bands ---
+    this is a genuine pixel effect, unlike a glow)
 
-This avoids generating many animation frames.
+Prefer these to generated animation sheets.
 
 ## 9. Shift Transition
 
@@ -777,18 +865,37 @@ visual assets.
 
 ## 16. UI Typography
 
-Use a readable pixel-inspired display font only for:
+Typography does more for the pixel-art read than any sprite. A system
+monospace in a dark theme looks like a code editor, not a terminal from
+another universe.
 
--   headings
--   status messages
--   flavor labels
+### Chosen faces
 
-Use a highly readable UI font for:
+Both are SIL Open Font License 1.1 and are **self-hosted** in
+`src/styles/fonts/` --- the game must not depend on the network at
+runtime (technical design §1). Total cost is about 11 KB.
 
--   task requirements
--   values
--   timers
--   form controls
+-   **Press Start 2P** --- the wordmark, and nothing else. Gloriously
+    chunky and nearly unreadable in quantity.
+-   **Silkscreen** --- all interface chrome: headings, labels, values,
+    form controls, buttons. A pixel face that stays legible small, which
+    is the entire requirement.
+-   **System UI font** --- running prose only (the stage lede, result
+    blurbs). A paragraph of any pixel face is a chore.
+
+Set `-webkit-font-smoothing: none` on the pixel faces so they stay
+crisp, and re-enable antialiasing on the prose.
+
+### Legibility floor
+
+Pixel faces fall apart when set small and tracked wide. Learned the hard
+way:
+
+-   **Minimum 12px** for Silkscreen. At 10px it is mush.
+-   **Keep tracking under about 0.08em.** Wide letter-spacing on a pixel
+    face separates glyphs into unreadable fragments; it does not look
+    more "terminal".
+-   Size on the `--px` grid: 12, 14, 16, 20.
 
 Do not sacrifice readability for retro aesthetics.
 
@@ -838,15 +945,22 @@ The game must first work with plain HTML controls.
 
 A visually complete V0 requires only:
 
-1.  NES.css installed and overridden by the WrongUIᴎverse theme.
-2.  `bg_calibration_lab`.
-3.  Zorblet idle/confused/success states.
-4.  At least 3 anomaly props from A010.
-5.  Real HTML/CSS gameplay widgets.
+1.  The pixel CSS discipline in §8 --- grid, chunky borders, notched
+    frames, no blur. *(done)*
+2.  Self-hosted pixel typography per §16. *(done)*
+3.  Flat terminal surface with scanlines. No background painting. *(done)*
+4.  Zorblet idle/confused/success states. *(done)*
+5.  Real HTML/CSS gameplay widgets. *(done)*
 6.  Actual `WrongUIᴎverse` wordmark implemented in code/manual
-    lettering.
-7.  Calibration + Shift music loops.
-8.  Core UI/shift/correct/error SFX.
+    lettering. *(done)*
+7.  At least 3 anomaly props from A010.
+8.  NES.css installed and overridden by the WrongUIᴎverse theme --- only
+    if it still earns its place. The hand-written theme now covers the
+    control language it was wanted for, so adopting it is optional rather
+    than assumed; it should not be allowed to reintroduce rounded corners
+    or its own palette.
+9.  Calibration + Shift music loops.
+10. Core UI/shift/correct/error SFX.
 
 Secondary creatures A005--A009 can be added incrementally. Do not delay
 mechanics for them.

@@ -1,15 +1,63 @@
 /* wronguinverse-theme.css
-   Component treatment for the terminal. Every colour here comes from a role
-   token in universe-variables.css — no literal hexes, so stage treatments and
-   universe variants apply for free.
-   See docs/WrongUInverse-art-audio-guide.md §3, §7. */
+   Component treatment for the terminal.
+   See docs/WrongUInverse-art-audio-guide.md §3, §7, §8, §16.
+
+   Four rules make this read as pixel art rather than "dark web app":
+   1. No curves. `border-radius: 0` everywhere except the radio, which needs its
+      round shape to stay identifiable as a radio (§3 Layer A).
+   2. No blur. Frames are drawn with hard box-shadow offsets — the notched-corner
+      technique below — and there are no soft glows or gradients on panels.
+   3. Everything lands on the --px grid, so nothing renders on a half pixel.
+   4. Flat fills only. A pixel palette is opaque; translucency muddies it.
+
+   Colour follows §7's weighting: dark surfaces and muted text carry the screen,
+   and a saturated accent means something specific. */
 
 body {
   margin: 0;
   min-height: 100vh;
   background: var(--bg-page);
   color: var(--text-primary);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'Silkscreen', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 16px;
+  line-height: 1.6;
+  /* Pixel faces are drawn, not hinted — let them stay crisp. */
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+/* Long prose drops to the system face. Silkscreen is legible in labels and
+   values, but a paragraph of it is a chore (§16: readability over theme). */
+.wui-lede,
+.wui-diagnosis-blurb,
+.wui-diagnosis-caveat,
+.wui-notebook-empty {
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- the notched 8-bit frame ---
+   Four offset shadows draw an edge on each side and leave the corners cut out.
+   That stepped corner is what says "8-bit" more than any single other detail.
+   Every framed surface shares this one rule and just sets --frame-color. */
+
+.wui-frame,
+.wui-station,
+.wui-challenge-card,
+.wui-shift-panel,
+.wui-primary,
+.wui-ghost,
+.wui-hint-button {
+  border: none;
+  box-shadow:
+    0 calc(-1 * var(--border)) 0 0 var(--frame-color, var(--line)),
+    0 var(--border) 0 0 var(--frame-color, var(--line)),
+    calc(-1 * var(--border)) 0 0 0 var(--frame-color, var(--line)),
+    var(--border) 0 0 0 var(--frame-color, var(--line));
 }
 
 /* --- terminal shell (Layer B) --- */
@@ -20,83 +68,59 @@ body {
   isolation: isolate;
 }
 
-/* Layer A: the generated environment art, if it is present.
-   Missing art simply does not paint and the gradient below shows through —
-   decorative assets must never block gameplay (art guide §18). */
-.wui-shell-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  background:
-    radial-gradient(
-      circle at 20% 15%,
-      color-mix(in srgb, var(--accent-anomaly) 14%, transparent),
-      transparent 45%
-    ),
-    radial-gradient(
-      circle at 85% 80%,
-      color-mix(in srgb, var(--accent-primary) 10%, transparent),
-      transparent 40%
-    ),
-    var(--bg-page);
-  background-size: cover;
-  background-position: center;
-  image-rendering: pixelated;
-}
-
-.wui-shell-backdrop[data-has-art='true'] {
-  background-blend-mode: normal;
-}
-
-/* Keeps the centre quiet enough for text regardless of what the art does. */
+/* Scanlines: two-pixel bands on the grid, barely there. The one screen effect
+   that is genuinely a pixel effect rather than a blur (§6). */
 .wui-shell-veil {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background:
-    linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--bg-page) 72%, transparent),
-      color-mix(in srgb, var(--bg-page) 90%, transparent)
-    ),
-    var(--stage-tint, transparent);
-  transition: background 0.4s ease;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0%) 0,
+    rgb(0 0 0 / 0%) 2px,
+    rgb(0 0 0 / 16%) 2px,
+    rgb(0 0 0 / 16%) 4px
+  );
 }
 
 .wui-screen {
   position: relative;
-  max-width: 44rem;
+  max-width: 46rem;
   margin: 0 auto;
-  padding: 2rem 1rem 4rem;
+  padding: calc(var(--px) * 8) calc(var(--px) * 4) calc(var(--px) * 16);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: calc(var(--px) * 6);
 }
 
 .wui-screen-head h1 {
-  margin: 0.25rem 0 0.5rem;
-  font-size: 1.5rem;
+  margin: 0 0 var(--px);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
 }
 
 .wui-eyebrow,
 .wui-progress,
 .wui-meta {
   margin: 0;
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
+  font-size: 12px;
+  letter-spacing: 0.06em;
   color: var(--text-secondary);
 }
 
 .wui-lede {
   margin: 0;
   color: var(--text-secondary);
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 /* --- wordmark ---
-   Built in CSS, never generated: the spelling and the reversed N must be
-   exact (art guide §1.1). The U and I are emphasised so the reader can find
-   "UI" inside "universe". */
+   Built in CSS, never generated: the spelling and the reversed N must be exact
+   (§1.1). Press Start 2P appears here and nowhere else. */
 
 .wui-intro {
   min-height: 100vh;
@@ -107,18 +131,18 @@ body {
 
 .wui-title {
   margin: 0;
-  font-size: clamp(2rem, 8vw, 3.4rem);
-  letter-spacing: 0.02em;
-  font-weight: 700;
+  font-family: 'Press Start 2P', 'Silkscreen', monospace;
+  font-size: clamp(20px, 5vw, 40px);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
 }
 
 .wui-title-ui {
   color: var(--accent-primary);
-  font-weight: 900;
-  /* A pixel of offset: the title is the first tiny UI violation. */
+  /* Four pixels off the baseline: the title is the first small UI violation. */
   display: inline-block;
-  transform: translateY(-2px);
-  text-shadow: 0 0 calc(18px * var(--glow-strength)) var(--accent-primary);
+  transform: translateY(calc(-1 * var(--px)));
 }
 
 .wui-title-flip {
@@ -129,8 +153,9 @@ body {
 
 .wui-tagline {
   margin: 0;
-  color: var(--accent-hint);
-  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  font-size: 12px;
+  letter-spacing: 0.05em;
 }
 
 /* --- shift --- */
@@ -143,48 +168,44 @@ body {
 }
 
 .wui-shift-panel {
-  padding: 2rem;
-  border: 1px solid var(--accent-anomaly);
-  background: color-mix(in srgb, var(--accent-anomaly) 10%, var(--bg-panel));
+  --frame-color: var(--accent-anomaly);
+  padding: calc(var(--px) * 8);
+  background: var(--bg-panel);
 }
 
 .wui-shift-headline {
-  margin: 0 0 0.5rem;
+  margin: 0 0 calc(var(--px) * 2);
   color: var(--accent-anomaly);
-  font-size: 1.2rem;
-  letter-spacing: 0.1em;
+  font-size: 16px;
+  letter-spacing: 0.06em;
 }
 
 .wui-shift-subhead {
   margin: 0;
-  color: var(--accent-danger);
-  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  font-size: 12px;
+  letter-spacing: 0.06em;
 }
 
+/* Whole-pixel steps: a sub-pixel glitch just looks blurry. */
 @keyframes wui-glitch {
   0%,
   100% {
     transform: translate(0, 0);
-    opacity: 1;
   }
-  20% {
-    transform: translate(-3px, 1px);
-    opacity: 0.7;
+  25% {
+    transform: translate(-4px, 0);
   }
-  40% {
-    transform: translate(3px, -1px);
+  50% {
+    transform: translate(4px, -4px);
   }
-  60% {
-    transform: translate(-2px, -2px);
-    opacity: 0.85;
-  }
-  80% {
-    transform: translate(2px, 2px);
+  75% {
+    transform: translate(-4px, 4px);
   }
 }
 
 .wui-shift-animated {
-  animation: wui-glitch 0.4s infinite;
+  animation: wui-glitch 0.32s steps(1, end) infinite;
 }
 
 /* --- timer --- */
@@ -192,25 +213,28 @@ body {
 .wui-timer-label {
   display: flex;
   justify-content: space-between;
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
+  font-size: 12px;
+  letter-spacing: 0.06em;
   color: var(--text-secondary);
-  margin-bottom: 0.35rem;
+  margin-bottom: calc(var(--px) * 2);
 }
 
 .wui-timer-track {
-  height: 6px;
-  background: var(--line-soft);
-  overflow: hidden;
+  height: calc(var(--px) * 3);
+  background: var(--bg-control);
+  box-shadow: 0 0 0 var(--border) var(--line);
 }
 
+/* Stepped, not smooth: the bar drains in visible chunks.
+   Dimmed while there is time left — a full-width saturated bar would be the
+   loudest thing on screen for 45 seconds and blow §7's accent budget on
+   something that is only ambient. It earns full colour when it turns urgent. */
 .wui-timer-fill {
   height: 100%;
-  background: var(--accent-primary);
-  transition: width 0.25s linear;
+  background: var(--accent-dim);
+  transition: width 0.25s steps(8, end);
 }
 
-/* Coral carries urgency, per the semantic colour roles. */
 .wui-timer-urgent .wui-timer-fill {
   background: var(--accent-danger);
 }
@@ -224,97 +248,94 @@ body {
 .wui-bench {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: calc(var(--px) * 4);
 }
 
 .wui-station {
-  padding: 1rem;
-  background: color-mix(in srgb, var(--bg-panel) 88%, transparent);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--shell-radius);
+  --frame-color: var(--line);
+  padding: calc(var(--px) * 4);
+  background: var(--bg-panel);
 }
 
 .wui-station-locked {
-  border-color: var(--accent-success);
-  opacity: 0.75;
+  --frame-color: var(--success-dim);
 }
 
 .wui-station-head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  gap: calc(var(--px) * 2);
+  margin-bottom: calc(var(--px) * 3);
 }
 
 .wui-station-name {
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
 }
 
 .wui-station-lock {
   color: var(--accent-success);
-  font-size: 0.7rem;
-}
-
-.wui-station-control input[type='range'] {
-  width: 100%;
-  accent-color: var(--accent-primary);
+  font-size: 12px;
+  letter-spacing: 0.05em;
 }
 
 .wui-station-output {
   display: flex;
-  gap: 0.6rem;
+  gap: calc(var(--px) * 3);
   align-items: baseline;
-  margin: 0.75rem 0 0;
+  margin: calc(var(--px) * 3) 0 0;
   flex-wrap: wrap;
 }
 
 .wui-station-output-label {
-  font-size: 0.65rem;
-  letter-spacing: 0.12em;
+  font-size: 12px;
+  letter-spacing: 0.06em;
   color: var(--text-secondary);
 }
 
+/* The interpreted value is the thing the player is reading. It gets the accent
+   precisely because almost nothing else does. */
 .wui-station-output-value {
   color: var(--accent-primary);
-  font-size: 1.1rem;
+  font-size: 16px;
 }
 
 .wui-station-hint {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px dashed var(--line-soft);
+  margin-top: calc(var(--px) * 3);
+  padding-top: calc(var(--px) * 3);
+  border-top: var(--border) solid var(--line);
 }
 
-/* Amber is the hint/curiosity colour. */
 .wui-hint-text {
-  margin: 0 0 0.5rem;
+  margin: 0 0 calc(var(--px) * 2);
   color: var(--accent-hint);
-  font-size: 0.85rem;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 /* --- notebook --- */
 
 .wui-notebook {
-  padding: 1rem;
-  border: 1px dashed color-mix(in srgb, var(--accent-hint) 35%, var(--line-soft));
-  border-radius: var(--shell-radius);
+  padding: calc(var(--px) * 4);
+  background: var(--bg-panel);
+  box-shadow: 0 0 0 var(--border) var(--line);
 }
 
 .wui-notebook-title,
 .wui-challenge-head h2,
 .wui-rules h2 {
-  margin: 0 0 0.6rem;
-  font-size: 0.7rem;
-  letter-spacing: 0.14em;
+  margin: 0 0 calc(var(--px) * 3);
+  font-size: 12px;
+  letter-spacing: 0.06em;
   color: var(--text-secondary);
 }
 
 .wui-notebook-empty {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 13px;
 }
 
 .wui-notebook-list,
@@ -325,32 +346,31 @@ body {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: calc(var(--px) * 2);
 }
 
 .wui-notebook-list li {
   display: flex;
-  gap: 0.75rem;
-  font-size: 0.85rem;
+  gap: calc(var(--px) * 3);
+  font-size: 12px;
   flex-wrap: wrap;
 }
 
 .wui-notebook-widget {
-  min-width: 6rem;
+  min-width: calc(var(--px) * 24);
   color: var(--text-secondary);
 }
 
 .wui-notebook-values {
-  color: var(--accent-hint);
+  color: var(--text-primary);
 }
 
 /* --- challenge --- */
 
 .wui-challenge-card {
-  padding: 1rem;
-  border: 1px solid color-mix(in srgb, var(--accent-primary) 45%, transparent);
-  background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
-  border-radius: var(--shell-radius);
+  --frame-color: var(--stage-edge, var(--line));
+  padding: calc(var(--px) * 4);
+  background: var(--bg-panel);
 }
 
 .wui-challenge-head {
@@ -360,38 +380,39 @@ body {
 }
 
 .wui-challenge-count {
-  font-size: 0.8rem;
+  font-size: 12px;
   color: var(--text-secondary);
 }
 
 .wui-requirement {
   display: grid;
   grid-template-columns: 1fr auto auto;
-  gap: 0.75rem;
+  gap: calc(var(--px) * 3);
   align-items: baseline;
-  padding: 0.35rem 0;
-  border-bottom: 1px solid var(--line-soft);
+  padding: calc(var(--px) * 2) 0;
+  border-bottom: var(--border) solid var(--line);
 }
 
 .wui-requirement-label {
   color: var(--text-secondary);
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
+  font-size: 12px;
+  letter-spacing: 0.05em;
 }
 
 .wui-requirement-target {
-  color: var(--accent-primary);
-  font-size: 1rem;
+  color: var(--text-primary);
+  font-size: 14px;
 }
 
 .wui-requirement-state {
-  font-size: 0.7rem;
+  font-size: 12px;
   color: var(--accent-success);
-  min-width: 5rem;
+  min-width: calc(var(--px) * 20);
   text-align: right;
+  letter-spacing: 0.05em;
 }
 
-/* Lime as each requirement locks into place (§7 Stage 3). */
+/* Lime marks the moment a requirement locks, and only that. */
 .wui-requirement-locked .wui-requirement-target {
   color: var(--accent-success);
   text-decoration: line-through;
@@ -399,224 +420,295 @@ body {
 
 /* --- rules / result --- */
 
-.wui-rules {
-  padding: 1rem;
-  border: 1px solid var(--line-soft);
-  background: color-mix(in srgb, var(--bg-panel) 88%, transparent);
-  border-radius: var(--shell-radius);
+.wui-rules,
+.wui-diagnosis {
+  padding: calc(var(--px) * 4);
+  background: var(--bg-panel);
+  box-shadow: 0 0 0 var(--border) var(--line);
 }
 
 .wui-rules li {
-  font-size: 0.9rem;
-  color: var(--accent-anomaly);
+  font-size: 13px;
+  color: var(--text-primary);
 }
 
 .wui-diagnosis {
-  padding: 1.25rem;
-  border: 1px solid var(--line-soft);
-  background: color-mix(in srgb, var(--bg-panel) 88%, transparent);
   text-align: center;
-  border-radius: var(--shell-radius);
+  padding: calc(var(--px) * 6) calc(var(--px) * 4);
 }
 
 .wui-diagnosis-metric {
-  margin: 0 0 0.75rem;
-  font-size: 1.1rem;
-  letter-spacing: 0.06em;
+  margin: 0 0 calc(var(--px) * 3);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
 }
 
 .wui-diagnosis-brain {
   margin: 0;
-  font-size: 1.4rem;
-  color: var(--accent-hint);
+  font-size: 20px;
+  color: var(--accent-primary);
   letter-spacing: 0.06em;
+  line-height: 1.4;
 }
 
 .wui-diagnosis-blurb {
-  margin: 0.35rem 0 0;
+  margin: calc(var(--px) * 2) 0 0;
   color: var(--text-secondary);
+  font-size: 14px;
 }
 
 .wui-diagnosis-caveat {
-  margin: 1rem 0 0;
-  font-size: 0.7rem;
-  color: color-mix(in srgb, var(--text-secondary) 65%, transparent);
+  margin: calc(var(--px) * 4) 0 0;
+  font-size: 12px;
+  color: var(--line-strong);
 }
 
 .wui-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--px) * 28), 1fr));
+  gap: calc(var(--px) * 3);
   margin: 0;
 }
 
 .wui-stats div {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: var(--px);
 }
 
 .wui-stats dt {
-  font-size: 0.65rem;
-  letter-spacing: 0.12em;
+  font-size: 12px;
+  letter-spacing: 0.06em;
   color: var(--text-secondary);
 }
 
 .wui-stats dd {
   margin: 0;
-  font-size: 1.05rem;
-  color: var(--accent-primary);
+  font-size: 16px;
+  color: var(--text-primary);
 }
 
-.wui-solved {
-  color: var(--accent-success);
-}
-
-/* --- controls --- */
-
-.wui-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  align-items: center;
-}
+/* --- buttons ---
+   Chunky, flat, and they physically move when pressed. */
 
 .wui-primary,
 .wui-ghost,
 .wui-hint-button {
   font: inherit;
-  padding: 0.6rem 1rem;
-  border: 1px solid var(--line-soft);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  padding: calc(var(--px) * 3) calc(var(--px) * 4);
+  border: none;
+  border-radius: 0;
   background: var(--bg-control);
   color: var(--text-primary);
   cursor: pointer;
-  border-radius: var(--shell-radius);
+  --frame-color: var(--line-strong);
 }
 
 .wui-primary {
-  border-color: var(--accent-primary);
   color: var(--accent-primary);
-  box-shadow: 0 0 calc(16px * var(--glow-strength))
-    color-mix(in srgb, var(--accent-primary) 40%, transparent);
+  --frame-color: var(--accent-primary);
 }
 
 .wui-primary:disabled {
-  border-color: var(--line-soft);
-  color: color-mix(in srgb, var(--text-secondary) 55%, transparent);
+  color: var(--line-strong);
   cursor: not-allowed;
-  box-shadow: none;
+  --frame-color: var(--line);
+}
+
+.wui-primary:not(:disabled):active,
+.wui-ghost:active,
+.wui-hint-button:active {
+  transform: translateY(var(--border));
 }
 
 .wui-hint-button {
-  padding: 0.35rem 0.7rem;
-  font-size: 0.8rem;
-  border-color: color-mix(in srgb, var(--accent-hint) 45%, transparent);
+  padding: calc(var(--px) * 2) calc(var(--px) * 3);
+  font-size: 12px;
   color: var(--accent-hint);
 }
 
-.wui-primary:not(:disabled):hover,
-.wui-ghost:hover,
-.wui-hint-button:hover {
-  border-color: var(--accent-primary);
+.wui-actions {
+  display: flex;
+  gap: calc(var(--px) * 3);
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 /* Visible focus is non-negotiable even while the semantics lie. */
 :focus-visible {
-  outline: 2px solid var(--accent-primary);
-  outline-offset: 2px;
+  outline: var(--border) solid var(--accent-primary);
+  outline-offset: var(--border);
 }
+
+/* --- form controls (Layer A) ---
+   These stay real DOM inputs and must keep reading as the control they are:
+   a radio still looks round, a checkbox still square. The game depends on the
+   player recognising the widget and being wrong only about its meaning (§3). */
 
 select,
 input[type='date'],
 input[type='text'],
 input[type='number'] {
   font: inherit;
-  padding: 0.35rem 0.5rem;
+  font-size: 14px;
+  padding: calc(var(--px) * 2);
   background: var(--bg-control);
   color: var(--text-primary);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--shell-radius);
-}
-
-input[type='checkbox'],
-input[type='radio'] {
-  accent-color: var(--accent-primary);
+  border: var(--border) solid var(--line-strong);
+  border-radius: 0;
 }
 
 .wui-text {
-  min-width: 12rem;
+  min-width: calc(var(--px) * 48);
+}
+
+/* Square, hard-edged checkbox. */
+input[type='checkbox'] {
+  appearance: none;
+  margin: 0;
+  width: calc(var(--px) * 4);
+  height: calc(var(--px) * 4);
+  background: var(--bg-control);
+  border: var(--border) solid var(--line-strong);
+  border-radius: 0;
+  cursor: pointer;
+  flex: none;
+}
+
+input[type='checkbox']:checked {
+  background: var(--accent-primary);
+  /* A smaller square inside a square — no tick glyph to go blurry. */
+  box-shadow: inset 0 0 0 var(--border) var(--bg-control);
+}
+
+/* Round, so it still reads as a radio. */
+input[type='radio'] {
+  appearance: none;
+  margin: 0;
+  width: calc(var(--px) * 4);
+  height: calc(var(--px) * 4);
+  background: var(--bg-control);
+  border: var(--border) solid var(--line-strong);
+  border-radius: 50%;
+  cursor: pointer;
+  flex: none;
+}
+
+input[type='radio']:checked {
+  background: var(--accent-primary);
+  box-shadow: inset 0 0 0 calc(var(--px) * 0.75) var(--bg-control);
+}
+
+/* Slider: square thumb on a flat track, no rounding anywhere. */
+input[type='range'] {
+  appearance: none;
+  width: 100%;
+  height: calc(var(--px) * 5);
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: calc(var(--px) * 2);
+  background: var(--bg-control);
+  border: var(--border) solid var(--line-strong);
+}
+
+input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: calc(var(--px) * 3);
+  height: calc(var(--px) * 5);
+  margin-top: calc(var(--px) * -2);
+  background: var(--accent-primary);
+  border: var(--border) solid var(--bg-page);
+  border-radius: 0;
+}
+
+input[type='range']::-moz-range-track {
+  height: calc(var(--px) * 2);
+  background: var(--bg-control);
+  border: var(--border) solid var(--line-strong);
+}
+
+input[type='range']::-moz-range-thumb {
+  width: calc(var(--px) * 3);
+  height: calc(var(--px) * 5);
+  background: var(--accent-primary);
+  border: var(--border) solid var(--bg-page);
+  border-radius: 0;
 }
 
 .wui-checkbox-group,
 .wui-checkbox-count,
 .wui-radio-group {
   display: flex;
-  gap: 0.75rem;
+  gap: calc(var(--px) * 3);
   flex-wrap: wrap;
 }
 
 .wui-checkbox-group,
 .wui-radio-group {
   flex-direction: column;
-  gap: 0.3rem;
+  gap: calc(var(--px) * 2);
 }
 
 .wui-checkbox-row,
 .wui-checkbox-single,
 .wui-radio-row {
   display: flex;
-  gap: 0.4rem;
+  gap: calc(var(--px) * 2);
   align-items: center;
   cursor: pointer;
+  font-size: 13px;
 }
 
 /* --- colour swatches --- */
 
 .wui-swatches {
   display: flex;
-  gap: 0.5rem;
+  gap: calc(var(--px) * 2);
   flex-wrap: wrap;
 }
 
 .wui-swatch {
-  width: 2.25rem;
-  height: 2.25rem;
-  border: 2px solid var(--line-soft);
-  border-radius: var(--shell-radius);
+  width: calc(var(--px) * 8);
+  height: calc(var(--px) * 8);
+  border: var(--border) solid var(--line-strong);
+  border-radius: 0;
   cursor: pointer;
   padding: 0;
 }
 
+/* Selected reads as a ring drawn in whole pixels, not a glow. */
 .wui-swatch-selected {
   border-color: var(--text-primary);
-  box-shadow: 0 0 calc(14px * var(--glow-strength)) currentColor;
-  transform: scale(1.08);
+  box-shadow: 0 0 0 var(--border) var(--bg-page);
 }
 
 /* --- sprites --- */
 
 /* Rendering mode is set per asset by AssetImage — see the note there on why
-   `pixelated` is wrong for sources that have not been reduced to a pixel grid. */
+   `pixelated` is wrong for sources not yet reduced to a pixel grid. */
 .wui-sprite {
   display: block;
 }
 
 /* --- mascot ---
-   Animation is CSS rather than sprite frames, per art guide §17: idle float,
-   success bounce, error shake. Two source images cover six states. */
+   Animation is CSS rather than sprite frames (§17). Movement is in whole
+   pixels and stepped, so it reads as animation on a grid. */
 
 .wui-mascot {
   position: fixed;
-  right: 1.25rem;
-  bottom: 1.25rem;
+  right: calc(var(--px) * 4);
+  bottom: calc(var(--px) * 4);
   z-index: 2;
   pointer-events: none;
-  filter: drop-shadow(0 0 calc(20px * var(--glow-strength)) var(--accent-primary));
-  transition: filter 0.3s ease;
 }
 
-/* Zorblet must never cover a control on a narrow screen. */
-@media (max-width: 52rem) {
+@media (max-width: 60rem) {
   .wui-mascot {
     display: none;
   }
@@ -628,51 +720,43 @@ input[type='radio'] {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-6px);
+    transform: translateY(calc(var(--px) * -1));
   }
 }
 
 @keyframes wui-bounce {
   0%,
   100% {
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
-  30% {
-    transform: translateY(-16px) scale(1.06);
-  }
-  60% {
-    transform: translateY(0) scale(0.98);
+  50% {
+    transform: translateY(calc(var(--px) * -3));
   }
 }
 
 @keyframes wui-wobble {
   0%,
   100% {
-    transform: rotate(0deg);
+    transform: translateX(0);
   }
-  25% {
-    transform: rotate(-5deg);
-  }
-  75% {
-    transform: rotate(5deg);
+  50% {
+    transform: translateX(calc(var(--px) * -1));
   }
 }
 
 .wui-mascot-idle,
 .wui-mascot-watching {
-  animation: wui-float 3.6s ease-in-out infinite;
+  animation: wui-float 2s steps(2, end) infinite;
 }
 
 .wui-mascot-celebrate,
 .wui-mascot-discovery {
-  animation: wui-bounce 0.7s ease-in-out 2;
-  filter: drop-shadow(0 0 calc(26px * var(--glow-strength)) var(--accent-success));
+  animation: wui-bounce 0.4s steps(2, end) 3;
 }
 
 .wui-mascot-confused,
 .wui-mascot-suspicious {
-  animation: wui-wobble 1.6s ease-in-out infinite;
-  filter: drop-shadow(0 0 calc(20px * var(--glow-strength)) var(--accent-anomaly));
+  animation: wui-wobble 0.6s steps(2, end) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

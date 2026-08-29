@@ -38,20 +38,26 @@ export const COLOR_PALETTE: ColorValue[] = [
  *
  * The control still has to look like a colour picker while it is secretly
  * choosing a date, so each position needs *a* colour — one with no meaning.
+ *
+ * Deliberately muted versions of the palette above. Saturation is reserved for
+ * colour that MEANS something (art guide §7): a row of ten full-strength
+ * swatches standing in for "position 1..10" shouts louder than anything real on
+ * the screen. These stay distinguishable from each other and quiet next to a
+ * genuine colour domain.
  */
 export const DECORATIVE_SWATCHES: string[] = [
-  '#38e8ff',
-  '#b46cff',
-  '#c8ff4d',
-  '#ffc857',
-  '#ff6b72',
-  '#72f2c2',
-  '#8a7bff',
-  '#ff9f4d',
-  '#4dd4a0',
-  '#f4f2e8',
-  '#6f7ba8',
-  '#2b3a6b',
+  '#3d7a8c',
+  '#6a5490',
+  '#7d8a52',
+  '#94804f',
+  '#8c555a',
+  '#4f8a76',
+  '#5a5490',
+  '#8c6a4d',
+  '#417f68',
+  '#7d7d78',
+  '#4a5578',
+  '#2b3a5c',
 ];
 
 /** True when a value looks like a `ColorValue`. Shape check, not a type test. */

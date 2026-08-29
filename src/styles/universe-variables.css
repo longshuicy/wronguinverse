@@ -5,10 +5,16 @@
    Components must reference the ROLE tokens (--accent-primary, --bg-panel, …)
    rather than the raw palette tokens. That indirection is what makes stage
    treatments and Cursed Universe palette variants cost nothing but a data
-   attribute. Never write a literal hex in a component. */
+   attribute. Never write a literal hex in a component.
+
+   On restraint: §7 asks for 65-75% dark surface, 15-20% muted text, and only
+   5-10% electric cyan. Saturated accents are for MEANING — focus, a locked
+   requirement, a hint — never for decoration. Structure (borders, dividers,
+   panel fills) uses the navy and the -dim tokens below, so the rare loud thing
+   actually reads as loud. */
 
 :root {
-  /* --- raw palette --- */
+  /* --- raw palette (art guide §7) --- */
   --space-950: #090b18;
   --space-900: #11152a;
   --space-800: #1a2040;
@@ -38,39 +44,48 @@
   --accent-danger: var(--warning-coral); /* mismatch / urgency / unstable */
   --accent-hint: var(--flux-amber); /* hint / clue / observation */
 
-  /* --- derived --- */
-  --line-soft: #262c48;
-  --glow-strength: 0.35;
-  --shell-radius: 2px;
+  /* --- structure ---
+     Dimmed derivations for anything large or persistent: borders, dividers,
+     inactive frames. Carrying the accent hue at low intensity keeps the screen
+     coherent without a wall of neon. */
+  --line: #232a45;
+  --line-strong: #33406b;
+  --accent-dim: color-mix(in srgb, var(--accent-primary) 28%, var(--space-800));
+  --success-dim: color-mix(in srgb, var(--accent-success) 26%, var(--space-800));
+
+  /* --- pixel geometry ---
+     One unit. Every size, gap and border is a multiple of it, so nothing ever
+     lands on a half pixel and the whole layout sits on a visible grid. */
+  --px: 4px;
+  --border: 2px;
 }
 
 /* --- Stage treatment (§7 "Stage Treatment") ---
-   The universe should feel changed without becoming a different website, so
-   stages shift accent PRESENCE rather than swapping the palette. */
+   The universe should feel changed without becoming a different website, so a
+   stage shifts one or two accent roles and nothing else. */
 
-/* Stage 1 — orderly and trustworthy: navy, cyan, off-white. */
 [data-stage='normal'] {
-  --stage-tint: transparent;
+  --stage-edge: var(--line);
 }
 
-/* Shift — violet and coral briefly take over. */
+/* Shift — the one moment violet is allowed to take over. */
 [data-stage='shift'] {
   --accent-primary: var(--anomaly-violet);
-  --stage-tint: color-mix(in srgb, var(--anomaly-violet) 12%, transparent);
+  --stage-edge: var(--anomaly-violet);
 }
 
-/* Stage 2 — same base, more violet, amber for hints. */
+/* Stage 2 — same base, a hint of violet at the edges. */
 [data-stage='explore'] {
-  --stage-tint: color-mix(in srgb, var(--anomaly-violet) 7%, transparent);
+  --stage-edge: color-mix(in srgb, var(--anomaly-violet) 35%, var(--line));
 }
 
-/* Stage 3 — cyan returns to the foreground, coral carries the pressure. */
+/* Stage 3 — cyan returns to the foreground. */
 [data-stage='challenge'] {
-  --stage-tint: color-mix(in srgb, var(--electric-cyan) 4%, transparent);
+  --stage-edge: var(--accent-dim);
 }
 
 [data-stage='result'] {
-  --stage-tint: color-mix(in srgb, var(--inverse-lime) 6%, transparent);
+  --stage-edge: var(--success-dim);
 }
 
 /* --- Universe palette variants (§7 "Universe Palette Variants") ---
@@ -78,7 +93,6 @@
 
 [data-universe='voidMint'] {
   --accent-primary: var(--void-mint);
-  --accent-anomaly: var(--anomaly-violet);
 }
 
 [data-universe='fluxAmber'] {
@@ -88,11 +102,9 @@
 
 [data-universe='inverseViolet'] {
   --accent-primary: var(--anomaly-violet);
-  --accent-success: var(--inverse-lime);
 }
 
 /* Desaturated until the player finds the single wrong mapping. */
 [data-universe='mostlyNormal'] {
   --accent-anomaly: var(--terminal-muted);
-  --glow-strength: 0.12;
 }

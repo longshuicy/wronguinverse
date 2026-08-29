@@ -12,7 +12,8 @@ import { ResultStage } from './game/stages/ResultStage.tsx';
 import { ShiftTransition } from './game/stages/ShiftTransition.tsx';
 import { useGameStore } from './game/state/gameStore.ts';
 
-// Order matters: variables first, then the NES layer, then our theme on top.
+// Order matters: fonts and variables first, then the NES layer, then our theme.
+import './styles/fonts.css';
 import './styles/universe-variables.css';
 import './styles/nes-overrides.css';
 import './styles/wronguinverse-theme.css';
