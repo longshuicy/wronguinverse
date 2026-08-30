@@ -84,7 +84,9 @@ describe('conventional pairings (Stage 1 calibration)', () => {
 describe('calendar regions', () => {
   // A date picker driven by a discrete domain turns a whole year into a handful
   // of values, so most date changes do nothing and the boundaries are invisible.
-  // The region strip is the calendar's equivalent of the slider's detents.
+  // The regions are the days that mean something; every other day snaps to the
+  // nearest of them, which is how the calendar refuses a dead date given that a
+  // native date input cannot grey individual days out.
   it('marks one region per distinct value when the year collapses', () => {
     for (const semantic of ['boolean', 'choice'] as const) {
       for (const seed of SEEDS.slice(0, 12)) {
@@ -100,6 +102,23 @@ describe('calendar regions', () => {
         for (const region of regions) {
           expect(domain.display(domain.denormalize(region.position))).toBe(region.label);
         }
+      }
+    }
+  });
+
+  it('covers the whole year, so every date snaps to a meaningful one', () => {
+    // Regions are found by walking consecutive days, so they tile the span with
+    // no gaps: whatever day a player picks falls inside one, and the nearest
+    // region start is always a day that changes the reading.
+    for (const semantic of ['boolean', 'choice'] as const) {
+      for (const seed of SEEDS.slice(0, 12)) {
+        const domain = generateDomain(semantic, createRng(seed));
+        const regions = calendarRegions(domain);
+
+        expect(regions[0]!.position).toBe(0);
+        const covered = regions.reduce((total, region) => total + region.days, 0);
+        // 2097 is not a leap year, and the walk includes both endpoints.
+        expect(covered).toBe(365);
       }
     }
   });

@@ -883,11 +883,12 @@ input[type='number'] {
   min-width: calc(var(--px) * 48);
 }
 
-/* --- calendar regions ---
-   The calendar's detents. A discrete domain collapses a year into a few
-   values, so without these the boundaries are invisible and the control is
-   unusable by anything but luck. Shows WHERE the reading changes, never what
-   it changes to. */
+/* --- calendar ---
+   Hand-drawn rather than `<input type="date">`, because a native picker cannot
+   disable individual days. A discrete domain collapses a year into a few
+   values, and without the dead days greyed out the control is unusable by
+   anything but luck. Shows WHERE the reading changes, never what it changes
+   to. */
 
 .wui-date-control {
   display: flex;
@@ -895,31 +896,94 @@ input[type='number'] {
   gap: calc(var(--px) * 2);
 }
 
-.wui-date-regions {
+.wui-calendar {
   display: flex;
-  gap: var(--border);
-  max-width: calc(var(--px) * 96);
+  flex-direction: column;
+  gap: calc(var(--px) * 2);
+  padding: calc(var(--px) * 2);
+  background: var(--bg-control);
+  box-shadow: 0 0 0 var(--border) var(--line-strong);
+  width: fit-content;
 }
 
-/* flex-grow is set per region from its day count; see DateWidget. */
-.wui-date-region {
-  flex: 1 1 0;
-  height: calc(var(--px) * 4);
-  min-width: calc(var(--px) * 2);
-  padding: 0;
+.wui-calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--px) * 2);
+}
+
+.wui-calendar-month {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+}
+
+.wui-calendar-step {
+  font: inherit;
+  font-size: 9px;
+  line-height: 1;
+  padding: var(--px) calc(var(--px) * 1.5);
   border: var(--border) solid var(--line-strong);
   border-radius: 0;
-  background: var(--bg-control);
+  background: var(--bg-panel);
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
-.wui-date-region:hover {
+.wui-calendar-step:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.wui-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, calc(var(--px) * 6));
+  gap: var(--border);
+}
+
+.wui-calendar-weekday {
+  font-size: 9px;
+  line-height: calc(var(--px) * 5);
+  text-align: center;
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.wui-calendar-pad {
+  display: block;
+}
+
+.wui-calendar-day {
+  font: inherit;
+  font-size: 9px;
+  line-height: 1;
+  height: calc(var(--px) * 5);
+  padding: 0;
+  border: var(--border) solid transparent;
+  border-radius: 0;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.wui-calendar-day:hover:not(:disabled) {
   border-color: var(--accent-primary);
 }
 
-.wui-date-region.is-active {
+/* A dead day: it exists, it is visibly not for you. Kept legible rather than
+   hidden, so the player can see how sparse the real choices are. */
+.wui-calendar-day:disabled {
+  background: transparent;
+  color: var(--text-secondary);
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.wui-calendar-day.is-selected {
   background: var(--accent-primary);
   border-color: var(--accent-primary);
+  color: var(--bg-page);
 }
 
 /* Square, hard-edged checkbox. */

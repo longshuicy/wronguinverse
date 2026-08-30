@@ -78,9 +78,6 @@ export function IntroStage() {
 
       <div className="wui-actions wui-actions-centred">
         {/* `?seed=…` reproduces a specific universe exactly (technical §9). */}
-        {/* A first-time player is routed through the Reality Index, because
-            the lore is the reason any of this makes sense; a returning one
-            goes straight in and can revisit it from the link. */}
         {/* Every run opens on the Reality Index rather than dropping straight
             into calibration. It carries a skip, so this costs a returning
             player one click and gives a new one the reason any of it makes
@@ -121,9 +118,29 @@ export function IntroStage() {
               </li>
             ))}
           </ul>
+          <h2>ART</h2>
+          <ul>
+            <li>
+              Creatures, props and the shift clip generated with Midjourney, then cleaned to a pixel
+              grid by the scripts in this repository.
+            </li>
+          </ul>
           <h2>TYPE</h2>
           <ul>
             <li>Press Start 2P and Silkscreen, SIL Open Font License 1.1.</li>
+          </ul>
+          <h2>CODE</h2>
+          <ul>
+            <li>
+              MIT licensed:{' '}
+              <a
+                href="https://github.com/longshuicy/wronguinverse"
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                github.com/longshuicy/wronguinverse
+              </a>
+            </li>
           </ul>
         </section>
       )}

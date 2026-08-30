@@ -140,6 +140,11 @@ licence actually requires.
 **Sound effects** — procedurally synthesized for this game; no third-party
 samples.
 
+**Art** — creatures, props and the shift clip generated with
+[Midjourney](https://www.midjourney.com), then cleaned to a pixel grid by the
+scripts in `scripts/`. Prompts are recorded per asset in the
+[art guide](docs/WrongUInverse-art-audio-guide.md).
+
 **Type** — [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P)
 and [Silkscreen](https://fonts.google.com/specimen/Silkscreen), both under the
 SIL Open Font License 1.1 and self-hosted.
@@ -156,3 +161,8 @@ npm run audio:clean    # audio-source/ -> public/sound/music  (96kbps AAC)
 Both have a `:check` counterpart that runs in CI and fails if anything
 oversized reaches `public/`. See the art guide
 [§5](docs/WrongUInverse-art-audio-guide.md) and §11.
+
+## Licence
+
+The code is [MIT licensed](LICENSE). The third-party music and fonts keep
+their own licences, listed under Credits above.

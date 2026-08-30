@@ -226,15 +226,28 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   beginChallenge: () => {
     const at = Date.now();
-    set({ stage: 'challenge', challengeStartedAt: at });
+    const run = get().run;
+    if (!run) {
+      set({ stage: 'challenge', challengeStartedAt: at });
+      return;
+    }
 
-    const { run, requirements, values, events } = get();
-    if (!run) return;
+    // Exploration is for poking, so the bench arrives at stabilization wherever
+    // the player left it — half-dragged sliders, a colour picked to see what it
+    // did. Stabilizing is a fresh instruction, and it should start from the
+    // same resting state the goals were generated against.
+    set({
+      stage: 'challenge',
+      challengeStartedAt: at,
+      values: freshValues(run.mappings),
+    });
 
-    // A player who worked a mapping out during exploration may leave the widget
-    // sitting on the answer. Evaluate on entry so that counts: locking used to
-    // happen only inside setValue, which stranded already-correct requirements
-    // and — if every one of them was correct — left the run unwinnable.
+    const { requirements, values, events } = get();
+
+    // A guard, not a carry-over: the generator never picks a target equal to a
+    // widget's resting value, so nothing should be satisfied by the reset
+    // above. If that invariant ever breaks, locking only inside setValue would
+    // strand the requirement and leave the run unwinnable.
     const alreadySatisfied = requirements
       .filter((requirement) => isRequirementSatisfied(requirement, run.mappings, values))
       .map((requirement) => requirement.widget);

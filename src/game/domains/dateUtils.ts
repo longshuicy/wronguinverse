@@ -44,6 +44,30 @@ export function makeIsoDate(year: number, month: number, day: number): IsoDate {
   return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
+/** Month abbreviation for an ISO date's month, e.g. `AUG`. */
+export function monthName(month: number): string {
+  return MONTH_ABBREVIATIONS[month - 1]!;
+}
+
+/** `[year, month, day]` from an ISO date, with month 1-indexed. */
+export function partsOf(iso: IsoDate): [number, number, number] {
+  return iso.split('-').map(Number) as [number, number, number];
+}
+
+/** Days in a month, 1-indexed, leap years included. */
+export function daysInMonth(year: number, month: number): number {
+  return (
+    toDayNumber(makeIsoDate(month === 12 ? year + 1 : year, (month % 12) + 1, 1)) -
+    toDayNumber(makeIsoDate(year, month, 1))
+  );
+}
+
+/** Weekday of an ISO date, 0 = Sunday. */
+export function weekdayOf(iso: IsoDate): number {
+  // The epoch, day 0, was a Thursday.
+  return (((toDayNumber(iso) + 4) % 7) + 7) % 7;
+}
+
 /**
  * Unambiguous display, e.g. `AUG 29, 2097`.
  * Month names avoid the DD/MM vs MM/DD trap called out in the design doc.

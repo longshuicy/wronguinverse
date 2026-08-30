@@ -6,9 +6,18 @@
 // The widget's calendar is deliberately independent of any date domain: this is
 // what lets a date picker mean something that is not a date.
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { clamp01 } from '../game/domains/defineDomain.ts';
-import { formatDate, fromDayNumber, makeIsoDate, toDayNumber } from '../game/domains/dateUtils.ts';
+import {
+  daysInMonth,
+  formatDate,
+  fromDayNumber,
+  makeIsoDate,
+  monthName,
+  partsOf,
+  toDayNumber,
+  weekdayOf,
+} from '../game/domains/dateUtils.ts';
 import type { AnyDomain, WidgetAdapterProps } from '../game/state/types.ts';
 
 /** The control's own physical span. Not related to any date domain's range. */
@@ -57,7 +66,7 @@ export interface Region {
   position: number;
   startIso: string;
   endIso: string;
-  /** Days covered. Segments are sized by this so the strip maps the real year. */
+  /** Days covered, so a stretch can show the range it stands for. */
   days: number;
 }
 
@@ -107,6 +116,132 @@ export function calendarRegions(domain: AnyDomain): Region[] {
   return findRegions(domain, first, span);
 }
 
+const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+/**
+ * A calendar that can refuse a date.
+ *
+ * `<input type="date">` cannot: there is no attribute for disabling individual
+ * days, and the popup is browser chrome we can neither style nor gate. When a
+ * discrete domain collapses the year into a handful of readings, every other
+ * day is dead — picking it changes nothing, and a player cannot tell a calendar
+ * that means five creatures from one that is ignoring them. So the grid is
+ * drawn here, where a dead day can simply be `disabled`.
+ *
+ * It still shows WHERE the calendar changes meaning and never WHAT it means:
+ * the deduction stays intact, only the fumbling goes away.
+ */
+function CalendarGrid({
+  first,
+  last,
+  selectedIso,
+  selectable,
+  onPick,
+}: {
+  first: number;
+  last: number;
+  selectedIso: string;
+  /** Day numbers that mean something, or `null` when every day does. */
+  selectable: Set<number> | null;
+  onPick: (iso: string) => void;
+}) {
+  const [selectedYear, selectedMonth] = partsOf(selectedIso);
+  const [view, setView] = useState({ year: selectedYear, month: selectedMonth });
+
+  // Most months are entirely dead when a domain collapses to four readings, so
+  // stepping one month at a time would mean clicking through empty grids. The
+  // arrows jump to the next month that actually holds something.
+  function step(direction: 1 | -1) {
+    let day = toDayNumber(makeIsoDate(view.year, view.month, 1));
+    for (let guard = 0; guard < 24; guard += 1) {
+      const [y, m] = partsOf(fromDayNumber(day));
+      const next =
+        direction === 1
+          ? toDayNumber(makeIsoDate(m === 12 ? y + 1 : y, (m % 12) + 1, 1))
+          : toDayNumber(makeIsoDate(m === 1 ? y - 1 : y, m === 1 ? 12 : m - 1, 1));
+      if (next > last || next < first - 31) return;
+      day = next;
+
+      const [ny, nm] = partsOf(fromDayNumber(day));
+      const total = daysInMonth(ny, nm);
+      const start = toDayNumber(makeIsoDate(ny, nm, 1));
+      const holdsSomething =
+        selectable === null ||
+        Array.from({ length: total }, (_, i) => start + i).some(
+          (d) => d >= first && d <= last && selectable.has(d),
+        );
+      if (holdsSomething) {
+        setView({ year: ny, month: nm });
+        return;
+      }
+    }
+  }
+
+  const total = daysInMonth(view.year, view.month);
+  const leading = weekdayOf(makeIsoDate(view.year, view.month, 1));
+  const cells: (string | null)[] = [
+    ...Array.from({ length: leading }, () => null),
+    ...Array.from({ length: total }, (_, i) => makeIsoDate(view.year, view.month, i + 1)),
+  ];
+
+  return (
+    <div className="wui-calendar">
+      <div className="wui-calendar-head">
+        <button
+          type="button"
+          className="wui-calendar-step"
+          onClick={() => step(-1)}
+          aria-label="Previous month with a selectable date"
+        >
+          {'\u25C0'}
+        </button>
+        <span className="wui-calendar-month">
+          {monthName(view.month)} {view.year}
+        </span>
+        <button
+          type="button"
+          className="wui-calendar-step"
+          onClick={() => step(1)}
+          aria-label="Next month with a selectable date"
+        >
+          {'\u25B6'}
+        </button>
+      </div>
+
+      <div className="wui-calendar-grid" role="grid">
+        {WEEKDAY_INITIALS.map((initial, i) => (
+          <span key={i} className="wui-calendar-weekday" aria-hidden="true">
+            {initial}
+          </span>
+        ))}
+
+        {cells.map((iso, i) => {
+          if (!iso) return <span key={`pad-${i}`} className="wui-calendar-pad" />;
+
+          const day = toDayNumber(iso);
+          const inSpan = day >= first && day <= last;
+          const enabled = inSpan && (selectable === null || selectable.has(day));
+          const selected = iso === selectedIso;
+
+          return (
+            <button
+              key={iso}
+              type="button"
+              className={selected ? 'wui-calendar-day is-selected' : 'wui-calendar-day'}
+              disabled={!enabled}
+              aria-label={formatDate(iso)}
+              aria-current={selected ? 'date' : undefined}
+              onClick={() => onPick(iso)}
+            >
+              {partsOf(iso)[2]}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function DateWidget({ domain, value, onChange }: WidgetAdapterProps) {
   // Native: the domain already speaks in dates, so show its actual calendar.
   // Otherwise fall back to this control's own span and report a position —
@@ -116,56 +251,36 @@ export function DateWidget({ domain, value, onChange }: WidgetAdapterProps) {
   const last = native ? native.last : LAST_DAY;
   const span = last - first;
 
-  const position = domain.normalize(value);
-  const shownDate = fromDayNumber(first + Math.round(clamp01(position) * span));
+  const regions = useMemo(() => calendarRegions(domain), [domain]);
   const currentLabel = value === undefined ? null : domain.display(value);
 
-  const regions = useMemo(() => calendarRegions(domain), [domain]);
+  // One day per distinct reading. `null` means the domain changes often enough
+  // that every day is worth offering, and the calendar behaves normally.
+  const selectable = useMemo(
+    () =>
+      regions.length === 0
+        ? null
+        : new Set(regions.map((region) => first + Math.round(region.position * span))),
+    [regions, first, span],
+  );
+
+  const activeRegion =
+    currentLabel === null ? undefined : regions.find((region) => region.label === currentLabel);
+
+  const position = domain.normalize(value);
+  const selectedIso = activeRegion
+    ? activeRegion.startIso
+    : fromDayNumber(first + Math.round(clamp01(position) * span));
 
   return (
     <div className="wui-date-control">
-      <input
-        className="wui-date"
-        type="date"
-        min={fromDayNumber(first)}
-        max={fromDayNumber(last)}
-        value={shownDate}
-        onChange={(event) => {
-          // Clearing a date input yields an empty string; ignore it rather than
-          // snapping the value to January 1st behind the player's back.
-          if (!event.target.value) return;
-          const picked = toDayNumber(event.target.value);
-          onChange(domain.denormalize(clamp01((picked - first) / span)));
-        }}
-        aria-label="Date control"
+      <CalendarGrid
+        first={first}
+        last={last}
+        selectedIso={selectedIso}
+        selectable={selectable}
+        onPick={(iso) => onChange(domain.denormalize(clamp01((toDayNumber(iso) - first) / span)))}
       />
-
-      {/* One segment per distinct reading, the active one highlighted. Deliberately
-          shows WHERE the calendar changes meaning, never WHAT it means — the
-          deduction stays intact, only the fumbling goes away. */}
-      {regions.length > 0 && (
-        <div className="wui-date-regions" role="group" aria-label="Calendar regions">
-          {regions.map((region, index) => {
-            const active = currentLabel !== null && region.label === currentLabel;
-            return (
-              <button
-                key={region.startIso}
-                type="button"
-                className={active ? 'wui-date-region is-active' : 'wui-date-region'}
-                // Width tracks the real span of dates, so the strip reads as a
-                // map of the year rather than an abstract list of slots.
-                style={{ flexGrow: region.days }}
-                aria-pressed={active}
-                aria-label={`Region ${index + 1} of ${regions.length}, ${formatDate(
-                  region.startIso,
-                )} to ${formatDate(region.endIso)}`}
-                title={`${formatDate(region.startIso)} – ${formatDate(region.endIso)}`}
-                onClick={() => onChange(domain.denormalize(region.position))}
-              />
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

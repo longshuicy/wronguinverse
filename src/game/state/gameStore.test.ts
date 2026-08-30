@@ -65,37 +65,37 @@ describe('run loop', () => {
     expect(useGameStore.getState().values[requirement.widget]).toEqual(mapping.domain.target);
   });
 
-  it('locks requirements already satisfied when the challenge begins', () => {
-    // A player who works a mapping out during exploration may leave the widget
-    // sitting on the answer. That must count, not strand the requirement:
-    // locking used to happen only inside setValue, so an already-correct value
-    // never locked and the run could not complete.
+  it('resets the bench when the challenge begins', () => {
+    // Exploration is for poking, so a widget can arrive at stabilization
+    // anywhere the player left it. Stabilizing is a fresh instruction and
+    // starts from the resting state the goals were generated against.
     useGameStore.getState().beginRun('REALITY-TEST');
     const { run, requirements } = useGameStore.getState();
     const requirement = requirements[0]!;
     const mapping = run!.mappings.find((m) => m.widget === requirement.widget)!;
 
-    // Set it during EXPLORE, before the challenge starts.
     useGameStore.getState().setValue(requirement.widget, mapping.domain.target);
+    expect(useGameStore.getState().values[requirement.widget]).toEqual(mapping.domain.target);
+
     useGameStore.getState().beginChallenge();
 
-    expect(useGameStore.getState().lockedWidgets).toContain(requirement.widget);
+    expect(useGameStore.getState().values[requirement.widget]).not.toEqual(mapping.domain.target);
+    expect(useGameStore.getState().lockedWidgets).toEqual([]);
+    expect(useGameStore.getState().stage).toBe('challenge');
   });
 
-  it('completes the run when every requirement is satisfied on entry', () => {
-    // The degenerate version of the same bug: with everything already correct
-    // there was no further interaction to trigger the completion check at all.
-    useGameStore.getState().beginRun('REALITY-TEST');
-    const { run, requirements } = useGameStore.getState();
+  it('never begins a challenge with a requirement already satisfied', () => {
+    // The reset above is only safe because the generator never picks a target
+    // equal to a widget's resting value. If that invariant broke, a run whose
+    // requirements were all satisfied on entry would have nothing left to
+    // interact with and could never complete.
+    for (let i = 0; i < 40; i += 1) {
+      useGameStore.getState().beginRun(`REALITY-RESET-${i}`);
+      useGameStore.getState().beginChallenge();
 
-    for (const requirement of requirements) {
-      const mapping = run!.mappings.find((m) => m.widget === requirement.widget)!;
-      useGameStore.getState().setValue(requirement.widget, mapping.domain.target);
+      expect(useGameStore.getState().stage).toBe('challenge');
+      expect(useGameStore.getState().lockedWidgets).toEqual([]);
     }
-    useGameStore.getState().beginChallenge();
-
-    expect(useGameStore.getState().stage).toBe('result');
-    expect(useGameStore.getState().outcome).toBe('stabilized');
   });
 
   it('reaches the result screen by satisfying every requirement', () => {
