@@ -1,10 +1,10 @@
 // StageRail.tsx
-// A persistent map of the run: CALIBRATE → SHIFT → EXPLORE → STABILIZE → REPORT.
+// A map of the run: CALIBRATE, SHIFT, EXPLORE, STABILIZE, REPORT.
 //
-// The stages used to be told apart only by their heading, which meant a player
-// mid-run could not see where they were or what was coming. Tinting each stage
-// a different colour was not enough on its own — a tint tells you something
-// changed, not what. This names the steps and marks the current one.
+// Drawn as a progress track, not a row of chips. Boxed labels read as buttons
+// and invite clicks that do nothing, so there are no borders, no panels and no
+// hover states here: just a connecting line, a marker on the current step, and
+// three levels of dimming.
 
 import type { StageId } from '../game/state/types.ts';
 
@@ -25,19 +25,20 @@ export function StageRail({ stage }: StageRailProps) {
   if (index < 0) return null;
 
   return (
-    <nav className="wui-rail" aria-label="Run progress">
+    <ol className="wui-rail" aria-label="Run progress">
       {STEPS.map((step, i) => {
         const state = i === index ? 'current' : i < index ? 'done' : 'todo';
         return (
-          <span
+          <li
             key={step.id}
             className={`wui-rail-step is-${state}`}
             aria-current={state === 'current' ? 'step' : undefined}
           >
-            {step.label}
-          </span>
+            <span className="wui-rail-mark" aria-hidden="true" />
+            <span className="wui-rail-label">{step.label}</span>
+          </li>
         );
       })}
-    </nav>
+    </ol>
   );
 }

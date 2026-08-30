@@ -125,10 +125,15 @@ describe('run loop', () => {
     expect(state.run).not.toBeNull();
   });
 
-  it('retries the same reality with identical mappings and targets', () => {
+  it('retries the same reality with the same rules but new goals', () => {
+    // The point of a retry is to ask whether the player learned the MAPPING,
+    // not whether they memorised four values. Same widget meanings, new
+    // labels, ranges and targets.
     useGameStore.getState().beginRun('REALITY-TEST');
     useGameStore.getState().beginChallenge();
+
     const before = useGameStore.getState().run!;
+    const beforeRules = before.mappings.map((m) => `${m.widget}:${m.semantic}`);
     const beforeTargets = before.mappings.map((m) => m.domain.display(m.domain.target));
 
     useGameStore.getState().giveUp();
@@ -137,10 +142,31 @@ describe('run loop', () => {
     const after = useGameStore.getState();
     expect(after.stage).toBe('challenge');
     expect(after.run!.seed).toBe(before.seed);
-    expect(after.run!.mappings.map((m) => m.domain.display(m.domain.target))).toEqual(
-      beforeTargets,
-    );
+
+    // The rules are preserved exactly.
+    expect(after.run!.mappings.map((m) => `${m.widget}:${m.semantic}`)).toEqual(beforeRules);
+
+    // The goals are not. (A single domain could coincidentally re-roll the
+    // same value, so this asserts on the set rather than every element.)
+    const afterTargets = after.run!.mappings.map((m) => m.domain.display(m.domain.target));
+    expect(afterTargets).not.toEqual(beforeTargets);
+
+    // And every new target is still reachable and not the resting value.
+    for (const mapping of after.run!.mappings) {
+      const resting = mapping.domain.denormalize(0);
+      expect(mapping.domain.equals(resting, mapping.domain.target)).toBe(false);
+    }
+
     expect(after.lockedWidgets).toEqual([]);
+  });
+
+  it('keeps the seed stable across retries', () => {
+    useGameStore.getState().beginRun('REALITY-TEST');
+    useGameStore.getState().beginChallenge();
+    const before = useGameStore.getState().run!;
+    useGameStore.getState().giveUp();
+    useGameStore.getState().retrySameReality();
+    expect(useGameStore.getState().run!.seed).toBe(before.seed);
   });
 
   it('advances distance only after a successful stabilization', () => {

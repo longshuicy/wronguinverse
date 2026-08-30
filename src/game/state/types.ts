@@ -104,7 +104,15 @@ export interface RunConfig {
 }
 
 /** Screens in the run loop. See docs/WrongUInverse-technical-design.md §12. */
-export type StageId = 'intro' | 'normal' | 'shift' | 'explore' | 'challenge' | 'result';
+export type StageId =
+  | 'intro'
+  /** The Reality Index: the lore, read at the player's own pace. */
+  | 'briefing'
+  | 'normal'
+  | 'shift'
+  | 'explore'
+  | 'challenge'
+  | 'result';
 
 /** One line of the compound objective, e.g. `COMPANION: QUONK`. */
 export interface Requirement {

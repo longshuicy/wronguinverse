@@ -1,27 +1,30 @@
 // IntroStage.tsx
-// Entry point. Deliberately says almost nothing about the twist: the game
-// communicates its thesis through play, not exposition (game design §2).
+// The landing page. Says almost nothing about the twist on purpose: the game
+// communicates its thesis through play, not exposition (game design §2). The
+// lore that used to sit here now lives in the Reality Index, one page along.
 
 import { useState } from 'react';
 import { MUSIC_CREDITS } from '../../content/music.ts';
+import { TAGLINE } from '../../content/flavorText.ts';
 import { availableDifficulties } from '../difficulty.ts';
 import { seedFromLocation } from '../generator/seededRandom.ts';
 import { useGameStore } from '../state/gameStore.ts';
 
-/** Tiers 2 and 3 from game design §3, folded away until they exist. */
-const FUTURE_TIERS = [
-  {
-    name: 'TIER 2 · OPERATION SHIFT',
-    blurb: 'The controls stop working the way they look. A slider you click. A checkbox you drag.',
-  },
-  {
-    name: 'TIER 3 · GESTURE SHIFT',
-    blurb: 'Clicking, dragging and hovering swap places. Expert chaos.',
-  },
+/**
+ * The three tiers from game design §3, all visible.
+ *
+ * Showing the locked ones is the point: it makes clear that this release is
+ * one third of an idea rather than the whole of it, and what the other two
+ * thirds do to you.
+ */
+const TIERS = [
+  { name: 'SEMANTIC SHIFT', blurb: 'Wrong meanings.', available: true },
+  { name: 'OPERATION SHIFT', blurb: 'Wrong operation.', available: false },
+  { name: 'GESTURE SHIFT', blurb: 'Wrong gestures.', available: false },
 ];
 
 export function IntroStage() {
-  const beginRun = useGameStore((s) => s.beginRun);
+  const openBriefing = useGameStore((s) => s.openBriefing);
   const progress = useGameStore((s) => s.progress);
   const difficulty = useGameStore((s) => s.difficulty);
   const setDifficulty = useGameStore((s) => s.setDifficulty);
@@ -35,33 +38,27 @@ export function IntroStage() {
         Wrong<span className="wui-title-ui">UI</span>
         <span className="wui-title-flip">N</span>verse
       </h1>
-      <p className="wui-tagline">Everything works as unintended.</p>
+      <p className="wui-tagline">{TAGLINE}</p>
 
-      {/* Tier 1 is the release; the other two fold away behind it rather than
-          taking up the page with things you cannot play. */}
-      <div className="wui-tier-line">
-        <span className="wui-release">1.0 · TIER 1 · SEMANTIC SHIFT</span>
-        <details className="wui-future">
-          <summary>What else is coming?</summary>
-          <ul>
-            {FUTURE_TIERS.map((tier) => (
-              <li key={tier.name}>
-                <span className="wui-future-name">{tier.name}</span>
-                <span className="wui-future-blurb">{tier.blurb}</span>
-                <span className="wui-future-tag">COMING SOON</span>
-              </li>
-            ))}
-          </ul>
-        </details>
-      </div>
-
-      <p className="wui-lede">
-        You operate a Reality Calibration Terminal. Nearby universes have overlapped, and interface
-        conventions were among the things that shifted.
-      </p>
+      {/* Plain rows, not buttons: only one is selectable, so anything that
+          looks pressable is a promise the page cannot keep. */}
+      <ul className="wui-tiers" aria-label="Tier">
+        {TIERS.map((tier, i) => (
+          <li key={tier.name} className={tier.available ? 'wui-tier is-active' : 'wui-tier'}>
+            <span className="wui-tier-caret" aria-hidden="true">
+              {tier.available ? '▶' : ''}
+            </span>
+            <span className="wui-tier-name">
+              TIER {i + 1} · {tier.name}
+            </span>
+            <span className="wui-tier-blurb">{tier.blurb}</span>
+            {!tier.available && <span className="wui-tier-tag">SOON</span>}
+          </li>
+        ))}
+      </ul>
 
       <section className="wui-levels" aria-label="Difficulty level">
-        <p className="wui-levels-label">SELECT LEVEL</p>
+        <p className="wui-picker-label">SELECT LEVEL</p>
         <div className="wui-level-row">
           {availableDifficulties().map((level) => (
             <button
@@ -81,8 +78,15 @@ export function IntroStage() {
 
       <div className="wui-actions wui-actions-centred">
         {/* `?seed=…` reproduces a specific universe exactly (technical §9). */}
-        <button type="button" className="wui-start" onClick={() => beginRun(urlSeed ?? undefined)}>
-          {progress.tutorialCompleted ? 'Contact a new universe' : 'Begin calibration'}
+        {/* A first-time player is routed through the Reality Index, because
+            the lore is the reason any of this makes sense; a returning one
+            goes straight in and can revisit it from the link. */}
+        {/* Every run opens on the Reality Index rather than dropping straight
+            into calibration. It carries a skip, so this costs a returning
+            player one click and gives a new one the reason any of it makes
+            sense. */}
+        <button type="button" className="wui-start" onClick={openBriefing}>
+          {progress.tutorialCompleted ? 'Contact a new universe' : 'Begin'}
         </button>
       </div>
 

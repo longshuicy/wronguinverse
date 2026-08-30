@@ -27,13 +27,40 @@ interface WidgetBenchProps {
    * checkbox) and "STATION 3" was worse: a number that appears nowhere else.
    */
   requirements?: Requirement[];
+  /**
+   * Print each control's target on it.
+   *
+   * Off during exploration: Stage 2 is free experimentation, and handing over
+   * the objective before the player has touched anything removes the reason to
+   * explore (game design §4). The card still carries its NAME, so the bench can
+   * be matched to the order when the order arrives.
+   */
+  showTargets?: boolean;
   lockedWidgets?: WidgetType[];
   hintLevels?: Partial<Record<WidgetType, HintLevel>>;
   onHint?: (widget: WidgetType) => void;
   hintsEnabled?: boolean;
   /** Run seed, used to give each station a stable specimen. */
   seed?: string;
+  /**
+   * Values the player has already produced with each control, oldest first.
+   *
+   * Shown on the card that produced them rather than only in a separate panel:
+   * the useful question during exploration is "what has THIS control done so
+   * far", and answering it next to the control saves the player holding a
+   * second list in their head. Records values, never semantic labels, which is
+   * what preserves the deduction (technical design §13).
+   */
+  observations?: Partial<Record<WidgetType, string[]>>;
+  /** How much of that trail to keep; tightened on harder levels. */
+  observationDetail?: 'full' | 'reduced' | 'minimal';
 }
+
+const TRAIL_LIMIT: Record<'full' | 'reduced' | 'minimal', number> = {
+  full: 5,
+  reduced: 3,
+  minimal: 2,
+};
 
 export function WidgetBench({
   mappings,
@@ -42,11 +69,14 @@ export function WidgetBench({
   onChange,
   showInterpreted,
   requirements,
+  showTargets = true,
   lockedWidgets = [],
   hintLevels = {},
   onHint,
   hintsEnabled = false,
   seed,
+  observations,
+  observationDetail = 'full',
 }: WidgetBenchProps) {
   const specimens = seed ? planSpecimens(seed, mappings.length) : [];
 
@@ -73,13 +103,14 @@ export function WidgetBench({
                     name is visible in the control itself and adds nothing. */}
                 {requirement ? requirement.label : `STATION ${index + 1}`}
               </span>
-              {/* One inhabitant per station — decoration that belongs to
-                  something, rather than floating loose on the page. */}
-              <Specimen id={specimens[index]} />
               {locked && <span className="wui-station-lock">✓ LOCKED</span>}
+              {/* One inhabitant per station. In normal flow rather than
+                  absolutely positioned: floating it over the corner meant wide
+                  controls ran underneath it. */}
+              <Specimen id={specimens[index]} />
             </header>
 
-            {requirement && (
+            {requirement && showTargets && (
               <p className="wui-station-goal">
                 <span className="wui-station-goal-arrow">SET TO</span>
                 <span className="wui-station-goal-value">{requirement.targetDisplay}</span>
@@ -100,6 +131,18 @@ export function WidgetBench({
                 <span className="wui-station-output-label">READS AS</span>
                 <span className="wui-station-output-value">
                   {value === undefined ? '--' : mapping.domain.display(value)}
+                </span>
+              </p>
+            )}
+
+            {/* What this control has done so far. Kept even when the current
+                value is wrong: during exploration nothing is wrong, and seeing
+                the sequence is how the mapping gets deduced. */}
+            {observations && (observations[mapping.widget]?.length ?? 0) > 1 && (
+              <p className="wui-station-trail">
+                <span className="wui-station-trail-label">YOU SAW</span>
+                <span className="wui-station-trail-values">
+                  {observations[mapping.widget]!.slice(-TRAIL_LIMIT[observationDetail]).join(' → ')}
                 </span>
               </p>
             )}

@@ -5,6 +5,7 @@
 
 import { useMemo } from 'react';
 import { AssetImage } from '../../components/AssetImage.tsx';
+import { StageBar } from '../../components/StageBar.tsx';
 import {
   GIVE_UP_RESPONSE,
   resultHeadline,
@@ -38,25 +39,66 @@ export function ResultStage() {
 
   return (
     <main className="wui-screen">
+      {/* The report keeps the same bar as every other stage, so the run never
+          loses its frame and the exits never move. */}
+      <StageBar
+        stage="result"
+        status={
+          <>
+            <span className="wui-status-word">
+              {outcome === 'stabilized' ? 'STABILIZED' : 'ABANDONED'}
+            </span>{' '}
+            {run.seed}
+          </>
+        }
+        actions={
+          <>
+            {/* Retrying after finally understanding the mapping is the
+                satisfying half of failing, so offer it first (game design §4). */}
+            <button type="button" className="wui-primary" onClick={retry}>
+              Try this reality again
+            </button>
+            <button type="button" className="wui-ghost" onClick={next}>
+              Escape to another universe
+            </button>
+            <button type="button" className="wui-ghost" onClick={returnToIntro}>
+              Leave
+            </button>
+          </>
+        }
+      />
+
       <header className="wui-screen-head">
-        <p className="wui-eyebrow">{run.seed}</p>
         <h1>{resultHeadline(outcome)}</h1>
         {outcome === 'gaveUp' && <p className="wui-lede">{GIVE_UP_RESPONSE}</p>}
       </header>
 
+      {/* Two columns, not one centred stack. The panel is far wider than a
+          readable line, so a single column left ~460px empty on either side
+          and stacked five blocks at three different alignments. The specimen
+          card is the part a player recognises and shares; the read is prose
+          and belongs in a column of its own. */}
       <section className="wui-diagnosis">
         {/* Each brain type has a specimen; the pairing lives in
             content/brainTypes.ts so it is not re-invented per screen. */}
-        <div className="wui-diagnosis-creature">
-          <AssetImage id={brain.creature} alt="" scale={2} />
+        <div className="wui-diagnosis-specimen">
+          <div className="wui-diagnosis-creature">
+            <AssetImage id={brain.creature} alt="" scale={2} />
+          </div>
+          <p className="wui-diagnosis-creature-name">{brain.creatureName}</p>
+          {/* The one number that summarises the read, so it is set as a
+              figure rather than as a grey footnote under the prose. */}
+          <p className="wui-diagnosis-metric-value">{conventional}%</p>
+          <p className="wui-diagnosis-metric-label">CONVENTIONAL THINKING</p>
         </div>
-        <p className="wui-diagnosis-metric">CONVENTIONAL THINKING: {conventional}%</p>
-        <p className="wui-diagnosis-brain">{brain.name}</p>
-        <p className="wui-diagnosis-blurb">{brain.blurb}</p>
-        {/* The doc is emphatic that this is comedy, not assessment. Say so. */}
-        <p className="wui-diagnosis-caveat">
-          Diagnosis is entirely unscientific and should not be shown to a doctor.
-        </p>
+
+        <div className="wui-diagnosis-read">
+          <p className="wui-diagnosis-brain">{brain.name}</p>
+          {/* A caption for the type, not body text — the description below is
+              the payoff and carries the weight. */}
+          <p className="wui-diagnosis-blurb">{brain.blurb}</p>
+          <p className="wui-diagnosis-description">{brain.description}</p>
+        </div>
       </section>
 
       <dl className="wui-stats">
@@ -102,20 +144,6 @@ export function ResultStage() {
           ))}
         </ul>
       </section>
-
-      <div className="wui-actions">
-        {/* Retrying after finally understanding the mapping is the satisfying
-            half of failing — offer it first (game design §4). */}
-        <button type="button" className="wui-primary" onClick={retry}>
-          Try this reality again
-        </button>
-        <button type="button" className="wui-ghost" onClick={next}>
-          Escape to another universe
-        </button>
-        <button type="button" className="wui-ghost" onClick={returnToIntro}>
-          Back to the start
-        </button>
-      </div>
     </main>
   );
 }

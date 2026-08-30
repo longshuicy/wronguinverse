@@ -19,7 +19,9 @@
     "art:clean": "node scripts/clean-sprites.mjs",
     "art:check": "node scripts/clean-sprites.mjs --check",
     "audio:clean": "node scripts/clean-audio.mjs",
-    "audio:check": "node scripts/clean-audio.mjs --check"
+    "audio:check": "node scripts/clean-audio.mjs --check",
+    "video:clean": "node scripts/clean-video.mjs",
+    "video:check": "node scripts/clean-video.mjs --check"
   },
   "dependencies": {
     "howler": "^2.2.4",

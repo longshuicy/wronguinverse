@@ -8,6 +8,10 @@ art-source
 # transcoded files are what is committed.
 audio-source
 
+# Raw video. The shift clip arrives full length and full size;
+# `npm run video:clean` trims and transcodes it into public/animation.
+video-source
+
 # Dependencies
 node_modules
 

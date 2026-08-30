@@ -4,9 +4,7 @@
 // See docs/WrongUInverse-game-design.md §4, technical design §12.
 
 import { Mascot } from '../../components/Mascot.tsx';
-import { ObservationLog } from '../../components/ObservationLog.tsx';
-import { OrderPanel } from '../../components/OrderPanel.tsx';
-import { StageRail } from '../../components/StageRail.tsx';
+import { StageBar } from '../../components/StageBar.tsx';
 import { WidgetBench } from '../../components/WidgetBench.tsx';
 import { EXPLORE_INTRO } from '../../content/flavorText.ts';
 import { useGameStore } from '../state/gameStore.ts';
@@ -18,7 +16,6 @@ export function ExploreStage() {
   const observations = useGameStore((s) => s.observations);
   const hintLevels = useGameStore((s) => s.hintLevels);
   const useHint = useGameStore((s) => s.useHint);
-  const events = useGameStore((s) => s.events);
   const beginChallenge = useGameStore((s) => s.beginChallenge);
   const difficulty = useGameStore((s) => s.difficulty);
   const requirements = useGameStore((s) => s.requirements);
@@ -26,33 +23,39 @@ export function ExploreStage() {
 
   if (!run) return null;
 
-  const interactions = events.filter((event) => event.type === 'interaction').length;
-
   return (
     <main className="wui-screen">
-      {/* Everything the player needs to keep checking lives here and stays
-          put: the order, the count, and the way forward. The advance button
-          used to sit under the bench, which on a six-station board is well
-          below the fold - so players never found it, and never reached the
-          report at all. */}
-      <header className="wui-topbar">
-        <div className="wui-topbar-row">
-          <StageRail stage="explore" />
-          <div className="wui-topbar-actions">
-            <span className="wui-counter">
-              <span className="wui-counter-value">{interactions}</span> INTERACTIONS
-            </span>
+      {/* The status line states the stakes outright. Explore and Stabilize
+          otherwise look alike, and a tester who cannot tell them apart is
+          really asking "does what I do here count?" — so answer that. */}
+      <StageBar
+        stage="explore"
+        // No count here. Exploration is the stage where nothing is being
+        // scored, and putting a running tally on screen quietly contradicts
+        // that — it reads as something to keep down.
+        status={
+          <>
+            <span className="wui-status-word">EXPLORING</span> nothing counts yet
+          </>
+        }
+        actions={
+          <>
             <button type="button" className="wui-primary" onClick={beginChallenge}>
               I understand this universe
             </button>
             <button type="button" className="wui-ghost" onClick={returnToIntro}>
               Leave
             </button>
-          </div>
-        </div>
+          </>
+        }
+      />
 
-        <div className="wui-topbar-main">
-          {/* Zorblet stands beside the order he reacts to. */}
+      {/* Same two columns as the challenge, so the screen does not rearrange
+          itself between the two stages. The field notes take the place the
+          order will occupy, since watching values accumulate is what this
+          stage is for. */}
+      <div className="wui-board">
+        <aside className="wui-board-aside">
           <div className="wui-goal">
             <Mascot />
             <div>
@@ -61,26 +64,27 @@ export function ExploreStage() {
               <p className="wui-eyebrow">SHIFTED · {run.seed}</p>
             </div>
           </div>
-          <OrderPanel requirements={requirements} lockedWidgets={[]} />
-        </div>
-      </header>
+        </aside>
 
-      <WidgetBench
-        mappings={run.mappings}
-        values={values}
-        mode="explore"
-        onChange={setValue}
-        seed={run.seed}
-        showInterpreted
-        requirements={requirements}
-        hintLevels={hintLevels}
-        onHint={useHint}
-        hintsEnabled={difficulty.hintPolicy !== 'limited'}
-      />
-
-      <footer className="wui-footer">
-        <ObservationLog observations={observations} detail={difficulty.notebookDetail} />
-      </footer>
+        <WidgetBench
+          mappings={run.mappings}
+          values={values}
+          mode="explore"
+          onChange={setValue}
+          seed={run.seed}
+          showInterpreted
+          // Names, but not targets: Stage 2 is free experimentation, and
+          // handing over the objective before the player has touched anything
+          // removes the reason to explore at all (game design §4).
+          requirements={requirements}
+          showTargets={false}
+          hintLevels={hintLevels}
+          onHint={useHint}
+          hintsEnabled={difficulty.hintPolicy !== 'limited'}
+          observations={observations}
+          observationDetail={difficulty.notebookDetail}
+        />
+      </div>
     </main>
   );
 }

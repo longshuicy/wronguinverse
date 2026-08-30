@@ -33,6 +33,16 @@ export interface GenerateRunOptions {
    * `yes`, which by construction excludes every conventional (`normal`) pairing.
    */
   accept?: Compatibility[];
+  /**
+   * Let two widgets share a semantic.
+   *
+   * The shift needs one widget per semantic or the puzzle is ill-formed. But
+   * radio and dropdown are BOTH conventionally "choice", so calibration cannot
+   * show all eight controls under that rule — and it does not need to: two
+   * controls that both pick from a list is what ordinary software looks like,
+   * which is exactly the baseline calibration exists to establish.
+   */
+  allowDuplicateSemantics?: boolean;
 }
 
 export class MappingGenerationError extends Error {
@@ -69,6 +79,7 @@ function findAssignment(
   semantics: SemanticType[],
   count: number,
   accept: Compatibility[],
+  allowDuplicateSemantics = false,
 ): { widget: WidgetType; semantic: SemanticType }[] | null {
   const chosen: { widget: WidgetType; semantic: SemanticType }[] = [];
   const usedSemantics = new Set<SemanticType>();
@@ -81,7 +92,7 @@ function findAssignment(
     const widget = widgets[widgetIndex]!;
 
     for (const semantic of semantics) {
-      if (usedSemantics.has(semantic)) continue;
+      if (!allowDuplicateSemantics && usedSemantics.has(semantic)) continue;
       if (!isPairingAllowed(widget, semantic, accept)) continue;
 
       chosen.push({ widget, semantic });
@@ -99,32 +110,16 @@ function findAssignment(
 }
 
 /**
- * Generate a complete universe from a seed.
+ * Build a domain and a reachable target for each widget/semantic pair.
  *
- * The same seed always yields the same widgets, semantics, labels and targets:
- * a single RNG stream drives selection and every domain generator in turn.
+ * Split out from `generateRun` so the same logic can produce a fresh set of
+ * goals over an assignment that already exists — see `regenerateGoals`.
  */
-export function generateRun(options: GenerateRunOptions): RunConfig {
-  const {
-    seed,
-    count = 4,
-    widgets = implementedWidgets(),
-    semantics = implementedSemantics(),
-    accept = ['yes'],
-  } = options;
-
-  const rng: Rng = createRng(seed);
-  const assignment = findAssignment(rng.shuffle(widgets), rng.shuffle(semantics), count, accept);
-
-  if (!assignment) {
-    throw new MappingGenerationError(
-      `Could not build ${count} mappings from ${widgets.length} widgets and ` +
-        `${semantics.length} semantics at compatibility [${accept.join(', ')}]. ` +
-        `Reduce the mapping count rather than weakening compatibility.`,
-    );
-  }
-
-  const mappings: Mapping[] = assignment.map(({ widget, semantic }) => {
+function buildMappings(
+  assignment: { widget: WidgetType; semantic: SemanticType }[],
+  rng: Rng,
+): Mapping[] {
+  return assignment.map(({ widget, semantic }) => {
     const domain = generateDomain(semantic, rng);
 
     // A domain generates a target from its own full value space, but the widget
@@ -140,9 +135,7 @@ export function generateRun(options: GenerateRunOptions): RunConfig {
     }
 
     // Exclude the widget's resting value. A target the control already sits on
-    // is a requirement that satisfies itself before the player does anything —
-    // it locks for free in the challenge and gives a calibration task with
-    // nothing to do. Keep it only if the control has nowhere else to go.
+    // is a requirement that satisfies itself before the player does anything.
     const resting = initialValue(domain);
     const candidates = reachable.filter((value) => !domain.equals(value, resting));
     const usable = candidates.length > 0 ? candidates : reachable;
@@ -153,6 +146,59 @@ export function generateRun(options: GenerateRunOptions): RunConfig {
 
     return { widget, semantic, domain: { ...domain, target } };
   });
+}
+
+/**
+ * Re-roll the CONTENT of a universe while keeping its RULES.
+ *
+ * Same widgets meaning the same things, but new labels, new ranges and new
+ * targets: the slider still means a date, it is simply a different date, and
+ * the boolean is now OPEN/CLOSED rather than STABLE/UNSTABLE.
+ *
+ * This is what "try this reality again" replays. Repeating the identical
+ * challenge only measures whether the player remembers four values; changing
+ * the goals asks whether they actually learned the mapping, which is the thing
+ * the game is about.
+ */
+export function regenerateGoals(mappings: Mapping[], seed: string): Mapping[] {
+  const assignment = mappings.map(({ widget, semantic }) => ({ widget, semantic }));
+  return buildMappings(assignment, createRng(seed));
+}
+
+/**
+ * Generate a complete universe from a seed.
+ *
+ * The same seed always yields the same widgets, semantics, labels and targets:
+ * a single RNG stream drives selection and every domain generator in turn.
+ */
+export function generateRun(options: GenerateRunOptions): RunConfig {
+  const {
+    seed,
+    count = 4,
+    widgets = implementedWidgets(),
+    semantics = implementedSemantics(),
+    accept = ['yes'],
+    allowDuplicateSemantics = false,
+  } = options;
+
+  const rng: Rng = createRng(seed);
+  const assignment = findAssignment(
+    rng.shuffle(widgets),
+    rng.shuffle(semantics),
+    count,
+    accept,
+    allowDuplicateSemantics,
+  );
+
+  if (!assignment) {
+    throw new MappingGenerationError(
+      `Could not build ${count} mappings from ${widgets.length} widgets and ` +
+        `${semantics.length} semantics at compatibility [${accept.join(', ')}]. ` +
+        `Reduce the mapping count rather than weakening compatibility.`,
+    );
+  }
+
+  const mappings = buildMappings(assignment, rng);
 
   return { seed, mappings, stage: 'explore' };
 }

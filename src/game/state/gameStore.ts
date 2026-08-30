@@ -13,7 +13,7 @@ import {
 import { playMusicFor, playSfx, setMuted as setAudioMuted } from '../../audio/audioManager.ts';
 import { initialValue } from '../domains/index.ts';
 import { generateChallenge, isRequirementSatisfied } from '../generator/challengeGenerator.ts';
-import { generateRun } from '../generator/mappingGenerator.ts';
+import { generateRun, regenerateGoals } from '../generator/mappingGenerator.ts';
 import { createRng, createSeed } from '../generator/seededRandom.ts';
 import { loadProgress, saveProgress, type PersistedProgress } from './persistence.ts';
 import type {
@@ -34,7 +34,8 @@ import type {
  * measured against — so it must feel the same every run.
  */
 const CALIBRATION_SEED = 'HOME-UNIVERSE';
-const CALIBRATION_TASK_COUNT = 4;
+/** Every control, so the baseline covers the whole vocabulary. */
+const CALIBRATION_TASK_COUNT = 8;
 
 type WidgetValues = Partial<Record<WidgetType, unknown>>;
 
@@ -45,7 +46,6 @@ interface GameState {
 
   /** Conventional mappings for Stage 1. Regenerated identically every run. */
   calibration: RunConfig | null;
-  calibrationIndex: number;
   calibrationValues: WidgetValues;
 
   /** The shifted universe. Survives Retry, replaced by Next. */
@@ -66,11 +66,12 @@ interface GameState {
 
   events: GameEvent[];
   distance: number;
+  /** Which attempt at this reality the player is on; drives the retry seed. */
+  attempt: number;
 
   // --- actions ---
   beginRun: (seed?: string) => void;
   skipCalibration: () => void;
-  advanceCalibration: () => void;
   setCalibrationValue: (widget: WidgetType, value: unknown) => void;
   beginExplore: () => void;
   beginChallenge: () => void;
@@ -81,6 +82,7 @@ interface GameState {
   retrySameReality: () => void;
   nextUniverse: () => void;
   returnToIntro: () => void;
+  openBriefing: () => void;
   setDifficulty: (id: DifficultyId) => void;
   setMuted: (muted: boolean) => void;
 }
@@ -141,7 +143,6 @@ export const useGameStore = create<GameState>((set, get) => ({
   progress: loadProgress(),
 
   calibration: null,
-  calibrationIndex: 0,
   calibrationValues: {},
 
   run: null,
@@ -159,6 +160,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   events: [],
   distance: 0,
+  attempt: 0,
 
   beginRun: (seed) => {
     const { difficulty, progress } = get();
@@ -176,6 +178,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       seed: CALIBRATION_SEED,
       count: CALIBRATION_TASK_COUNT,
       accept: ['normal'],
+      // Radio and dropdown are both conventionally "choice"; without this
+      // calibration could only ever show seven of the eight controls.
+      allowDuplicateSemantics: true,
     });
 
     set({
@@ -186,7 +191,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       requirements,
       values: freshValues(run.mappings),
       calibration,
-      calibrationIndex: 0,
       calibrationValues: freshValues(calibration.mappings),
       hintLevels: {},
       observations: {},
@@ -196,23 +200,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       rulesRevealed: false,
       outcome: null,
       events: [],
+      attempt: 0,
     });
   },
 
   setCalibrationValue: (widget, value) =>
     set((state) => ({ calibrationValues: { ...state.calibrationValues, [widget]: value } })),
-
-  advanceCalibration: () => {
-    const { calibration, calibrationIndex } = get();
-    if (!calibration) return;
-    const next = calibrationIndex + 1;
-    if (next >= calibration.mappings.length) {
-      get().skipCalibration();
-      return;
-    }
-    playSfx('selection_confirm');
-    set({ calibrationIndex: next });
-  },
 
   skipCalibration: () => {
     const progress = { ...get().progress, tutorialCompleted: true };
@@ -364,13 +357,33 @@ export const useGameStore = create<GameState>((set, get) => ({
     }));
   },
 
-  /** Same seed, same mappings, same targets — only the attempt resets. */
+  /**
+   * Same rules, new orders.
+   *
+   * Keeps the mapping the player worked out — the slider still means a date —
+   * but re-rolls every domain, so the labels, ranges and targets are all
+   * different. Replaying the identical challenge would only measure whether
+   * they remember four values; changing the goal asks whether they actually
+   * learned the mapping, which is the thing the game is about.
+   */
   retrySameReality: () => {
-    const { run } = get();
+    const { run, difficulty, attempt } = get();
     if (!run) return;
+
+    const nextAttempt = attempt + 1;
+    const mappings = regenerateGoals(run.mappings, `${run.seed}::retry-${nextAttempt}`);
+    const requirements = generateChallenge(
+      mappings,
+      difficulty.challengeRequirementCount,
+      createRng(`${run.seed}::retry-${nextAttempt}::challenge`),
+    );
+
     set({
       stage: 'challenge',
-      values: freshValues(run.mappings),
+      attempt: nextAttempt,
+      run: { ...run, mappings },
+      requirements,
+      values: freshValues(mappings),
       lockedWidgets: [],
       challengeStartedAt: Date.now(),
       challengeEndedAt: null,
@@ -398,12 +411,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       rulesRevealed: false,
       outcome: null,
       events: [],
+      attempt: 0,
       // Giving up ends the streak without blocking play (game design §12).
       distance: outcome === 'stabilized' ? distance : 0,
     });
   },
 
   returnToIntro: () => set({ stage: 'intro' }),
+
+  openBriefing: () => set({ stage: 'briefing' }),
 
   /**
    * Only meaningful from the intro; a run's level is fixed once it starts.

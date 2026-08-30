@@ -46,5 +46,8 @@ jobs:
       - name: Check audio budget
         run: npm run audio:check
 
+      - name: Check animation budget
+        run: npm run video:check
+
       - name: Build
         run: npm run build

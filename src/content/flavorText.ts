@@ -75,18 +75,27 @@ export function hintText(widget: WidgetType, semantic: SemanticType, level: 1 | 
 export const SHIFT_HEADLINE = 'REALITY INDEX DESYNCHRONIZED';
 export const SHIFT_SUBHEAD = 'INTERFACE SEMANTICS SHIFTED';
 
-/** Rotating skip copy, so a returning player gets a different joke. */
+/**
+ * Rotating skip copy, so a returning player gets a different joke.
+ *
+ * Kept generic about interfaces rather than naming a specific control: the
+ * calibration set is generated, so a line about sliders can appear on a screen
+ * with no slider on it.
+ */
 export const SKIP_CALIBRATION_COPY = [
-  'SKIP: I still remember how buttons work',
-  'SKIP: I live in this universe',
-  'SKIP: Yes yes, sliders slide',
+  'SKIP: I have used a computer before',
+  'SKIP: I already know what things mean',
+  'SKIP: My assumptions are load-bearing',
   'SKIP: Unfortunately, I know UX',
+  'SKIP: I have read a design system',
+  'SKIP: Conventions and I go way back',
 ];
 
 export const GIVE_UP_RESPONSE = 'Understandable.';
 
 export const CALIBRATION_INTRO =
-  'Baseline calibration. Ordinary controls, ordinary meanings. Confirm each reading.';
+  'Baseline calibration. Ordinary controls, ordinary meanings. Set every reading, ' +
+  'then confirm. Enjoy it while it lasts.';
 
 // No deadline is implied: exploration is untimed, and promising a closing
 // window when nothing closes would be a lie the interface tells for free.
@@ -99,3 +108,28 @@ export const CHALLENGE_INTRO = 'Set every reading to stabilize this dimension.';
 export function resultHeadline(outcome: 'stabilized' | 'gaveUp'): string {
   return outcome === 'stabilized' ? 'DIMENSION STABILIZED' : 'DIMENSION ABANDONED';
 }
+
+/**
+ * The tagline.
+ *
+ * "Everything works as unintended" was a decent pun and said nothing. This
+ * lists the crimes, which is both funnier and an accurate description of the
+ * game: every one of these is a real thing the generator can do to you.
+ */
+export const TAGLINE = 'Every control lies. None of them are broken.';
+
+/**
+ * The Reality Index: the lore, typed out at reading pace.
+ *
+ * One string per paragraph. Kept short enough that a player who wants to get
+ * on with it is not held hostage by a typewriter.
+ */
+export const BRIEFING_PARAGRAPHS = [
+  'REALITY CALIBRATION TERMINAL // CLEARANCE: PROVISIONAL',
+  'An experiment two sectors over went wrong in a way nobody has finished writing up. Nearby universes now overlap. Most of the overlap is harmless: slightly different gravity, slightly different Tuesdays.',
+  'Interface conventions were not harmless.',
+  'In this universe a slider may select a date. A checkbox may name a creature. A calendar may hold a percentage, and a colour picker may be the only way to set a time. The hardware is fine. The wiring is fine. The MEANINGS came loose.',
+  'Your terminal still works. It simply no longer agrees with you about what anything does.',
+  'Each contact begins with a calibration pass in your own universe, so you remember what normal feels like. Then the drift hits, and you find out what these controls mean HERE before you are asked to stabilize the dimension with them.',
+  'Nothing you do during exploration is scored. Poke everything.',
+];

@@ -4,6 +4,7 @@
 // See docs/WrongUInverse-technical-design.md §12.
 
 import { TerminalShell } from './components/TerminalShell.tsx';
+import { BriefingStage } from './game/stages/BriefingStage.tsx';
 import { ChallengeStage } from './game/stages/ChallengeStage.tsx';
 import { ExploreStage } from './game/stages/ExploreStage.tsx';
 import { IntroStage } from './game/stages/IntroStage.tsx';
@@ -24,6 +25,8 @@ function CurrentStage() {
   switch (stage) {
     case 'intro':
       return <IntroStage />;
+    case 'briefing':
+      return <BriefingStage />;
     case 'normal':
       return <NormalStage />;
     case 'shift':
@@ -39,7 +42,13 @@ function CurrentStage() {
 
 function App() {
   const stage = useGameStore((s) => s.stage);
-  const seed = useGameStore((s) => s.run?.seed ?? null);
+  // A universe's palette belongs to a RUN, not to the session. Leaving the run
+  // in state on the way back to the intro used to tint the landing page with
+  // whichever universe was last played — amber or violet at random, depending
+  // on the seed, which is why it only happened sometimes.
+  const seed = useGameStore((s) =>
+    s.stage === 'intro' || s.stage === 'briefing' ? null : (s.run?.seed ?? null),
+  );
 
   return (
     <TerminalShell stage={stage} seed={seed}>

@@ -34,18 +34,21 @@ body {
    those three it becomes a wall. */
 .wui-lede,
 .wui-diagnosis-blurb,
-.wui-diagnosis-caveat,
-.wui-notebook-empty {
+.wui-diagnosis-description {
   font-size: 14px;
   line-height: 2;
   letter-spacing: 0;
   max-width: 58ch;
 }
 
+/* ...except the diagnosis, which already has a column of its own to bound it.
+   Capping it again left a third of that column empty. */
+.wui-diagnosis-description {
+  max-width: none;
+}
+
 /* Centred screens keep their prose centred rather than left-hugging. */
-.wui-intro .wui-lede,
-.wui-diagnosis-blurb,
-.wui-diagnosis-caveat {
+.wui-intro .wui-lede {
   margin-left: auto;
   margin-right: auto;
 }
@@ -107,18 +110,40 @@ body {
   gap: calc(var(--px) * 4);
 }
 
-/* The objective and the clock are what a player checks constantly; both used
-   to scroll away behind the bench. */
+/* One bar: where you are, and the ways out. Everything specific to the
+   current universe lives in the sticky column below instead. */
 .wui-topbar {
   position: sticky;
   top: 0;
-  z-index: 3;
+  z-index: 4;
+  display: flex;
+  gap: calc(var(--px) * 4);
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: calc(var(--px) * 3) 0 calc(var(--px) * 4);
+  /* Clear air between the bar and the board below it; they used to collide. */
+  margin-bottom: calc(var(--px) * 4);
+  background: var(--bg-page);
+  box-shadow: 0 var(--border) 0 0 var(--stage-edge, var(--line));
+}
+
+.wui-topbar-status {
   display: flex;
   flex-direction: column;
   gap: calc(var(--px) * 2);
-  padding: calc(var(--px) * 3) 0 calc(var(--px) * 3);
-  background: var(--bg-page);
-  box-shadow: 0 var(--border) 0 0 var(--stage-edge, var(--line));
+}
+
+/* Says what this stage is counting, in as many words as it takes. */
+.wui-status {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.wui-status-word {
+  color: var(--stage-ink, var(--accent-primary));
+  letter-spacing: 0.06em;
 }
 
 .wui-topbar-main {
@@ -153,31 +178,60 @@ body {
 }
 
 /* --- stage rail ---
-   Names the five steps and marks the current one. A colour tint alone told the
-   player that something had changed, not what or where they were. */
+   A progress track. Boxed labels read as buttons and invited clicks that do
+   nothing, so this has no borders, no panels and no hover: a connecting line,
+   a marker on the current step, and three levels of dimming. */
 
 .wui-rail {
   display: flex;
-  gap: calc(var(--px) * 2);
   flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
   font-size: 12px;
   letter-spacing: 0.06em;
+  cursor: default;
 }
 
 .wui-rail-step {
-  padding: var(--px) calc(var(--px) * 2);
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 2);
   color: var(--line-strong);
-  border: var(--border) solid transparent;
+}
+
+/* No connector: the markers alone carry the sequence, and the dashes cost
+   width the bar cannot spare. */
+.wui-rail-step + .wui-rail-step {
+  margin-left: calc(var(--px) * 4);
+}
+
+.wui-rail-mark {
+  width: calc(var(--px) * 2);
+  height: calc(var(--px) * 2);
+  background: var(--line-strong);
 }
 
 .wui-rail-step.is-done {
   color: var(--text-secondary);
 }
 
+.wui-rail-step.is-done .wui-rail-mark {
+  background: var(--text-secondary);
+}
+
 .wui-rail-step.is-current {
   color: var(--stage-ink, var(--accent-primary));
-  border-color: var(--stage-edge, var(--accent-primary));
-  background: var(--bg-panel);
+}
+
+/* A bigger, filled marker is the only thing that changes size, so the eye
+   lands on the current step without anything looking pressable. */
+.wui-rail-step.is-current .wui-rail-mark {
+  width: calc(var(--px) * 3);
+  height: calc(var(--px) * 3);
+  background: var(--stage-ink, var(--accent-primary));
 }
 
 /* --- progress tally --- */
@@ -210,13 +264,23 @@ body {
   letter-spacing: 0.02em;
 }
 
-.wui-eyebrow,
 .wui-progress,
 .wui-meta {
   margin: 0;
   font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--text-secondary);
+}
+
+/* Sits under the heading in the same text column, so it lines up with the
+   words rather than with the mascot beside them. */
+.wui-eyebrow {
+  margin: calc(var(--px) * 2) 0 0;
+  font-size: 11px;
+  line-height: 1.7;
+  letter-spacing: 0.04em;
+  color: var(--line-strong);
+  overflow-wrap: anywhere;
 }
 
 /* Size and leading come from the prose rule near the top of this file. */
@@ -274,7 +338,43 @@ body {
   text-align: center;
 }
 
+/* Full-bleed behind the message, dimmed so the text stays legible over
+   whatever the clip is doing. */
+.wui-ambient-clip {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+/* Cheap grade toward the palette: drain most of the colour, push what is left
+   blue, and lift contrast so it sits with the flat UI. A filter cannot map
+   footage onto specific palette colours — that would need a duotone blend or a
+   baked LUT — but it stops the clip fighting the theme. */
+/* Grade toward the palette: drain most of the colour and darken, so the clip
+   sits behind the flat UI instead of competing with it.
+   NO hue-rotate: the footage is already in the navy/cyan family, and rotating
+   it 200deg swung it right past the palette into olive. A filter cannot map
+   footage onto specific palette colours anyway — that needs a duotone blend or
+   a baked LUT. */
+.wui-ambient-clip.is-ready {
+  opacity: 0.45;
+  filter: saturate(0.35) contrast(1.15) brightness(0.7);
+}
+
+/* Dimmer still where there is text to read over it. */
+.wui-briefing .wui-ambient-clip.is-ready {
+  opacity: 0.28;
+}
+
 .wui-shift-panel {
+  position: relative;
+  z-index: 1;
   --frame-color: var(--accent-anomaly);
   padding: calc(var(--px) * 8);
   background: var(--bg-panel);
@@ -396,7 +496,7 @@ body {
 .wui-station-head {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: calc(var(--px) * 2);
   margin-bottom: calc(var(--px) * 3);
 }
@@ -478,29 +578,49 @@ body {
   line-height: 1.5;
 }
 
-/* --- notebook --- */
-
-.wui-notebook {
-  padding: calc(var(--px) * 4);
-  background: var(--bg-panel);
-  box-shadow: 0 0 0 var(--border) var(--line);
+/* What a control has already produced, on the control itself. */
+.wui-station-trail {
+  display: flex;
+  gap: calc(var(--px) * 2);
+  align-items: baseline;
+  flex-wrap: wrap;
+  margin: calc(var(--px) * 2) 0 0;
 }
 
-.wui-notebook-title,
+.wui-station-trail-label {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.wui-station-trail-values {
+  font-size: 12px;
+  color: var(--accent-hint);
+  overflow-wrap: anywhere;
+}
+
+.wui-effort {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.wui-effort-value {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+/* Shared small-caps heading for the panels in the left column. */
 .wui-challenge-head h2,
-.wui-rules h2 {
+.wui-rules h2,
+.wui-order-head h2 {
   margin: 0 0 calc(var(--px) * 3);
   font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--text-secondary);
 }
 
-.wui-notebook-empty {
-  margin: 0;
-  color: var(--text-secondary);
-}
-
-.wui-notebook-list,
 .wui-challenge-list,
 .wui-rules ul {
   list-style: none;
@@ -509,22 +629,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: calc(var(--px) * 2);
-}
-
-.wui-notebook-list li {
-  display: flex;
-  gap: calc(var(--px) * 3);
-  font-size: 12px;
-  flex-wrap: wrap;
-}
-
-.wui-notebook-widget {
-  min-width: calc(var(--px) * 24);
-  color: var(--text-secondary);
-}
-
-.wui-notebook-values {
-  color: var(--text-primary);
 }
 
 /* --- challenge --- */
@@ -594,41 +698,91 @@ body {
   color: var(--text-primary);
 }
 
-.wui-diagnosis {
-  text-align: center;
-  padding: calc(var(--px) * 6) calc(var(--px) * 4);
+/* Eight mappings in one column made a tall thin list inside a very wide panel.
+   `columns` rather than grid: the list is read top-to-bottom in each column
+   and the number of entries varies with the level. */
+.wui-rules ul {
+  /* Overrides the shared flex column above: `columns` only works on a block. */
+  display: block;
+  columns: 3 calc(var(--px) * 52);
+  column-gap: calc(var(--px) * 6);
 }
 
-.wui-diagnosis-metric {
-  margin: 0 0 calc(var(--px) * 3);
-  font-size: 14px;
-  letter-spacing: 0.08em;
-  color: var(--text-secondary);
+.wui-rules li + li {
+  margin-top: calc(var(--px) * 2);
+}
+
+/* Specimen card left, the read right. `max-content` on the first track keeps
+   the card exactly as wide as the sprite and its figures, so the prose takes
+   everything else instead of leaving the panel's outer thirds empty. */
+.wui-diagnosis {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: calc(var(--px) * 8);
+  align-items: start;
+  padding: calc(var(--px) * 6) calc(var(--px) * 5);
+}
+
+.wui-diagnosis-specimen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 2);
+  /* The widest cleaned creature is 96px, doubled by AssetImage, plus slack so
+     a long creature name never stretches the track. */
+  width: calc(var(--px) * 52);
+}
+
+/* Top-aligned, not resting on a shared floor. Sprites run 73px to 96px tall,
+   and a floor pushed the short ones 46px down the card, so the heading beside
+   them no longer lined up with the top of the picture. The panel's height is
+   set by the prose either way, so nothing moves when the sprite is short. */
+.wui-diagnosis-creature {
+  align-items: flex-start;
+}
+
+/* One alignment for everything that is prose. The specimen card is the only
+   centred block on the screen, because it is a label under a picture. */
+/* Silkscreen sets its caps well below the line box, so a heading whose box
+   starts level with the sprite still *looks* higher than it. This pulls the
+   cap-height down onto the sprite's top edge. */
+.wui-diagnosis-read {
+  text-align: left;
+  padding-top: var(--px);
+}
+
+@media (max-width: 60rem) {
+  .wui-diagnosis {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wui-diagnosis-specimen {
+    width: auto;
+  }
 }
 
 .wui-diagnosis-brain {
   margin: 0;
-  font-size: 20px;
+  font-size: 22px;
   color: var(--accent-primary);
   letter-spacing: 0.06em;
   line-height: 1.4;
 }
 
+/* A caption for the type above it, so it stays small and muted; the
+   description below is six lines of payoff and takes the body weight. */
 .wui-diagnosis-blurb {
   margin: calc(var(--px) * 2) 0 0;
+  font-size: 13px;
   color: var(--text-secondary);
 }
 
-/* Quiet, but still readable: a pixel face at 12px needs more contrast than a
-   system font would to stay legible when de-emphasised. */
-.wui-diagnosis-caveat {
-  margin: calc(var(--px) * 4) 0 0;
-  font-size: 12px;
-  line-height: 1.9;
-  color: color-mix(in srgb, var(--text-secondary) 65%, var(--bg-panel));
-}
-
+/* The same frame as the panels above and below. Unframed, this strip read as
+   a seam between two panels rather than as data. */
 .wui-stats {
+  padding: calc(var(--px) * 4);
+  background: var(--bg-panel);
+  box-shadow: 0 0 0 var(--border) var(--line);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(calc(var(--px) * 28), 1fr));
   gap: calc(var(--px) * 3);
@@ -959,20 +1113,27 @@ input[type='range']::-moz-range-thumb {
 /* Zorblet sits next to what the player is reading. */
 .wui-goal {
   display: flex;
-  gap: calc(var(--px) * 4);
+  gap: calc(var(--px) * 3);
   align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.wui-goal > div {
+  flex: 1 1 10rem;
 }
 
 /* One inhabitant per station.
    Taken out of flow: at full size it shoved the station label around and
    competed with the control for attention. It is scenery, so it sits in the
    corner, behind the content, and never changes the layout. */
+/* Sits at the end of the header row, IN FLOW. Absolutely positioning it over
+   the corner looked fine above a slider and buried the right-hand end of
+   anything wider — a swatch row ran straight underneath it. In flow it cannot
+   overlap anything, at any card width. */
 .wui-specimen {
-  position: absolute;
-  top: calc(var(--px) * -2);
-  right: calc(var(--px) * -2);
-  z-index: 0;
-  opacity: 0.45;
+  margin-left: auto;
+  flex: none;
+  opacity: 0.7;
   pointer-events: none;
   animation: wui-float 3s steps(2, end) infinite;
 }
@@ -987,7 +1148,6 @@ input[type='range']::-moz-range-thumb {
 
 .wui-station {
   position: relative;
-  overflow: hidden;
 }
 
 /* Everything the player reads sits above the scenery. */
@@ -1230,8 +1390,6 @@ input[type='range']::-moz-range-thumb {
 
 .wui-order {
   --frame-color: var(--stage-edge, var(--line));
-  flex: 1 1 22rem;
-  max-width: 34rem;
   padding: calc(var(--px) * 3);
   background: var(--bg-panel);
   border: none;
@@ -1261,20 +1419,25 @@ input[type='range']::-moz-range-thumb {
   color: var(--accent-success);
 }
 
+/* One line each. A two-column grid saved space but made the order read as a
+   table of unrelated pairs rather than a checklist. */
 .wui-order-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: 0 calc(var(--px) * 4);
+  display: flex;
+  flex-direction: column;
+}
+
+.wui-order-item + .wui-order-item {
+  border-top: var(--border) solid var(--line);
 }
 
 .wui-order-item {
   display: flex;
   align-items: baseline;
   gap: calc(var(--px) * 2);
-  padding: calc(var(--px) * 1) 0;
+  padding: calc(var(--px) * 2) 0;
   font-size: 12px;
 }
 
@@ -1369,4 +1532,270 @@ input[type='range']::-moz-range-thumb {
   display: flex;
   justify-content: center;
   margin-bottom: calc(var(--px) * 3);
+}
+
+/* --- board ---
+   Order on the left, bench on the right. The order is the one thing a player
+   re-reads constantly, so on a wide screen it gets its own column and stays
+   put rather than scrolling away above a tall bench. Below that width there is
+   no room for two columns, so it stacks and sticks to the top instead. */
+
+.wui-board {
+  display: grid;
+  grid-template-columns: minmax(19rem, 23rem) 1fr;
+  gap: calc(var(--px) * 5);
+  align-items: start;
+}
+
+.wui-board-aside {
+  position: sticky;
+  /* Clears the one-line topbar above it. */
+  top: calc(var(--px) * 14);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 3);
+  /* Never taller than the screen, or the bottom of the order becomes
+     unreachable once it is stuck. */
+  max-height: calc(100vh - var(--px) * 18);
+  overflow-y: auto;
+}
+
+@media (max-width: 68rem) {
+  .wui-board {
+    grid-template-columns: 1fr;
+  }
+
+  .wui-board-aside {
+    position: static;
+  }
+}
+
+/* --- tier list ---
+   Plain rows. Only one tier is selectable, so anything with button chrome is
+   a promise the page cannot keep. */
+
+.wui-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+  max-width: 30rem;
+  font-size: 12px;
+}
+
+.wui-tier {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--px) * 2);
+  padding: var(--px) 0;
+  color: var(--line-strong);
+  text-align: left;
+}
+
+/* Amber, not violet: violet already carries the level chips and the stage
+   accent, so the tier list had nothing of its own and disappeared. */
+.wui-tier.is-active {
+  color: var(--accent-hint);
+}
+
+.wui-tier.is-active .wui-tier-name {
+  color: var(--accent-hint);
+}
+
+/* Reserved whether filled or not, so rows do not shift. */
+.wui-tier-caret {
+  flex: none;
+  width: 1em;
+  color: var(--accent-hint);
+}
+
+.wui-tier-name {
+  letter-spacing: 0.05em;
+}
+
+.wui-tier-blurb {
+  color: var(--text-secondary);
+}
+
+.wui-tier.is-active .wui-tier-blurb {
+  color: var(--text-secondary);
+}
+
+.wui-tier:not(.is-active) .wui-tier-blurb {
+  color: var(--line-strong);
+}
+
+.wui-tier-tag {
+  margin-left: auto;
+  flex: none;
+  color: color-mix(in srgb, var(--accent-hint) 60%, var(--bg-page));
+}
+
+/* --- level picker ---
+   Compact chips: three short names that fit on one line and need no prose. */
+
+.wui-picker-label {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.wui-levels {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 2);
+  width: 100%;
+}
+
+.wui-level-row {
+  display: flex;
+  gap: calc(var(--px) * 2);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.wui-level {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--px) * 2);
+  padding: calc(var(--px) * 2) calc(var(--px) * 3);
+  font: inherit;
+  font-size: 12px;
+  border: var(--border) solid var(--line);
+  border-radius: 0;
+  background: var(--bg-panel);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.wui-level:hover {
+  border-color: var(--accent-anomaly);
+}
+
+.wui-level.is-active {
+  border-color: var(--accent-anomaly);
+  color: var(--accent-anomaly);
+}
+
+.wui-level-count {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.wui-level-blurb {
+  margin: 0;
+  min-height: 3.4em;
+  max-width: 34rem;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* --- reality index --- */
+
+.wui-briefing {
+  min-height: 100vh;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Above the ambient clip, and opaque enough to read against moving footage. */
+.wui-briefing-title,
+.wui-briefing-body,
+.wui-briefing .wui-actions {
+  position: relative;
+  z-index: 1;
+}
+
+.wui-briefing-title {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  color: var(--accent-anomaly);
+}
+
+.wui-briefing-body {
+  width: 100%;
+  max-width: 46rem;
+  max-height: 58vh;
+  overflow-y: auto;
+  padding: calc(var(--px) * 4);
+  background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
+  box-shadow: 0 0 0 var(--border) var(--line);
+}
+
+.wui-briefing-line {
+  margin: 0 0 calc(var(--px) * 4);
+  font-size: 13px;
+  line-height: 2;
+  color: var(--text-primary);
+}
+
+.wui-briefing-line:first-child {
+  color: var(--accent-anomaly);
+  letter-spacing: 0.05em;
+}
+
+/* A block that blinks where the next character will land. */
+.wui-caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--accent-primary);
+  animation: wui-blink 1s steps(1, end) infinite;
+}
+
+@keyframes wui-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* --- diagnosis --- */
+
+.wui-diagnosis-creature-name {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  color: var(--accent-primary);
+}
+
+/* The payoff of the whole screen, so it carries the page's body weight and
+   the bright ink. A pixel face still needs the line-length cap — `ch` is
+   correct here because only this block uses this size. */
+.wui-diagnosis-description {
+  margin: calc(var(--px) * 4) 0 0;
+  line-height: 2;
+  color: var(--text-primary);
+}
+
+/* --- the conventional-thinking figure ---
+   Set as a number under the specimen rather than as a grey line trailing the
+   prose: it is the single summary of the read, not a footnote. */
+.wui-diagnosis-metric-value {
+  margin: calc(var(--px) * 2) 0 0;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--accent-hint);
+}
+
+.wui-diagnosis-metric-label {
+  margin: 0;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  color: var(--text-secondary);
 }

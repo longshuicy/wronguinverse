@@ -1,14 +1,18 @@
 // ShiftTransition.tsx
-// The moment the rules change. A short glitch, then straight into exploration.
+// The moment the rules change. Art guide §9 calls this a major identity
+// moment, and it is the one screen with nothing to read and nothing to
+// operate, so it is the only place a full-bleed rendered clip belongs.
 //
-// The mapping was already generated when the run began — this stage only
-// reveals that it happened. See technical design §12.
+// The mapping was already generated when the run began; this stage only
+// reveals that it happened.
 
 import { useEffect, useState } from 'react';
+import { AmbientClip } from '../../components/AmbientClip.tsx';
 import { SHIFT_HEADLINE, SHIFT_SUBHEAD } from '../../content/flavorText.ts';
 import { useGameStore } from '../state/gameStore.ts';
 
-const GLITCH_MS = 1800;
+/** Matches the length the clip is trimmed to in scripts/clean-video.mjs. */
+const GLITCH_MS = 2400;
 
 export function ShiftTransition() {
   const beginExplore = useGameStore((s) => s.beginExplore);
@@ -24,15 +28,16 @@ export function ShiftTransition() {
 
   return (
     <main className="wui-screen wui-shift">
-      {/* The glitch is decorative; respecting reduced-motion drops the animation
-          but keeps the message and the timing identical. */}
+      <AmbientClip disabled={reducedMotion} />
+
       <div className={reducedMotion ? 'wui-shift-panel' : 'wui-shift-panel wui-shift-animated'}>
         <p className="wui-shift-headline">{SHIFT_HEADLINE}</p>
         <p className="wui-shift-subhead">{SHIFT_SUBHEAD}</p>
       </div>
-      <button type="button" className="wui-ghost" onClick={beginExplore}>
-        Skip
-      </button>
+
+      {/* No skip. The transition is about two seconds and is the payoff the
+          whole first stage sets up; offering to cut it short invites the
+          player to miss the point of the game. */}
     </main>
   );
 }

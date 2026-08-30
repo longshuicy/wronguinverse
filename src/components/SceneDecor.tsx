@@ -18,8 +18,7 @@ import { AssetImage } from './AssetImage.tsx';
  * stands for an Interface Brain Type (content/brainTypes.ts) — reusing them as
  * card decoration would dilute that association into wallpaper.
  *
- * Seven props against a maximum of eight stations, so the hardest level
- * repeats one. An eighth prop would remove the repeat.
+ * Eight props for a maximum of eight stations, so no level repeats one.
  */
 const SPECIMENS: AssetId[] = [
   'prop_flux_crystal',
@@ -29,6 +28,7 @@ const SPECIMENS: AssetId[] = [
   'prop_tiny_satellite',
   'prop_anomaly_blob',
   'prop_portal',
+  'prop_alien_plant',
 ];
 
 /**

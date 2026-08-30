@@ -242,14 +242,68 @@ the pairing is not re-rolled on a whim.
 
   THE THEORIST               `creature_plim`
 
-  THE NORMIE                 `mascot_zorblet_idle` (doubled up)
+  THE NORMIE                 `creature_wubbit`
   ------------------------------------------------------------------
 
 **Creatures appear only here.** Cards on the bench use props. Reusing the
 creatures as card decoration would dilute the association into wallpaper.
 
-**Wanted:** a sixth creature, so THE NORMIE stops borrowing Zorblet; and
-an eighth prop, so the eight-mapping level stops repeating one.
+All six brain types have their own portrait, so THE NORMIE no longer
+borrows Zorblet. The prompts that produced the last two are kept below as
+the reference for any future addition to the set.
+
+### A012 --- `creature_wubbit` --- LANDED
+
+**Filename:** `creatures/creature_wubbit.png`\
+**Priority:** DONE --- completes the brain-type set\
+**Represents:** THE NORMIE --- *"Attempted to use every control correctly.
+Adorable."*
+
+The one player who did nothing wrong except believe the labels. It should
+be the most ordinary, most trusting-looking creature in the set: round,
+symmetrical, content, no unsettling asymmetry and no visible scepticism.
+It is the straight man of the cast, and it should look faintly pleased
+with itself.
+
+**Prompt:**
+
+> cute original round alien creature, perfectly symmetrical soft body,
+> two small trusting eyes, tiny neat feet, calm contented expression,
+> unremarkable and reassuring, the most ordinary specimen in a laboratory
+> of strange ones, quirky retro futuristic parallel universe game, crisp
+> 16-bit pixel art sprite, strong simple silhouette, isolated, limited
+> palette, deep-space navy base with electric cyan highlights, no text,
+> plain solid background, no UI
+
+**Note:** deliberately *not* weird. Every other creature has an oddity;
+this one's whole joke is that it does not.
+
+### A013 --- `prop_alien_plant` --- LANDED
+
+**Filename:** `props/prop_alien_plant.png`\
+**Priority:** DONE --- completes the eight-prop set\
+**Why:** there are eight stations at the hardest level, and this is the
+eighth prop, so no level repeats one.
+
+Listed on the A010 sheet but drawn on its own, at **32px tall** like the
+rest of the prop set (see §5), with a silhouette distinct from the other
+seven --- the antenna is already thin and vertical and the crystal
+already tall and narrow, so this one reads as a low, leafy clump.
+
+**Prompt:**
+
+> pixel art tiny alien plant in a small pot, squat rounded leaves,
+> gently glowing tips, low silhouette, quirky retro-futuristic parallel
+> universe laboratory specimen, playful electric science fiction, crisp
+> 16-bit pixel art, strong readable silhouette, isolated object, limited
+> palette, deep-space navy with electric cyan and warm amber accents, no
+> text, plain background, no UI
+
+Both were dropped into `art-source/creatures/` and `art-source/props/`
+and passed through `npm run art:clean`, so they carry the same
+downscale, palette limit, sharpen and outline as the rest of the set.
+Anything new goes the same way: drop the raw file in `art-source/`, add
+the id to the manifest, run the script.
 
 ### A005 --- `creature_mip`
 
@@ -326,7 +380,8 @@ an eighth prop, so the eight-mapping level stops repeating one.
 -   `props/prop_anomaly_blob.png`
 -   `props/prop_portal.png`
 
-**Priority:** 3--4 props required; full set optional.
+**Priority:** DONE --- all eight ship. The alien plant was drawn
+separately; see A013.
 
 **Prompt:**
 
@@ -795,7 +850,37 @@ then:
 
 Keep it short. It should be fun on the twentieth playthrough.
 
-Provide reduced-motion alternative.
+### The clip
+
+A generated video plays full-bleed behind the message, dimmed so the text
+stays readable. This is the **only** place a rendered clip belongs: it is
+the one screen with nothing to read and nothing to operate, so atmosphere
+can win where it would otherwise fight the interface --- which is exactly
+why the background painting was retired everywhere else (§4 A001).
+
+``` bash
+npm run video:clean    # trim and transcode video-source/ into public/animation
+npm run video:check    # verify the budget (runs in CI)
+```
+
+-   `video-source/` --- the raw clip. **Untracked**, like the other
+    sources.
+-   `public/animation/shift.m4v` --- trimmed to the length of the
+    transition and transcoded to 640x480. 3.3MB becomes 0.9MB, almost
+    entirely by cutting length rather than quality.
+
+The clip is decoration and loads late: it fades in when it is ready, and
+the transition is identical without it.
+
+### No skip button
+
+There is deliberately no way to cut the transition short. It runs about
+two seconds and it is the payoff the whole calibration stage exists to
+set up; offering to skip it invites the player to miss the point of the
+game.
+
+Provide reduced-motion alternative: the clip and the glitch animation are
+both suppressed, the message and the timing are unchanged.
 
 ## Semantic Content and Assets
 

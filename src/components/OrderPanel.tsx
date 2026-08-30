@@ -10,11 +10,9 @@ import type { Requirement, WidgetType } from '../game/state/types.ts';
 interface OrderPanelProps {
   requirements: Requirement[];
   lockedWidgets: WidgetType[];
-  /** Hide targets during exploration if a level wants the order withheld. */
-  showTargets?: boolean;
 }
 
-export function OrderPanel({ requirements, lockedWidgets, showTargets = true }: OrderPanelProps) {
+export function OrderPanel({ requirements, lockedWidgets }: OrderPanelProps) {
   const done = requirements.filter((r) => lockedWidgets.includes(r.widget)).length;
 
   return (
@@ -34,7 +32,7 @@ export function OrderPanel({ requirements, lockedWidgets, showTargets = true }: 
               className={locked ? 'wui-order-item is-locked' : 'wui-order-item'}
             >
               <span className="wui-order-label">{requirement.label}</span>
-              {showTargets && <span className="wui-order-target">{requirement.targetDisplay}</span>}
+              <span className="wui-order-target">{requirement.targetDisplay}</span>
               {/* Not colour alone: the tick carries the same meaning for
                   players who cannot distinguish the green. */}
               {locked && <span className="wui-order-lock">✓</span>}
