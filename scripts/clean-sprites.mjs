@@ -45,18 +45,28 @@ const CATEGORIES = [
     // left just produced large soft blobs, which is what "blurry" actually
     // means here: the detail was lost on the way DOWN, not on the way up.
     size: 96,
-    colors: 48,
-    sharpen: 1,
+    colors: 16,
+    sharpen: 2,
+    saturation: 1.35,
+    contrast: 1.5,
+    outline: true,
   },
   {
     dir: 'props',
-    // Props are background decoration and never larger than a creature, but
-    // several have thin masts and antennae with the same problem.
-    size: 64,
-    colors: 32,
-    sharpen: 1,
+    // Props are card decoration. Fixed HEIGHT rather than longest side, so a
+    // row of them lines up: a wide satellite and a tall crystal are the same
+    // height and differ only in width.
+    height: 32,
+    colors: 12,
+    sharpen: 2,
+    saturation: 1.35,
+    contrast: 1.5,
+    outline: true,
   },
 ];
+
+/** Outline colour: near the page black, so it reads as a silhouette edge. */
+const OUTLINE_RGB = [9, 11, 24];
 
 /** Alpha at or above this becomes fully opaque; below it, fully transparent. */
 const ALPHA_CUTOFF = 128;
@@ -86,7 +96,7 @@ function log(...args) {
  * which defeats the point. sharp premultiplies alpha during resize, so the RGB
  * under a surviving edge pixel is already the right colour.
  */
-async function hardenAlpha(buffer) {
+async function hardenAlpha(buffer, { outline = false } = {}) {
   const image = sharp(buffer).ensureAlpha();
   const { data, info } = await image.raw().toBuffer({ resolveWithObject: true });
 
@@ -95,6 +105,7 @@ async function hardenAlpha(buffer) {
   }
 
   despeckle(data, info);
+  if (outline) addOutline(data, info);
 
   return sharp(data, {
     raw: { width: info.width, height: info.height, channels: info.channels },
@@ -149,7 +160,34 @@ function despeckle(data, info) {
   }
 }
 
-async function cleanOne(sourcePath, outputPath, { size, colors, sharpen }) {
+/**
+ * Grow a one-pixel dark edge around the silhouette.
+ *
+ * A hard outline is the strongest single signal that something is pixel art
+ * rather than a small photograph: it gives the shape a definite boundary
+ * instead of letting it fade into the background.
+ */
+function addOutline(data, info) {
+  const { width, height, channels } = info;
+  const before = Buffer.from(data);
+  const opaque = (x, y) =>
+    x >= 0 && y >= 0 && x < width && y < height && before[(y * width + x) * channels + 3] === 255;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const i = (y * width + x) * channels;
+      if (before[i + 3] === 255) continue;
+      if (!(opaque(x - 1, y) || opaque(x + 1, y) || opaque(x, y - 1) || opaque(x, y + 1))) continue;
+      data[i] = OUTLINE_RGB[0];
+      data[i + 1] = OUTLINE_RGB[1];
+      data[i + 2] = OUTLINE_RGB[2];
+      data[i + 3] = 255;
+    }
+  }
+}
+
+async function cleanOne(sourcePath, outputPath, category) {
+  const { size, height, colors, sharpen, saturation, contrast, outline } = category;
   const raw = await readFile(sourcePath);
 
   let pipeline = sharp(raw)
@@ -158,20 +196,34 @@ async function cleanOne(sourcePath, outputPath, { size, colors, sharpen }) {
     .trim({ threshold: 10 })
     // 2. Down to the logical grid. lanczos3 keeps the silhouette readable at
     //    this reduction; nearest-neighbour would drop whole features.
-    .resize({
-      width: size,
-      height: size,
-      fit: 'inside',
-      kernel: 'lanczos3',
-      withoutEnlargement: true,
-    });
+    .resize(
+      height
+        ? { height, kernel: 'lanczos3', withoutEnlargement: true }
+        : {
+            width: size,
+            height: size,
+            fit: 'inside',
+            kernel: 'lanczos3',
+            withoutEnlargement: true,
+          },
+    );
 
   // 3. Restore the edge definition lanczos softens. Without this the result is
   //    technically on-grid but every boundary is a gradient, which magnifies
   //    into mush rather than into pixels.
   if (sharpen) pipeline = pipeline.sharpen({ sigma: sharpen });
 
-  const hardened = await hardenAlpha(await pipeline.png().toBuffer());
+  // 4. Flatten the shading into bands. Generated art is smoothly lit, and a
+  //    smooth gradient shrunk down reads as a tiny photograph however square
+  //    its pixels are. Lifting contrast and saturation before quantising is
+  //    what turns that gradient into the deliberate ramps pixel art is made
+  //    of — this, not the pixel size, is what "crisp" actually means here.
+  if (saturation && saturation !== 1) pipeline = pipeline.modulate({ saturation });
+  if (contrast && contrast !== 1) {
+    pipeline = pipeline.linear(contrast, -(128 * contrast) + 128);
+  }
+
+  const hardened = await hardenAlpha(await pipeline.png().toBuffer(), { outline });
 
   // 4. Quantise to a limited palette, which is what makes it read as pixel art
   //    rather than a tiny photograph. Dithering is disabled deliberately: it
@@ -298,11 +350,17 @@ async function runCheck() {
       const filePath = path.join(dir, file);
       const { size: bytes } = await stat(filePath);
       const meta = await sharp(filePath).metadata();
-      const longest = Math.max(meta.width ?? 0, meta.height ?? 0);
       const label = `${category.dir}/${file}`;
 
-      if (longest > category.size) {
-        problems.push(`${label}: ${meta.width}x${meta.height}, expected max ${category.size}px`);
+      if (category.height) {
+        if (meta.height !== category.height) {
+          problems.push(`${label}: ${meta.height}px tall, expected exactly ${category.height}px`);
+        }
+      } else {
+        const longest = Math.max(meta.width ?? 0, meta.height ?? 0);
+        if (longest > category.size) {
+          problems.push(`${label}: ${meta.width}x${meta.height}, expected max ${category.size}px`);
+        }
       }
       if (bytes > MAX_SPRITE_KB * 1024) {
         problems.push(`${label}: ${Math.round(bytes / 1024)}KB, expected under ${MAX_SPRITE_KB}KB`);

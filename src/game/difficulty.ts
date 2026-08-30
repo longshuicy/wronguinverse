@@ -16,7 +16,7 @@ import { implementedSemantics } from './domains/index.ts';
 import { maxMappingCount } from './generator/mappingGenerator.ts';
 import { implementedWidgets } from '../widgets/registry.ts';
 
-export type DifficultyId = 'slightlyWrong' | 'deeplyWrong' | 'wronguinverse';
+export type DifficultyId = 'slightlyWrong' | 'uxHell' | 'wronguinverse';
 
 export interface DifficultyConfig {
   id: DifficultyId;
@@ -25,6 +25,11 @@ export interface DifficultyConfig {
   /** One line describing what changes, shown on the level picker. */
   blurb: string;
   mappingCount: number;
+  /**
+   * Always equal to `mappingCount`: every control carries one line of the
+   * order, so every card can be named after the objective it answers rather
+   * than by a meaningless station number.
+   */
   challengeRequirementCount: number;
   notebookDetail: 'full' | 'reduced' | 'minimal';
   hintPolicy: 'generous' | 'normal' | 'limited';
@@ -35,14 +40,6 @@ export interface DifficultyConfig {
    * lands on target.
    */
   interpretedOutputInChallenge: boolean;
-  /**
-   * Whether each requirement is shown ON the control that satisfies it.
-   *
-   * Paired, the player still has to work out HOW to make that control produce
-   * the value — but not WHICH control to use. Unpaired, the order is a separate
-   * list and matching it to the bench is part of the puzzle.
-   */
-  pairRequirementsWithWidgets: boolean;
 }
 
 /**
@@ -51,39 +48,44 @@ export interface DifficultyConfig {
  * Eight is the ceiling: a run gives every widget a distinct semantic, and there
  * are eight of each. A ninth level would need a ninth semantic implemented.
  */
-const LEVELS: DifficultyConfig[] = [
+/**
+ * Three levels, at 4, 6 and 8 mappings.
+ *
+ * `challengeRequirementCount` is derived rather than written here: it is always
+ * the mapping count, so every control carries one line of the order.
+ *
+ * Eight is the ceiling. A run gives every widget a distinct semantic, and there
+ * are eight of each; a fourth level needs a ninth semantic implemented.
+ */
+type LevelSpec = Omit<DifficultyConfig, 'challengeRequirementCount'>;
+
+const LEVELS: LevelSpec[] = [
   {
     id: 'slightlyWrong',
     label: 'SLIGHTLY WRONG',
-    blurb: 'Four controls. Each objective is written on the control that answers it.',
+    blurb: 'Four controls. The readings are visible and the universe is feeling generous.',
     mappingCount: 4,
-    challengeRequirementCount: 4,
     notebookDetail: 'full',
     hintPolicy: 'generous',
     interpretedOutputInChallenge: true,
-    pairRequirementsWithWidgets: true,
   },
   {
-    id: 'deeplyWrong',
-    label: 'DEEPLY WRONG',
-    blurb: 'Six controls, and the order no longer says which one to use.',
+    id: 'uxHell',
+    label: 'UX HELL',
+    blurb: 'Six controls, a shorter notebook, and a universe that has stopped explaining itself.',
     mappingCount: 6,
-    challengeRequirementCount: 5,
     notebookDetail: 'reduced',
     hintPolicy: 'normal',
     interpretedOutputInChallenge: true,
-    pairRequirementsWithWidgets: false,
   },
   {
     id: 'wronguinverse',
     label: 'THE WrongUIᴎverse',
-    blurb: 'All eight controls, and nothing tells you what they read as.',
+    blurb: 'All eight controls, and nothing tells you what any of them read as. Good luck.',
     mappingCount: 8,
-    challengeRequirementCount: 6,
     notebookDetail: 'minimal',
     hintPolicy: 'limited',
     interpretedOutputInChallenge: false,
-    pairRequirementsWithWidgets: false,
   },
 ];
 
@@ -99,13 +101,9 @@ function buildableCeiling(): number {
  * runtime, so it is trimmed instead. Nothing is clamped today; this exists so
  * that removing a semantic degrades the ladder rather than breaking the game.
  */
-function clampToVocabulary(config: DifficultyConfig): DifficultyConfig {
+function clampToVocabulary(config: LevelSpec): DifficultyConfig {
   const mappingCount = Math.min(config.mappingCount, buildableCeiling());
-  return {
-    ...config,
-    mappingCount,
-    challengeRequirementCount: Math.min(config.challengeRequirementCount, mappingCount),
-  };
+  return { ...config, mappingCount, challengeRequirementCount: mappingCount };
 }
 
 export function availableDifficulties(): DifficultyConfig[] {

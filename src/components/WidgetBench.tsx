@@ -20,13 +20,11 @@ interface WidgetBenchProps {
   /** Show what each control currently reads as. */
   showInterpreted: boolean;
   /**
-   * Requirements to print on the controls that satisfy them.
+   * The order lines, used to NAME each control.
    *
-   * When supplied, a station is headed by its objective ("COMPANION → QUONK")
-   * instead of by the name of its control. "CHECKBOX" was noise: the player can
-   * see it is a checkbox. What they cannot see is which line of the order it
-   * answers. Withheld on harder tiers, where matching order to bench is part of
-   * the puzzle.
+   * A card is headed by the objective it answers, so it can be matched against
+   * the order panel by name. "CHECKBOX" was noise (the player can see it is a
+   * checkbox) and "STATION 3" was worse: a number that appears nowhere else.
    */
   requirements?: Requirement[];
   lockedWidgets?: WidgetType[];
@@ -101,7 +99,7 @@ export function WidgetBench({
               <p className="wui-station-output">
                 <span className="wui-station-output-label">READS AS</span>
                 <span className="wui-station-output-value">
-                  {value === undefined ? '—' : mapping.domain.display(value)}
+                  {value === undefined ? '--' : mapping.domain.display(value)}
                 </span>
               </p>
             )}

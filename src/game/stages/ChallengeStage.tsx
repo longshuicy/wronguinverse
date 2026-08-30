@@ -1,12 +1,12 @@
 // ChallengeStage.tsx
-// Stage 3 — stabilize. Same mappings, less help.
+// Stage 3 - stabilize. Same mappings, less help.
 //
 // Escape valves are mandatory here: Give Up and Reveal Rules are always
 // present, and neither shames the player. A single wrong value never ends the
 // run. See docs/WrongUInverse-game-design.md §4, §10.
 
-import { ChallengeCard } from '../../components/ChallengeCard.tsx';
 import { Mascot } from '../../components/Mascot.tsx';
+import { OrderPanel } from '../../components/OrderPanel.tsx';
 import { StageRail } from '../../components/StageRail.tsx';
 import { WidgetBench } from '../../components/WidgetBench.tsx';
 import {
@@ -26,42 +26,45 @@ export function ChallengeStage() {
   const revealRules = useGameStore((s) => s.revealRules);
   const giveUp = useGameStore((s) => s.giveUp);
   const difficulty = useGameStore((s) => s.difficulty);
+  const returnToIntro = useGameStore((s) => s.returnToIntro);
 
   if (!run) return null;
 
-  const paired = difficulty.pairRequirementsWithWidgets;
-  const done = requirements.filter((r) => lockedWidgets.includes(r.widget)).length;
-
   return (
     <main className="wui-screen">
+      {/* Give Up and Reveal Rules are the escape valves, so they belong where
+          they can always be seen. They used to sit below the bench, which is
+          off-screen on a large board. */}
       <header className="wui-topbar">
-        <StageRail stage="challenge" />
+        <div className="wui-topbar-row">
+          <StageRail stage="challenge" />
+          <div className="wui-topbar-actions">
+            {!rulesRevealed && (
+              <button type="button" className="wui-ghost" onClick={revealRules}>
+                Reveal rules
+              </button>
+            )}
+            <button type="button" className="wui-ghost" onClick={giveUp}>
+              Give up
+            </button>
+            <button type="button" className="wui-ghost" onClick={returnToIntro}>
+              Leave
+            </button>
+          </div>
+        </div>
+
         <div className="wui-topbar-main">
           <div className="wui-goal">
             <Mascot />
             <div>
               <h1 className="wui-stage-title">Stabilize this dimension</h1>
               <p className="wui-lede">{CHALLENGE_INTRO}</p>
+              <p className="wui-eyebrow">STABILIZATION PROTOCOL · {run.seed}</p>
             </div>
           </div>
-          {/* Progress is the one thing that must always be visible. */}
-          <p className="wui-tally">
-            <span className="wui-tally-count">
-              {done}/{requirements.length}
-            </span>
-            <span className="wui-tally-label">LOCKED</span>
-          </p>
+          <OrderPanel requirements={requirements} lockedWidgets={lockedWidgets} />
         </div>
-        <p className="wui-eyebrow">STABILIZATION PROTOCOL · {run.seed}</p>
       </header>
-
-      {!paired && (
-        <ChallengeCard
-          title="STABILIZATION ORDER"
-          requirements={requirements}
-          lockedWidgets={lockedWidgets}
-        />
-      )}
 
       <WidgetBench
         mappings={run.mappings}
@@ -69,15 +72,15 @@ export function ChallengeStage() {
         mode="challenge"
         onChange={setValue}
         seed={run.seed}
-        // Easy tiers keep the readout; harder ones leave the requirement lock
-        // as the only signal (technical design §15).
+        // Easy levels keep the readout; the hardest leaves the requirement
+        // lock as the only signal (technical design §15).
         showInterpreted={difficulty.interpretedOutputInChallenge}
-        requirements={paired ? requirements : undefined}
+        requirements={requirements}
         lockedWidgets={lockedWidgets}
       />
 
-      <footer className="wui-footer">
-        {rulesRevealed && (
+      {rulesRevealed && (
+        <footer className="wui-footer">
           <section className="wui-rules">
             <h2>UNIVERSE RULES</h2>
             <ul>
@@ -89,19 +92,8 @@ export function ChallengeStage() {
               ))}
             </ul>
           </section>
-        )}
-
-        <div className="wui-actions">
-          {!rulesRevealed && (
-            <button type="button" className="wui-ghost" onClick={revealRules}>
-              Reveal rules
-            </button>
-          )}
-          <button type="button" className="wui-ghost" onClick={giveUp}>
-            Give up
-          </button>
-        </div>
-      </footer>
+        </footer>
+      )}
     </main>
   );
 }

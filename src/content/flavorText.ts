@@ -77,10 +77,10 @@ export const SHIFT_SUBHEAD = 'INTERFACE SEMANTICS SHIFTED';
 
 /** Rotating skip copy, so a returning player gets a different joke. */
 export const SKIP_CALIBRATION_COPY = [
-  'SKIP — I still remember how buttons work',
-  'SKIP — I live in this universe',
-  'SKIP — Yes yes, sliders slide',
-  'SKIP — Unfortunately, I know UX',
+  'SKIP: I still remember how buttons work',
+  'SKIP: I live in this universe',
+  'SKIP: Yes yes, sliders slide',
+  'SKIP: Unfortunately, I know UX',
 ];
 
 export const GIVE_UP_RESPONSE = 'Understandable.';

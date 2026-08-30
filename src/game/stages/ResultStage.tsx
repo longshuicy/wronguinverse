@@ -4,6 +4,7 @@
 // See docs/WrongUInverse-game-design.md §11, technical design §12.
 
 import { useMemo } from 'react';
+import { AssetImage } from '../../components/AssetImage.tsx';
 import {
   GIVE_UP_RESPONSE,
   resultHeadline,
@@ -23,6 +24,7 @@ export function ResultStage() {
   const progress = useGameStore((s) => s.progress);
   const retry = useGameStore((s) => s.retrySameReality);
   const next = useGameStore((s) => s.nextUniverse);
+  const returnToIntro = useGameStore((s) => s.returnToIntro);
 
   const mappingCount = run?.mappings.length ?? 0;
   const metrics = useMemo(
@@ -43,6 +45,11 @@ export function ResultStage() {
       </header>
 
       <section className="wui-diagnosis">
+        {/* Each brain type has a specimen; the pairing lives in
+            content/brainTypes.ts so it is not re-invented per screen. */}
+        <div className="wui-diagnosis-creature">
+          <AssetImage id={brain.creature} alt="" scale={2} />
+        </div>
         <p className="wui-diagnosis-metric">CONVENTIONAL THINKING: {conventional}%</p>
         <p className="wui-diagnosis-brain">{brain.name}</p>
         <p className="wui-diagnosis-blurb">{brain.blurb}</p>
@@ -104,6 +111,9 @@ export function ResultStage() {
         </button>
         <button type="button" className="wui-ghost" onClick={next}>
           Escape to another universe
+        </button>
+        <button type="button" className="wui-ghost" onClick={returnToIntro}>
+          Back to the start
         </button>
       </div>
     </main>

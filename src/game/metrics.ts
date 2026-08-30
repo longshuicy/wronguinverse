@@ -5,6 +5,7 @@
 // not a psychological assessment and must never be presented as one — see
 // docs/WrongUInverse-game-design.md §11 and technical design §12.
 
+import { BRAIN_TYPES, type BrainType } from '../content/brainTypes.ts';
 import type { GameEvent } from './state/types.ts';
 
 export interface RunMetrics {
@@ -85,11 +86,6 @@ export function conventionalThinking(metrics: RunMetrics, mappingCount: number):
   return Math.round(Math.min(1, raw) * 100);
 }
 
-export interface BrainType {
-  name: string;
-  blurb: string;
-}
-
 /**
  * Assign an Interface Brain Type.
  *
@@ -106,24 +102,11 @@ export function brainType(metrics: RunMetrics, mappingCount: number): BrainType 
   const { interactions, hintsUsed, firstAttemptHits, widgetsTouched } = metrics;
   const perMapping = mappingCount > 0 ? interactions / mappingCount : interactions;
 
-  if (perMapping > 25) {
-    return { name: 'THE POKER', blurb: 'Touched everything until reality gave up.' };
-  }
-  if (hintsUsed >= mappingCount) {
-    return {
-      name: 'REASONABLE HUMAN BEING',
-      blurb: 'Used hints instead of arguing with a calendar.',
-    };
-  }
-  if (firstAttemptHits === mappingCount && hintsUsed === 0) {
-    return { name: 'THE UX DESIGNER', blurb: 'Immediately assumed the interface was wrong.' };
-  }
-  if (perMapping > 12 && widgetsTouched >= mappingCount) {
-    return { name: 'THE ENGINEER', blurb: 'Brute-forced the semantic space, methodically.' };
-  }
+  if (perMapping > 25) return BRAIN_TYPES.poker;
+  if (hintsUsed >= mappingCount) return BRAIN_TYPES.reasonable;
+  if (firstAttemptHits === mappingCount && hintsUsed === 0) return BRAIN_TYPES.uxDesigner;
+  if (perMapping > 12 && widgetsTouched >= mappingCount) return BRAIN_TYPES.engineer;
   // Worked it out with barely any poking.
-  if (perMapping < 4 && hintsUsed === 0) {
-    return { name: 'THE THEORIST', blurb: 'Barely touched anything. Just knew.' };
-  }
-  return { name: 'THE NORMIE', blurb: 'Attempted to use every control correctly. Adorable.' };
+  if (perMapping < 4 && hintsUsed === 0) return BRAIN_TYPES.theorist;
+  return BRAIN_TYPES.normie;
 }

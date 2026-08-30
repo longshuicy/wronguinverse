@@ -13,13 +13,15 @@ import type { AssetId } from '../content/assets.ts';
 import { createRng } from '../game/generator/seededRandom.ts';
 import { AssetImage } from './AssetImage.tsx';
 
-/** Specimens and anomalies that can sit beside a control. */
+/**
+ * Props only. Creatures are reserved for the result screen, where each one
+ * stands for an Interface Brain Type (content/brainTypes.ts) — reusing them as
+ * card decoration would dilute that association into wallpaper.
+ *
+ * Seven props against a maximum of eight stations, so the hardest level
+ * repeats one. An eighth prop would remove the repeat.
+ */
 const SPECIMENS: AssetId[] = [
-  'creature_mip',
-  'creature_quonk',
-  'creature_velori',
-  'creature_plim',
-  'creature_noxu',
   'prop_flux_crystal',
   'prop_reactor_orb',
   'prop_antenna',
@@ -37,7 +39,9 @@ const SPECIMENS: AssetId[] = [
  */
 export function planSpecimens(seed: string, count: number): AssetId[] {
   const rng = createRng(`${seed}::specimens`);
-  return rng.sample(SPECIMENS, Math.min(count, SPECIMENS.length));
+  const picked = rng.sample(SPECIMENS, Math.min(count, SPECIMENS.length));
+  // Wrap rather than render nothing if a level has more stations than props.
+  return Array.from({ length: count }, (_, i) => picked[i % picked.length]!);
 }
 
 interface SpecimenProps {

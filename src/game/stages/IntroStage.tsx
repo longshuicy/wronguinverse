@@ -1,5 +1,5 @@
 // IntroStage.tsx
-// Entry point. Deliberately says almost nothing about the twist — the game
+// Entry point. Deliberately says almost nothing about the twist: the game
 // communicates its thesis through play, not exposition (game design §2).
 
 import { useState } from 'react';
@@ -8,10 +8,16 @@ import { availableDifficulties } from '../difficulty.ts';
 import { seedFromLocation } from '../generator/seededRandom.ts';
 import { useGameStore } from '../state/gameStore.ts';
 
-/** Tiers 2 and 3 from game design §3, named so the shape of the game is clear. */
+/** Tiers 2 and 3 from game design §3, folded away until they exist. */
 const FUTURE_TIERS = [
-  { name: 'TIER 2 · OPERATION SHIFT', blurb: 'The controls stop working the way they look.' },
-  { name: 'TIER 3 · GESTURE SHIFT', blurb: 'Clicking, dragging and hovering swap places.' },
+  {
+    name: 'TIER 2 · OPERATION SHIFT',
+    blurb: 'The controls stop working the way they look. A slider you click. A checkbox you drag.',
+  },
+  {
+    name: 'TIER 3 · GESTURE SHIFT',
+    blurb: 'Clicking, dragging and hovering swap places. Expert chaos.',
+  },
 ];
 
 export function IntroStage() {
@@ -30,16 +36,30 @@ export function IntroStage() {
         <span className="wui-title-flip">N</span>verse
       </h1>
       <p className="wui-tagline">Everything works as unintended.</p>
-      <p className="wui-release">1.0 · TIER 1 — SEMANTIC SHIFT</p>
+
+      {/* Tier 1 is the release; the other two fold away behind it rather than
+          taking up the page with things you cannot play. */}
+      <div className="wui-tier-line">
+        <span className="wui-release">1.0 · TIER 1 · SEMANTIC SHIFT</span>
+        <details className="wui-future">
+          <summary>What else is coming?</summary>
+          <ul>
+            {FUTURE_TIERS.map((tier) => (
+              <li key={tier.name}>
+                <span className="wui-future-name">{tier.name}</span>
+                <span className="wui-future-blurb">{tier.blurb}</span>
+                <span className="wui-future-tag">COMING SOON</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      </div>
 
       <p className="wui-lede">
         You operate a Reality Calibration Terminal. Nearby universes have overlapped, and interface
         conventions were among the things that shifted.
       </p>
 
-      {/* A plain row of named levels rather than a grid of description cards:
-          the blurb for the selected one is enough, and three boxes of prose
-          crowded the page. */}
       <section className="wui-levels" aria-label="Difficulty level">
         <p className="wui-levels-label">SELECT LEVEL</p>
         <div className="wui-level-row">
@@ -66,16 +86,6 @@ export function IntroStage() {
         </button>
       </div>
 
-      <section className="wui-future" aria-label="Coming soon">
-        {FUTURE_TIERS.map((tier) => (
-          <p key={tier.name} className="wui-future-item">
-            <span className="wui-future-name">{tier.name}</span>
-            <span className="wui-future-blurb">{tier.blurb}</span>
-            <span className="wui-future-tag">COMING SOON</span>
-          </p>
-        ))}
-      </section>
-
       <p className="wui-meta">
         {progress.universesStabilized > 0 && `${progress.universesStabilized} STABILIZED · `}
         {urlSeed && `SEED ${urlSeed} · `}
@@ -100,7 +110,7 @@ export function IntroStage() {
                 <a href={track.sourceUrl} target="_blank" rel="noreferrer noopener">
                   incompetech.com
                 </a>
-                ) — licensed under Creative Commons:{' '}
+                ), licensed under Creative Commons:{' '}
                 <a href={track.licenceUrl} target="_blank" rel="noreferrer noopener">
                   By Attribution 4.0
                 </a>

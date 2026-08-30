@@ -57,7 +57,7 @@ export const MUSIC_TRACKS: Record<string, MusicTrack> = {
  */
 const LEVEL_MUSIC: Record<DifficultyId, string> = {
   slightlyWrong: 'airship-serenity',
-  deeplyWrong: 'video-dungeon-boss',
+  uxHell: 'video-dungeon-boss',
   wronguinverse: 'club-diver',
 };
 

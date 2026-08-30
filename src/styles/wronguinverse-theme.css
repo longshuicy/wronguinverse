@@ -977,11 +977,11 @@ input[type='range']::-moz-range-thumb {
   animation: wui-float 3s steps(2, end) infinite;
 }
 
-/* Magnified enough for the pixels to be visible, then clipped by the card so
-   a big sprite reads as scenery running off the corner rather than as a
-   picture pasted on top of the panel. */
+/* Props are cleaned to exactly 32px tall, so 2x gives every card the same
+   64px specimen whatever the prop's width. Uniform height is what stops a row
+   of cards looking ragged. */
 .wui-specimen img {
-  max-height: calc(var(--px) * 34);
+  height: calc(var(--px) * 16);
   width: auto;
 }
 
@@ -1188,26 +1188,166 @@ input[type='range']::-moz-range-thumb {
   justify-content: center;
 }
 
-/* --- coming soon --- */
+/* Not a countdown — the count of interactions, which is what gets reported. */
+.wui-tally-neutral {
+  color: var(--accent-primary);
+}
+
+/* --- topbar rows ---
+   The stage rail and the actions share the first line; the goal, Zorblet and
+   the order share the second. Everything a player checks or presses is here,
+   above the bench, and none of it scrolls. */
+
+.wui-topbar-row {
+  display: flex;
+  gap: calc(var(--px) * 4);
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.wui-topbar-actions {
+  display: flex;
+  gap: calc(var(--px) * 2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.wui-counter {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.wui-counter-value {
+  font-size: 16px;
+  color: var(--accent-primary);
+}
+
+/* --- order panel ---
+   The checklist, pinned beside Zorblet. Each line names a card on the bench,
+   so this doubles as the legend for the whole board. */
+
+.wui-order {
+  --frame-color: var(--stage-edge, var(--line));
+  flex: 1 1 22rem;
+  max-width: 34rem;
+  padding: calc(var(--px) * 3);
+  background: var(--bg-panel);
+  border: none;
+  box-shadow:
+    0 calc(-1 * var(--border)) 0 0 var(--frame-color),
+    0 var(--border) 0 0 var(--frame-color),
+    calc(-1 * var(--border)) 0 0 0 var(--frame-color),
+    var(--border) 0 0 0 var(--frame-color);
+}
+
+.wui-order-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: calc(var(--px) * 2);
+}
+
+.wui-order-head h2 {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.wui-order-count {
+  font-size: 14px;
+  color: var(--accent-success);
+}
+
+.wui-order-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0 calc(var(--px) * 4);
+}
+
+.wui-order-item {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--px) * 2);
+  padding: calc(var(--px) * 1) 0;
+  font-size: 12px;
+}
+
+.wui-order-label {
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.wui-order-target {
+  margin-left: auto;
+  color: var(--text-primary);
+}
+
+.wui-order-item.is-locked .wui-order-target {
+  color: var(--accent-success);
+  text-decoration: line-through;
+}
+
+.wui-order-lock {
+  color: var(--accent-success);
+}
+
+/* --- coming soon, folded away --- */
+
+.wui-tier-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--px) * 2);
+}
 
 .wui-future {
+  max-width: 40rem;
+  font-size: 12px;
+}
+
+.wui-future summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+  text-align: center;
+  list-style: none;
+}
+
+.wui-future summary::-webkit-details-marker {
+  display: none;
+}
+
+.wui-future summary::after {
+  content: ' ▾';
+  color: var(--accent-anomaly);
+}
+
+.wui-future[open] summary::after {
+  content: ' ▴';
+}
+
+.wui-future ul {
+  list-style: none;
+  margin: calc(var(--px) * 3) 0 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: calc(var(--px) * 2);
-  width: 100%;
-  max-width: 34rem;
 }
 
-.wui-future-item {
+.wui-future li {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: calc(var(--px) * 2);
-  margin: 0;
+  flex-direction: column;
+  gap: var(--px);
   padding: calc(var(--px) * 2) calc(var(--px) * 3);
   border: var(--border) dashed var(--line);
-  font-size: 12px;
   color: var(--line-strong);
+  text-align: left;
 }
 
 .wui-future-name {
@@ -1215,15 +1355,18 @@ input[type='range']::-moz-range-thumb {
 }
 
 .wui-future-blurb {
-  flex: 1 1 12rem;
+  line-height: 1.8;
 }
 
 .wui-future-tag {
-  margin-left: auto;
   color: var(--accent-anomaly);
 }
 
-/* Not a countdown — the count of interactions, which is what gets reported. */
-.wui-tally-neutral {
-  color: var(--accent-primary);
+/* --- the diagnosis creature ---
+   Each brain type has a specimen; see content/brainTypes.ts. */
+
+.wui-diagnosis-creature {
+  display: flex;
+  justify-content: center;
+  margin-bottom: calc(var(--px) * 3);
 }

@@ -164,7 +164,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { difficulty, progress } = get();
     const runSeed = seed ?? createSeed();
 
-    // Browsers block audio until a user gesture; starting a run is one.
+    // Usually already playing from the level picker; this covers the player
+    // who pressed start without touching the picker at all.
     setAudioMuted(progress.audioMuted);
     if (!progress.audioMuted) playMusicFor(difficulty.id);
     const { run, requirements } = buildUniverse(runSeed, difficulty);
@@ -404,8 +405,19 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   returnToIntro: () => set({ stage: 'intro' }),
 
-  /** Only meaningful from the intro; a run's tier is fixed once it starts. */
-  setDifficulty: (id) => set({ difficulty: getDifficulty(id) }),
+  /**
+   * Only meaningful from the intro; a run's level is fixed once it starts.
+   *
+   * Switches the music straight away rather than waiting for the run to begin.
+   * The track is part of what a level IS, so picking one should let you hear
+   * it. The click is also the user gesture browsers require before audio may
+   * play, so this is the earliest honest moment to start.
+   */
+  setDifficulty: (id) => {
+    const difficulty = getDifficulty(id);
+    if (!get().progress.audioMuted) playMusicFor(id);
+    set({ difficulty });
+  },
 
   setMuted: (muted) => {
     const progress = { ...get().progress, audioMuted: muted };

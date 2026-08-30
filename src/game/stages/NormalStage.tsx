@@ -66,7 +66,7 @@ export function NormalStage() {
         <p className="wui-station-output">
           <span className="wui-station-output-label">READS AS</span>
           <span className="wui-station-output-value">
-            {value === undefined ? '—' : mapping.domain.display(value)}
+            {value === undefined ? '--' : mapping.domain.display(value)}
           </span>
         </p>
       </section>

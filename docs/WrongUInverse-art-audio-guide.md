@@ -221,6 +221,36 @@ frames per state if practical.
 -   Stage 3 success → success
 -   give up → confused/neutral
 
+### Creatures and the result screen
+
+Each secondary creature represents one Interface Brain Type on the result
+screen. The pairing lives in `src/content/brainTypes.ts`, next to the
+names and blurbs, so a type cannot end up with its wording in one place
+and its portrait in another. Each entry records *why* that creature, so
+the pairing is not re-rolled on a whim.
+
+  ------------------------------------------------------------------
+  Brain type                 Creature
+  -------------------------- ---------------------------------------
+  THE POKER                  `creature_quonk`
+
+  REASONABLE HUMAN BEING     `creature_noxu`
+
+  THE UX DESIGNER            `creature_velori`
+
+  THE ENGINEER               `creature_mip`
+
+  THE THEORIST               `creature_plim`
+
+  THE NORMIE                 `mascot_zorblet_idle` (doubled up)
+  ------------------------------------------------------------------
+
+**Creatures appear only here.** Cards on the bench use props. Reusing the
+creatures as card decoration would dilute the association into wallpaper.
+
+**Wanted:** a sixth creature, so THE NORMIE stops borrowing Zorblet; and
+an eighth prop, so the eight-mapping level stops repeating one.
+
 ### A005 --- `creature_mip`
 
 **Filename:** `creatures/creature_mip.png`\
@@ -364,11 +394,31 @@ Implementing steps 1--5 below in `scripts/clean-sprites.mjs`:
     downscale as orphaned specks. Removal is by *connected component*, so
     anything joined to the body (Zorblet's thin antennae, a satellite's
     mast) is kept however spindly,
-4.  **logical pixel grid** --- longest side to 96px for creatures, 64px
-    for props, aspect preserved; then a hard alpha cutoff so silhouettes
-    stay crisp when magnified, then quantisation to a limited palette
-    with dithering off (dithering scatters noise at this size),
-5.  **export** --- palette PNG with transparency.
+4.  **logical pixel grid** --- 96px longest side for creatures; props are
+    a fixed **32px tall** (not longest side) so a row of them lines up at
+    identical height and differs only in width,
+5.  **make it read as pixel art** --- lift contrast and saturation, cut to
+    a small palette (16 colours for creatures, 12 for props), harden the
+    alpha, and grow a one-pixel dark outline around the silhouette,
+6.  **export** --- palette PNG with transparency.
+
+### Crispness is contrast, not pixel size
+
+Getting this wrong twice is worth recording. Square pixels and integer
+scaling are necessary but nowhere near sufficient: generated art is
+smoothly lit, and a smooth gradient shrunk down still reads as a tiny
+photograph however square its pixels are.
+
+Reducing the palette alone barely helped, because the *gradient* survived
+quantisation. What worked was attacking the shading itself:
+
+-   **contrast and saturation up before quantising**, so the smooth ramp
+    collapses into a few deliberate bands;
+-   **a hard one-pixel outline**, which is the strongest single signal
+    that something is pixel art rather than a small render, and gives the
+    shape a definite edge instead of letting it fade into the page;
+-   **a genuinely small palette** (12--16), which only reads as
+    deliberate once the contrast step has given it bands to snap to.
 
 Steps 6--7 are the renderer's job and now hold, because the input is
 finally a real sprite: `AssetImage` magnifies by a whole number from the
