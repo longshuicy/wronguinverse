@@ -6,9 +6,15 @@ import { describe, expect, it } from 'vitest';
 import { implementedSemantics, initialValue } from '../domains/index.ts';
 import { implementedWidgets, reachableValues, supports } from '../../widgets/registry.ts';
 import { conventionalSemantic, getCompatibility, pairsWithCompatibility } from './compatibility.ts';
+import { shiftedOperations } from '../../widgets/operations.ts';
 import { generateRun, MappingGenerationError, maxMappingCount } from './mappingGenerator.ts';
 
 const RUNS = Array.from({ length: 400 }, (_, i) => generateRun({ seed: `run-${i}` }));
+
+/** The same universes, with the gesture shift layered on top. */
+const TIER_2_RUNS = Array.from({ length: 400 }, (_, i) =>
+  generateRun({ seed: `run-${i}`, operationShift: true }),
+);
 
 describe('generateRun', () => {
   it('returns the requested number of mappings', () => {
@@ -159,5 +165,84 @@ describe('maxMappingCount', () => {
     expect(max).toBeGreaterThanOrEqual(4);
     expect(() => generateRun({ seed: 'max', count: max })).not.toThrow();
     expect(() => generateRun({ seed: 'max', count: max + 1 })).toThrow(MappingGenerationError);
+  });
+});
+
+describe('operation shift (tier 2)', () => {
+  it('leaves every tier 1 control on its native gesture', () => {
+    for (const run of RUNS) {
+      expect(run.tier).toBe(1);
+      for (const mapping of run.mappings) expect(mapping.operation).toBe('native');
+    }
+  });
+
+  it('shifts the gesture of every control in a tier 2 run', () => {
+    // "All of them" is the tier's whole identity: one unshifted control would
+    // be a free foothold the design deliberately does not give.
+    for (const run of TIER_2_RUNS) {
+      expect(run.tier).toBe(2);
+      for (const mapping of run.mappings) {
+        expect(mapping.operation).not.toBe('native');
+        expect(shiftedOperations(mapping.widget)).toContain(mapping.operation);
+      }
+    }
+  });
+
+  it('keeps the semantic shift underneath the gesture shift', () => {
+    // Tier 2 is additive. If it replaced the semantic shift rather than adding
+    // to it, the controls would mean the ordinary things again.
+    for (const run of TIER_2_RUNS) {
+      for (const { widget, semantic } of run.mappings) {
+        expect(getCompatibility(widget, semantic)).toBe('yes');
+        expect(semantic).not.toBe(conventionalSemantic(widget));
+      }
+    }
+  });
+
+  it('picks a target the shifted gesture can actually reach', () => {
+    // The tier's central hazard: a click-stepped slider is coarser than a
+    // dragged one, so a target chosen against native reach could sit between
+    // two detents and never be satisfiable.
+    for (const run of TIER_2_RUNS) {
+      for (const { widget, domain, operation } of run.mappings) {
+        const reachable = reachableValues(widget, domain, operation);
+        expect(reachable.some((value) => domain.equals(value, domain.target))).toBe(true);
+      }
+    }
+  });
+
+  it('never sets a target the control already rests on', () => {
+    for (const run of TIER_2_RUNS) {
+      for (const { domain } of run.mappings) {
+        expect(domain.equals(initialValue(domain), domain.target)).toBe(false);
+      }
+    }
+  });
+
+  it('is deterministic for a seed and tier', () => {
+    for (const seed of ['op-a', 'op-b', 'op-c']) {
+      const first = generateRun({ seed, operationShift: true });
+      const second = generateRun({ seed, operationShift: true });
+      expect(first.mappings.map((m) => `${m.widget}:${m.semantic}:${m.operation}`)).toEqual(
+        second.mappings.map((m) => `${m.widget}:${m.semantic}:${m.operation}`),
+      );
+    }
+  });
+
+  it('does not disturb the universes tier 1 seeds already produced', () => {
+    // Regression: the operation draw shares the run's rng stream, so it must
+    // only ever pull from it when the shift is actually on. Otherwise every
+    // shared seed and every saved run would silently mean something else.
+    for (let i = 0; i < 50; i += 1) {
+      const seed = `run-${i}`;
+      const before = RUNS[i]!;
+      const again = generateRun({ seed });
+      expect(again.mappings.map((m) => `${m.widget}:${m.semantic}`)).toEqual(
+        before.mappings.map((m) => `${m.widget}:${m.semantic}`),
+      );
+      expect(again.mappings.map((m) => m.domain.display(m.domain.target))).toEqual(
+        before.mappings.map((m) => m.domain.display(m.domain.target)),
+      );
+    }
   });
 });

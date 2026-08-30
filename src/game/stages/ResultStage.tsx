@@ -9,6 +9,7 @@ import { StageBar } from '../../components/StageBar.tsx';
 import {
   GIVE_UP_RESPONSE,
   resultHeadline,
+  OPERATION_DISPLAY_NAME,
   SEMANTIC_DISPLAY_NAME,
   WIDGET_DISPLAY_NAME,
 } from '../../content/flavorText.ts';
@@ -140,6 +141,15 @@ export function ResultStage() {
             <li key={mapping.widget}>
               {WIDGET_DISPLAY_NAME[mapping.widget] ?? mapping.widget.toUpperCase()} →{' '}
               {SEMANTIC_DISPLAY_NAME[mapping.semantic] ?? mapping.semantic.toUpperCase()}
+              {/* On a tier 2 run the meaning is only half the rule; a debrief
+                  that stopped here would leave the player still not knowing
+                  why the control would not answer them. */}
+              {mapping.operation !== 'native' && (
+                <>
+                  {' · '}
+                  {OPERATION_DISPLAY_NAME[mapping.operation] ?? mapping.operation.toUpperCase()}
+                </>
+              )}
             </li>
           ))}
         </ul>

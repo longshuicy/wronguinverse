@@ -12,8 +12,9 @@ export interface RunMetrics {
   /** Wall-clock time spent in the challenge, in ms. */
   challengeMs: number;
   interactions: number;
+  /** Hints bought during stabilization. Exploration is unscored, so it is free. */
   hintsUsed: number;
-  /** Sum of hint levels — a full reveal costs more than a nudge. */
+  /** Sum of those hints' levels: a full reveal costs more than a nudge. */
   hintWeight: number;
   /** Requirements hit without a single wrong value for that widget first. */
   firstAttemptHits: number;
@@ -31,7 +32,11 @@ export function computeMetrics(
   challengeEndedAt: number | null,
 ): RunMetrics {
   const interactions = events.filter((e) => e.type === 'interaction');
-  const hints = events.filter((e) => e.type === 'hint');
+
+  // Only hints bought during stabilization count. Exploration is explicitly
+  // unscored ("nothing you do during exploration is scored, poke everything"),
+  // so charging for a hint taken there would quietly break that promise.
+  const hints = events.filter((e) => e.type === 'hint' && e.phase === 'challenge');
   const attempts = events.filter((e) => e.type === 'challenge_attempt');
 
   // A widget counts as first-attempt if its first challenge attempt was correct.

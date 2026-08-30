@@ -3,7 +3,7 @@
 // A player who gives up gets "Understandable.", not a scolding.
 // See docs/WrongUInverse-game-design.md §4, §6, §11.
 
-import type { SemanticType, WidgetType } from '../game/state/types.ts';
+import type { OperationType, SemanticType, TierId, WidgetType } from '../game/state/types.ts';
 
 /** Plain-language name for what a widget conventionally deals in. */
 const CONVENTIONAL_SUBJECT: Partial<Record<WidgetType, string>> = {
@@ -72,6 +72,64 @@ export function hintText(widget: WidgetType, semantic: SemanticType, level: 1 | 
   }
 }
 
+/** Plain-language name for the gesture a widget conventionally answers to. */
+const CONVENTIONAL_GESTURE: Partial<Record<WidgetType, string>> = {
+  slider: 'being dragged',
+  checkbox: 'being clicked',
+  radio: 'being clicked',
+  dropdown: 'being opened',
+  number: 'being typed into',
+  text: 'being typed into',
+  date: 'having its days picked',
+  color: 'having its swatches clicked',
+};
+
+/** Level 2 hint: what the control DOES want, without naming the gesture. */
+const OPERATION_CATEGORY_CLUE: Partial<Record<OperationType, string>> = {
+  clickStep: 'It would rather be aimed at than pushed along.',
+  wheelCycle: 'It wants to be turned, not touched.',
+  dragToggle: 'A tap is not enough. It wants the distance.',
+  holdToSelect: 'It responds to patience.',
+  commitOnEnter: 'It hears you, but it is waiting for you to finish.',
+  stepArrows: 'The body of it is scenery. Look at the edges.',
+};
+
+export const OPERATION_DISPLAY_NAME: Partial<Record<OperationType, string>> = {
+  native: 'AS BUILT',
+  clickStep: 'CLICK A POSITION',
+  wheelCycle: 'SCROLL OVER IT',
+  dragToggle: 'DRAG ACROSS IT',
+  holdToSelect: 'PRESS AND HOLD',
+  commitOnEnter: 'TYPE, THEN ENTER',
+  stepArrows: 'USE THE ARROWS',
+};
+
+/**
+ * The gesture ladder, mirroring `hintText`: nudge → category → reveal.
+ *
+ * Kept as a separate ladder rather than extra rungs on the semantic one,
+ * because "what does this mean" and "how do I work it" are different questions
+ * and a player stuck on one should not have to buy the other to reach it.
+ */
+export function operationHintText(
+  widget: WidgetType,
+  operation: OperationType,
+  level: 1 | 2 | 3,
+): string {
+  const widgetName = WIDGET_DISPLAY_NAME[widget] ?? widget.toUpperCase();
+
+  switch (level) {
+    case 1:
+      return `That ${widgetName.toLowerCase()} has lost interest in ${
+        CONVENTIONAL_GESTURE[widget] ?? 'the usual approach'
+      }.`;
+    case 2:
+      return OPERATION_CATEGORY_CLUE[operation] ?? 'It wants something else from you.';
+    case 3:
+      return `${widgetName} → ${OPERATION_DISPLAY_NAME[operation] ?? operation.toUpperCase()}`;
+  }
+}
+
 export const SHIFT_HEADLINE = 'REALITY INDEX DESYNCHRONIZED';
 export const SHIFT_SUBHEAD = 'INTERFACE SEMANTICS SHIFTED';
 
@@ -124,12 +182,33 @@ export const TAGLINE = 'Every control lies. None of them are broken.';
  * One string per paragraph. Kept short enough that a player who wants to get
  * on with it is not held hostage by a typewriter.
  */
-export const BRIEFING_PARAGRAPHS = [
-  'REALITY CALIBRATION TERMINAL // CLEARANCE: PROVISIONAL',
-  'An experiment two sectors over went wrong in a way nobody has finished writing up. Nearby universes now overlap. Most of the overlap is harmless: slightly different gravity, slightly different Tuesdays.',
-  'Interface conventions were not harmless.',
-  'In this universe a slider may select a date. A checkbox may name a creature. A calendar may hold a percentage, and a colour picker may be the only way to set a time. The hardware is fine. The wiring is fine. The MEANINGS came loose.',
-  'Your terminal still works. It simply no longer agrees with you about what anything does.',
-  'Each contact begins with a calibration pass in your own universe, so you remember what normal feels like. Then the drift hits, and you find out what these controls mean HERE before you are asked to stabilize the dimension with them.',
-  'Nothing you do during exploration is scored. Poke everything.',
-];
+/**
+ * The Reality Index, as read before a run.
+ *
+ * Tier-dependent because the lore has to describe the rules the player is
+ * about to meet: a tier 2 operator told only about meanings would be ambushed
+ * by the gestures.
+ *
+ * The middle of it argues that conventions are agreements rather than laws.
+ * That is the game's actual thesis, and stating it here means the shift reads
+ * as a different set of agreements rather than as damage.
+ *
+ * Every sentence is typed out a character at a time on the briefing screen, so
+ * length here is time the player waits. Keep it tight.
+ */
+export function briefingParagraphs(tier: TierId): string[] {
+  const drift =
+    tier === 2
+      ? 'Here a slider may select a date, and refuse to be dragged. A checkbox may name a creature, and only answer to being dragged across. Two agreements lapsed instead of one: what a control MEANS, and what it wants you to DO. The hardware is fine. Both were only ever agreements.'
+      : 'Here a slider may select a date. A checkbox may name a creature. A calendar may hold a percentage, and a colour picker may be the only way to set a time. The hardware is fine. This universe simply settled on different agreements than yours.';
+
+  return [
+    'REALITY CALIBRATION TERMINAL // CLEARANCE: PROVISIONAL',
+    'An experiment two sectors over went wrong in a way nobody has finished writing up. Nearby universes now overlap. Most of the overlap is harmless: slightly different gravity, slightly different Tuesdays.',
+    'Interface conventions were not harmless. Not because they broke, but because they were never laws. A slider means a quantity the way a red light means stop: by agreement, repeated until it felt like physics. Here the agreement lapsed.',
+    drift,
+    'Your terminal still works. It simply no longer agrees with you, and it is not obviously the one that is wrong.',
+    'Each contact begins with a calibration pass in your own universe, so you remember what normal feels like. Then the drift hits, and you find out what these controls mean HERE before you are asked to stabilize the dimension with them.',
+    'Nothing during exploration is scored. Poke everything. The operators who adapt fastest are the ones who never believed the conventions were true.',
+  ];
+}

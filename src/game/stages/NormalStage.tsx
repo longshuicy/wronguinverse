@@ -105,6 +105,10 @@ export function NormalStage() {
                   value={value}
                   onChange={(next) => setValue(mapping.widget, next)}
                   mode="normal"
+                  // Calibration is the player's home universe: whatever the
+                  // tier does to the shifted run, the baseline it is measured
+                  // against must behave exactly as built.
+                  operation="native"
                 />
               </div>
 

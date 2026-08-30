@@ -13,6 +13,7 @@
 import type { ComponentType } from 'react';
 import type {
   AnyDomain,
+  OperationType,
   SemanticType,
   WidgetAdapterProps,
   WidgetType,
@@ -39,8 +40,12 @@ export interface WidgetDefinition {
    * A control has finite resolution — a dropdown lists 12 options, a slider has
    * 100 detents — so it cannot necessarily reach every value in its domain. The
    * generator uses this to keep targets inputtable.
+   *
+   * The gesture can narrow this further: a slider you click has coarser detents
+   * than one you drag, because a click resolves to a pixel of track. Adapters
+   * that reach the same values under every gesture ignore the argument.
    */
-  positions: (domain: AnyDomain) => number[];
+  positions: (domain: AnyDomain, operation?: OperationType) => number[];
 }
 
 /** Everything except free text, which needs a keyboard to enter. */
@@ -141,13 +146,17 @@ export function supports(widget: WidgetType, semantic: SemanticType): boolean {
  * must be drawn from — see technical design §14, "do not generate a challenge
  * value that was impossible to discover or input".
  */
-export function reachableValues(widget: WidgetType, domain: AnyDomain): unknown[] {
+export function reachableValues(
+  widget: WidgetType,
+  domain: AnyDomain,
+  operation: OperationType = 'native',
+): unknown[] {
   const definition = WIDGETS[widget];
   if (!definition) return [];
 
   const seen = new Set<string>();
   const out: unknown[] = [];
-  for (const position of definition.positions(domain)) {
+  for (const position of definition.positions(domain, operation)) {
     const value = domain.denormalize(position);
     const label = domain.display(value);
     if (seen.has(label)) continue;

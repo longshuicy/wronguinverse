@@ -2,6 +2,8 @@
 // Stage machine behaviour, driven through the store rather than the DOM.
 
 import { beforeEach, describe, expect, it } from 'vitest';
+import { computeMetrics } from '../metrics.ts';
+import { getTier } from '../tier.ts';
 import { useGameStore } from './gameStore.ts';
 
 function reset() {
@@ -19,7 +21,9 @@ function reset() {
     challengeEndedAt: null,
     rulesRevealed: false,
     hintLevels: {},
+    operationHintLevels: {},
     observations: {},
+    tier: getTier(1),
   });
 }
 
@@ -98,7 +102,10 @@ describe('run loop', () => {
     }
   });
 
-  it('reaches the result screen by satisfying every requirement', () => {
+  it('stabilizes the universe without leaving the bench', () => {
+    // Landing the last requirement finishes the run but does NOT jump to the
+    // debrief: the player gets to see the finished bench and asks for the
+    // report themselves.
     useGameStore.getState().beginRun('REALITY-TEST');
     useGameStore.getState().beginChallenge();
 
@@ -108,9 +115,75 @@ describe('run loop', () => {
       useGameStore.getState().setValue(requirement.widget, mapping.domain.target);
     }
 
-    expect(useGameStore.getState().stage).toBe('result');
+    expect(useGameStore.getState().stage).toBe('challenge');
     expect(useGameStore.getState().outcome).toBe('stabilized');
     expect(useGameStore.getState().distance).toBe(1);
+  });
+
+  it('reaches the report when the player asks for it', () => {
+    useGameStore.getState().beginRun('REALITY-TEST');
+    useGameStore.getState().beginChallenge();
+    const before = useGameStore.getState().progress.universesStabilized;
+
+    const { run, requirements } = useGameStore.getState();
+    for (const requirement of requirements) {
+      const mapping = run!.mappings.find((m) => m.widget === requirement.widget)!;
+      useGameStore.getState().setValue(requirement.widget, mapping.domain.target);
+    }
+    // Credit is banked by FINISHING, not by reading about it: a player who
+    // leaves without opening the report has still stabilized the universe.
+    const banked = useGameStore.getState().progress.universesStabilized;
+    useGameStore.getState().openReport();
+
+    expect(useGameStore.getState().stage).toBe('result');
+    expect(useGameStore.getState().outcome).toBe('stabilized');
+    expect(banked).toBe(before + 1);
+    expect(useGameStore.getState().progress.universesStabilized).toBe(banked);
+  });
+
+  it('winds both hint ladders back when stabilization begins', () => {
+    // A hint unwound while exploring must not still be sitting on the card
+    // when the scored phase opens, or the deduction arrives pre-solved.
+    useGameStore.getState().setTier(2);
+    useGameStore.getState().beginRun('REALITY-TEST');
+    const widget = useGameStore.getState().run!.mappings[0]!.widget;
+    useGameStore.getState().useHint(widget);
+    useGameStore.getState().useOperationHint(widget);
+    expect(useGameStore.getState().hintLevels[widget]).toBe(1);
+    expect(useGameStore.getState().operationHintLevels[widget]).toBe(1);
+
+    useGameStore.getState().beginChallenge();
+
+    expect(useGameStore.getState().hintLevels).toEqual({});
+    expect(useGameStore.getState().operationHintLevels).toEqual({});
+  });
+
+  it('does not charge the run for hints spent while exploring', () => {
+    // Exploration is explicitly unscored, so a hint taken there is free. Only
+    // hints bought once stabilization has started show up in the tally.
+    useGameStore.getState().beginRun('REALITY-TEST');
+    const widget = useGameStore.getState().run!.mappings[0]!.widget;
+    useGameStore.getState().useHint(widget);
+    useGameStore.getState().useHint(widget);
+    useGameStore.getState().beginChallenge();
+
+    const explored = useGameStore.getState();
+    expect(computeMetrics(explored.events, explored.challengeStartedAt, Date.now()).hintsUsed).toBe(
+      0,
+    );
+
+    // The same ladder, continued after the challenge began, does count.
+    useGameStore.getState().useHint(widget);
+    const during = useGameStore.getState();
+    expect(computeMetrics(during.events, during.challengeStartedAt, Date.now()).hintsUsed).toBe(1);
+  });
+
+  it('will not open a report for a run that has not ended', () => {
+    useGameStore.getState().beginRun('REALITY-TEST');
+    useGameStore.getState().beginChallenge();
+    useGameStore.getState().openReport();
+
+    expect(useGameStore.getState().stage).toBe('challenge');
   });
 
   it('records giving up without shaming or losing the mapping', () => {
@@ -199,5 +272,58 @@ describe('run loop', () => {
     expect(seen.length).toBeGreaterThan(0);
     // Never leaks the semantic type into the notebook.
     expect(seen.join(' ')).not.toContain(mapping.semantic);
+  });
+});
+
+describe('tier 2 (operation shift)', () => {
+  beforeEach(reset);
+
+  it('shifts every control in the run but leaves calibration alone', () => {
+    useGameStore.getState().setTier(2);
+    useGameStore.getState().beginRun('REALITY-TEST');
+
+    const { run, calibration } = useGameStore.getState();
+    expect(run!.tier).toBe(2);
+    for (const mapping of run!.mappings) expect(mapping.operation).not.toBe('native');
+
+    // Stage 1 is the home universe the shift is measured against. If it shifted
+    // too, there would be no baseline left to notice the difference from.
+    for (const mapping of calibration!.mappings) expect(mapping.operation).toBe('native');
+  });
+
+  it('keeps the gestures when the same reality is retried', () => {
+    // Retry re-rolls the CONTENT of a universe but not its RULES, and the
+    // gesture is a rule: a retry that quietly un-shifted them would be a
+    // different, easier universe wearing the same name.
+    useGameStore.getState().setTier(2);
+    useGameStore.getState().beginRun('REALITY-TEST');
+    const before = useGameStore.getState().run!.mappings.map((m) => `${m.widget}:${m.operation}`);
+
+    useGameStore.getState().retrySameReality();
+    const after = useGameStore.getState().run!.mappings.map((m) => `${m.widget}:${m.operation}`);
+
+    expect(after).toEqual(before);
+  });
+
+  it('walks the gesture ladder independently of the meaning ladder', () => {
+    useGameStore.getState().setTier(2);
+    useGameStore.getState().beginRun('REALITY-TEST');
+    const widget = useGameStore.getState().run!.mappings[0]!.widget;
+
+    for (let i = 0; i < 5; i += 1) useGameStore.getState().useOperationHint(widget);
+
+    expect(useGameStore.getState().operationHintLevels[widget]).toBe(3);
+    // Spending the gesture ladder must not spend the meaning one: they answer
+    // different questions and are bought separately.
+    expect(useGameStore.getState().hintLevels[widget]).toBeUndefined();
+
+    const hints = useGameStore.getState().events.filter((e) => e.type === 'hint');
+    expect(hints).toHaveLength(3);
+    for (const hint of hints) expect(hint.track).toBe('operation');
+  });
+
+  it('stays on tier 1 by default', () => {
+    useGameStore.getState().beginRun('REALITY-TEST');
+    expect(useGameStore.getState().run!.tier).toBe(1);
   });
 });

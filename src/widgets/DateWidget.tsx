@@ -18,7 +18,8 @@ import {
   toDayNumber,
   weekdayOf,
 } from '../game/domains/dateUtils.ts';
-import type { AnyDomain, WidgetAdapterProps } from '../game/state/types.ts';
+import type { AnyDomain, OperationType, WidgetAdapterProps } from '../game/state/types.ts';
+import { useRefusal } from './operationShift.ts';
 
 /** The control's own physical span. Not related to any date domain's range. */
 const WIDGET_YEAR = 2097;
@@ -52,10 +53,38 @@ function nativeRange(domain: AnyDomain): { first: number; last: number } | null 
   return { first: domain.min, last: domain.max };
 }
 
+/**
+ * How coarsely the arrows walk a calendar with no regions of its own.
+ *
+ * Stepping a continuous domain one day at a time would mean up to 365 presses
+ * to cross the year, which is not a puzzle but a chore. A week per press keeps
+ * the whole span a handful of seconds away.
+ */
+const ARROW_STRIDE_DAYS = 7;
+
+/** The positions the arrows can walk to when every day means something. */
+function stridedPositions(span: number): number[] {
+  const out: number[] = [];
+  for (let day = 0; day <= span; day += ARROW_STRIDE_DAYS) out.push(day / span);
+  // The last day is a legitimate target and rarely lands on the stride.
+  if (out[out.length - 1] !== 1) out.push(1);
+  return out;
+}
+
 /** Every normalized position this control can emit — one per day in its span. */
-export function datePositions(domain: AnyDomain): number[] {
+export function datePositions(domain: AnyDomain, operation: OperationType = 'native'): number[] {
   const native = nativeRange(domain);
   const span = native ? native.last - native.first : SPAN_DAYS;
+
+  // Under `stepArrows` the days are dead and the arrows are the only way to
+  // move, so the reachable set is whatever they can walk to — the regions when
+  // the domain has them, a strided subset when it does not.
+  if (operation === 'stepArrows') {
+    const regions = calendarRegions(domain);
+    if (regions.length > 0) return regions.map((region) => region.position);
+    return stridedPositions(span);
+  }
+
   return Array.from({ length: span + 1 }, (_, i) => i / span);
 }
 
@@ -137,6 +166,8 @@ function CalendarGrid({
   selectedIso,
   selectable,
   onPick,
+  stepArrows,
+  walk,
 }: {
   first: number;
   last: number;
@@ -144,15 +175,48 @@ function CalendarGrid({
   /** Day numbers that mean something, or `null` when every day does. */
   selectable: Set<number> | null;
   onPick: (iso: string) => void;
+  /**
+   * Tier 2: the arrows move the SELECTION and the days are inert.
+   *
+   * The calendar keeps looking like a calendar — that is the joke — so the days
+   * stay enabled and flinch rather than greying out, which would read as the
+   * control being switched off rather than being wrong.
+   */
+  stepArrows: boolean;
+  /** Day numbers the arrows walk, ascending. Only used under `stepArrows`. */
+  walk: number[];
 }) {
   const [selectedYear, selectedMonth] = partsOf(selectedIso);
   const [view, setView] = useState({ year: selectedYear, month: selectedMonth });
+  const { refusing, refuse } = useRefusal();
+
+  // The view has to chase the selection once the arrows drive it, or stepping
+  // past a month boundary would move a selection the player cannot see.
+  const shownIso = fromDayNumber(toDayNumber(selectedIso));
+  const [shownYear, shownMonth] = partsOf(shownIso);
+  const viewYear = stepArrows ? shownYear : view.year;
+  const viewMonth = stepArrows ? shownMonth : view.month;
+
+  /** Move the selection one rung along the walk. */
+  function stepSelection(direction: 1 | -1) {
+    const current = toDayNumber(selectedIso);
+    const index = walk.findIndex((day) => day >= current);
+    const from = index === -1 ? walk.length - 1 : index;
+    const next = from + direction;
+    if (next < 0 || next >= walk.length) {
+      // The ends of the calendar are a real edge, not a bug. Flinch rather than
+      // wrapping: wrapping would let a player scrub past the target forever.
+      refuse();
+      return;
+    }
+    onPick(fromDayNumber(walk[next]!));
+  }
 
   // Most months are entirely dead when a domain collapses to four readings, so
   // stepping one month at a time would mean clicking through empty grids. The
   // arrows jump to the next month that actually holds something.
   function step(direction: 1 | -1) {
-    let day = toDayNumber(makeIsoDate(view.year, view.month, 1));
+    let day = toDayNumber(makeIsoDate(viewYear, viewMonth, 1));
     for (let guard = 0; guard < 24; guard += 1) {
       const [y, m] = partsOf(fromDayNumber(day));
       const next =
@@ -177,32 +241,32 @@ function CalendarGrid({
     }
   }
 
-  const total = daysInMonth(view.year, view.month);
-  const leading = weekdayOf(makeIsoDate(view.year, view.month, 1));
+  const total = daysInMonth(viewYear, viewMonth);
+  const leading = weekdayOf(makeIsoDate(viewYear, viewMonth, 1));
   const cells: (string | null)[] = [
     ...Array.from({ length: leading }, () => null),
-    ...Array.from({ length: total }, (_, i) => makeIsoDate(view.year, view.month, i + 1)),
+    ...Array.from({ length: total }, (_, i) => makeIsoDate(viewYear, viewMonth, i + 1)),
   ];
 
   return (
-    <div className="wui-calendar">
+    <div className={refusing ? 'wui-calendar is-refusing' : 'wui-calendar'}>
       <div className="wui-calendar-head">
         <button
           type="button"
           className="wui-calendar-step"
-          onClick={() => step(-1)}
-          aria-label="Previous month with a selectable date"
+          onClick={() => (stepArrows ? stepSelection(-1) : step(-1))}
+          aria-label={stepArrows ? 'Previous value' : 'Previous month with a selectable date'}
         >
           {'\u25C0'}
         </button>
         <span className="wui-calendar-month">
-          {monthName(view.month)} {view.year}
+          {monthName(viewMonth)} {viewYear}
         </span>
         <button
           type="button"
           className="wui-calendar-step"
-          onClick={() => step(1)}
-          aria-label="Next month with a selectable date"
+          onClick={() => (stepArrows ? stepSelection(1) : step(1))}
+          aria-label={stepArrows ? 'Next value' : 'Next month with a selectable date'}
         >
           {'\u25B6'}
         </button>
@@ -228,10 +292,14 @@ function CalendarGrid({
               key={iso}
               type="button"
               className={selected ? 'wui-calendar-day is-selected' : 'wui-calendar-day'}
-              disabled={!enabled}
+              // Under `stepArrows` the days stay pressable so they can flinch.
+              // A `disabled` button swallows the click entirely and cannot
+              // animate, which reads as the calendar being off rather than
+              // being wrong.
+              disabled={stepArrows ? false : !enabled}
               aria-label={formatDate(iso)}
               aria-current={selected ? 'date' : undefined}
-              onClick={() => onPick(iso)}
+              onClick={() => (stepArrows ? refuse() : onPick(iso))}
             >
               {partsOf(iso)[2]}
             </button>
@@ -242,7 +310,8 @@ function CalendarGrid({
   );
 }
 
-export function DateWidget({ domain, value, onChange }: WidgetAdapterProps) {
+export function DateWidget({ domain, value, onChange, operation }: WidgetAdapterProps) {
+  const stepArrows = operation === 'stepArrows';
   // Native: the domain already speaks in dates, so show its actual calendar.
   // Otherwise fall back to this control's own span and report a position —
   // which is what lets a date picker mean a boolean or a percentage.
@@ -272,6 +341,17 @@ export function DateWidget({ domain, value, onChange }: WidgetAdapterProps) {
     ? activeRegion.startIso
     : fromDayNumber(first + Math.round(clamp01(position) * span));
 
+  // The rungs the arrows climb, as day numbers. Derived from the same
+  // `datePositions` the generator asked for reachability, so the target it
+  // chose is always one the arrows can actually land on.
+  const walk = useMemo(
+    () =>
+      stepArrows
+        ? datePositions(domain, 'stepArrows').map((p) => first + Math.round(p * span))
+        : [],
+    [stepArrows, domain, first, span],
+  );
+
   return (
     <div className="wui-date-control">
       <CalendarGrid
@@ -279,6 +359,8 @@ export function DateWidget({ domain, value, onChange }: WidgetAdapterProps) {
         last={last}
         selectedIso={selectedIso}
         selectable={selectable}
+        stepArrows={stepArrows}
+        walk={walk}
         onPick={(iso) => onChange(domain.denormalize(clamp01((toDayNumber(iso) - first) / span)))}
       />
     </div>

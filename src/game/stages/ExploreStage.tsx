@@ -16,6 +16,8 @@ export function ExploreStage() {
   const observations = useGameStore((s) => s.observations);
   const hintLevels = useGameStore((s) => s.hintLevels);
   const useHint = useGameStore((s) => s.useHint);
+  const operationHintLevels = useGameStore((s) => s.operationHintLevels);
+  const useOperationHint = useGameStore((s) => s.useOperationHint);
   const beginChallenge = useGameStore((s) => s.beginChallenge);
   const difficulty = useGameStore((s) => s.difficulty);
   const requirements = useGameStore((s) => s.requirements);
@@ -80,6 +82,8 @@ export function ExploreStage() {
           showTargets={false}
           hintLevels={hintLevels}
           onHint={useHint}
+          operationHintLevels={operationHintLevels}
+          onOperationHint={useOperationHint}
           hintsEnabled={difficulty.hintPolicy !== 'limited'}
           observations={observations}
           observationDetail={difficulty.notebookDetail}

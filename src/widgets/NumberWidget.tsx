@@ -9,9 +9,11 @@
 // The ordinal mode is what lets a number input mean something that is not a
 // number, which is the entire point of the game.
 
+import { useRef } from 'react';
 import { enumerateDomain, isDiscrete } from '../game/domains/index.ts';
 import { clamp01 } from '../game/domains/defineDomain.ts';
 import type { AnyDomain, WidgetAdapterProps } from '../game/state/types.ts';
+import { useNonPassiveWheel, useRefusal } from './operationShift.ts';
 
 interface NativeRange {
   min: number;
@@ -29,6 +31,8 @@ function nativeRange(domain: AnyDomain): NativeRange | null {
   return { min, max, step };
 }
 
+// The wheel steps through exactly the positions typing could reach, so the
+// reachable set is the same under either gesture.
 export function numberPositions(domain: AnyDomain): number[] {
   const native = nativeRange(domain);
   if (native) {
@@ -38,20 +42,75 @@ export function numberPositions(domain: AnyDomain): number[] {
   return enumerateDomain(domain).map((option) => domain.normalize(option));
 }
 
-export function NumberWidget({ domain, value, onChange }: WidgetAdapterProps) {
+export function NumberWidget({ domain, value, onChange, operation }: WidgetAdapterProps) {
   const native = nativeRange(domain);
+  const wheel = operation === 'wheelCycle';
+  const ref = useRef<HTMLInputElement | null>(null);
+  const { refusing, refuse } = useRefusal();
+
+  // One shared ladder for both modes below, so the wheel does not need to know
+  // whether the field is addressing numbers or indexing a list.
+  const ladder = numberPositions(domain);
+  const current = clamp01(domain.normalize(value));
+
+  useNonPassiveWheel(
+    ref,
+    (direction) => {
+      // Nearest rung to where the value actually sits, so a value nudged in by
+      // some other route still steps predictably.
+      let index = 0;
+      for (let i = 1; i < ladder.length; i += 1) {
+        if (Math.abs(ladder[i]! - current) < Math.abs(ladder[index]! - current)) index = i;
+      }
+      const next = index + direction;
+      // Clamped, not wrapped: wrapping lets a player scrub past the target
+      // forever without ever noticing they passed it.
+      if (next < 0 || next >= ladder.length) {
+        refuse();
+        return;
+      }
+      onChange(domain.denormalize(ladder[next]!));
+    },
+    wheel,
+  );
+
+  /** Keys the shift takes away, each flinching rather than dying silently. */
+  function guardKeys(event: React.KeyboardEvent) {
+    if (!wheel) return;
+    if (event.key === 'Tab' || event.key === 'Shift') return;
+    event.preventDefault();
+    refuse();
+  }
+
+  const shiftedProps = wheel
+    ? {
+        ref,
+        // `readOnly`, never `disabled`: the field stays focusable and stays
+        // announced, it simply will not take what you type.
+        readOnly: true,
+        onKeyDown: guardKeys,
+      }
+    : {};
+
+  const className = ['wui-number', wheel ? 'is-shifted' : '', refusing ? 'is-refusing' : '']
+    .filter(Boolean)
+    .join(' ');
 
   if (native) {
-    const current = typeof value === 'number' ? value : native.min;
     return (
       <input
-        className="wui-number"
+        className={className}
         type="number"
         min={native.min}
         max={native.max}
         step={native.step}
-        value={current}
+        value={typeof value === 'number' ? value : native.min}
+        {...shiftedProps}
         onChange={(event) => {
+          // `readOnly` already stops a player typing here; this guard covers
+          // every other route a value could arrive by, matching the belt-and
+          // -braces guards on the slider and the dropdown.
+          if (wheel) return;
           // An empty or half-typed field ("-") parses as NaN; ignore it rather
           // than snapping the value while the player is mid-keystroke.
           const parsed = Number(event.target.value);
@@ -73,13 +132,15 @@ export function NumberWidget({ domain, value, onChange }: WidgetAdapterProps) {
 
   return (
     <input
-      className="wui-number"
+      className={className}
       type="number"
       min={1}
       max={options.length}
       step={1}
       value={index + 1}
+      {...shiftedProps}
       onChange={(event) => {
+        if (wheel) return;
         const parsed = Number(event.target.value);
         if (event.target.value === '' || Number.isNaN(parsed)) return;
         const clamped = Math.min(options.length, Math.max(1, Math.round(parsed)));

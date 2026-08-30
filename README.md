@@ -12,13 +12,13 @@ domains are independent systems, randomly paired at runtime. See
 
 **Play it:** <https://longshuicy.github.io/wronguinverse/>
 
-**WrongUIᴎverse 1.0 — Tier 1, Semantic Shift.** Playable end to end, with
-three difficulty levels, music and art.
+**WrongUIᴎverse 1.0 — Tier 1, Semantic Shift, and Tier 2, Operation Shift.**
+Playable end to end, with three difficulty levels, music and art.
 
 > **Tier vs level.** A _tier_ is which rules are broken — Tier 1 Semantic
-> Shift (this release), Tier 2 Operation Shift, Tier 3 Gesture Shift. A
-> _level_ is how hard a run within a tier is. The player picks a level; tiers
-> ship over time. See [game design §3](docs/WrongUInverse-game-design.md).
+> Shift and Tier 2 Operation Shift (both playable), Tier 3 Gesture Shift (not
+> built). A _level_ is how hard a run within a tier is. The player picks both;
+> tiers ship over time. See [game design §3](docs/WrongUInverse-game-design.md).
 
 What exists:
 
@@ -40,8 +40,8 @@ What exists:
 - Pixel-art presentation: self-hosted pixel type, notched 8-bit frames, the
   Zorblet mascot reacting to play, and per-universe creatures and anomalies.
 
-Still to come: the remaining Tier 1 polish in the design docs (cursed
-universes, Daily Reality, the endless distance run), then Tier 2. Art assets
+Still to come: the remaining polish in the design docs (cursed universes,
+Daily Reality, the endless distance run), then Tier 3. Art assets
 are produced separately; anything missing from `public/` degrades to a CSS
 fallback rather than blocking play.
 

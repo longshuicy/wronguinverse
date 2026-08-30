@@ -14,11 +14,13 @@ import {
 import type {
   Compatibility,
   Mapping,
+  OperationType,
   RunConfig,
   SemanticType,
   WidgetType,
 } from '../state/types.ts';
 import { implementedWidgets, reachableValues, supports } from '../../widgets/registry.ts';
+import { shiftedOperations } from '../../widgets/operations.ts';
 import { getCompatibility } from './compatibility.ts';
 import { createRng, type Rng } from './seededRandom.ts';
 
@@ -43,6 +45,13 @@ export interface GenerateRunOptions {
    * which is exactly the baseline calibration exists to establish.
    */
   allowDuplicateSemantics?: boolean;
+  /**
+   * Tier 2: also remap each control's gesture.
+   *
+   * Additive on top of the semantic shift, never instead of it — a Tier 2 run
+   * is a Tier 1 run you also cannot work out how to touch.
+   */
+  operationShift?: boolean;
 }
 
 export class MappingGenerationError extends Error {
@@ -116,10 +125,10 @@ function findAssignment(
  * goals over an assignment that already exists — see `regenerateGoals`.
  */
 function buildMappings(
-  assignment: { widget: WidgetType; semantic: SemanticType }[],
+  assignment: { widget: WidgetType; semantic: SemanticType; operation: OperationType }[],
   rng: Rng,
 ): Mapping[] {
-  return assignment.map(({ widget, semantic }) => {
+  return assignment.map(({ widget, semantic, operation }) => {
     const domain = generateDomain(semantic, rng);
 
     // A domain generates a target from its own full value space, but the widget
@@ -127,7 +136,10 @@ function buildMappings(
     // 12-option dropdown cannot reach all 21 values of a -10..10 range. Re-draw
     // the target from what this widget can actually produce so the challenge is
     // always inputtable (technical design §14).
-    const reachable = reachableValues(widget, domain);
+    // Under the operation shift a control may reach FEWER values than it can
+    // natively — a click-stepped slider has coarser detents than a dragged one
+    // — so reachability is asked for the gesture the player will actually have.
+    const reachable = reachableValues(widget, domain, operation);
     if (reachable.length === 0) {
       throw new MappingGenerationError(
         `Widget "${widget}" cannot reach any value of its "${semantic}" domain.`,
@@ -144,7 +156,7 @@ function buildMappings(
       ? domain.target
       : rng.pick(usable);
 
-    return { widget, semantic, domain: { ...domain, target } };
+    return { widget, semantic, operation, domain: { ...domain, target } };
   });
 }
 
@@ -161,7 +173,13 @@ function buildMappings(
  * the game is about.
  */
 export function regenerateGoals(mappings: Mapping[], seed: string): Mapping[] {
-  const assignment = mappings.map(({ widget, semantic }) => ({ widget, semantic }));
+  // The operation is part of the RULES, not the content: carrying it through is
+  // what stops "try this reality again" from quietly un-shifting every gesture.
+  const assignment = mappings.map(({ widget, semantic, operation }) => ({
+    widget,
+    semantic,
+    operation,
+  }));
   return buildMappings(assignment, createRng(seed));
 }
 
@@ -179,6 +197,7 @@ export function generateRun(options: GenerateRunOptions): RunConfig {
     semantics = implementedSemantics(),
     accept = ['yes'],
     allowDuplicateSemantics = false,
+    operationShift = false,
   } = options;
 
   const rng: Rng = createRng(seed);
@@ -198,9 +217,27 @@ export function generateRun(options: GenerateRunOptions): RunConfig {
     );
   }
 
-  const mappings = buildMappings(assignment, rng);
+  // Operations are drawn BEFORE the mappings are built, because `buildMappings`
+  // picks each target from what the widget can reach — and what it can reach
+  // depends on the gesture. Choosing afterwards would hand a click-stepped
+  // slider a target sitting between two detents: a requirement the player
+  // cannot satisfy (technical design §14).
+  //
+  // The rng is only drawn from when the shift is on, so Tier 1 seeds keep
+  // producing exactly the universes they produced before this existed.
+  const withOperations = assignment.map(({ widget, semantic }) => {
+    if (!operationShift) return { widget, semantic, operation: 'native' as OperationType };
+    const pool = shiftedOperations(widget);
+    return {
+      widget,
+      semantic,
+      operation: pool.length > 0 ? rng.pick(pool) : ('native' as OperationType),
+    };
+  });
 
-  return { seed, mappings, stage: 'explore' };
+  const mappings = buildMappings(withOperations, rng);
+
+  return { seed, mappings, stage: 'explore', tier: operationShift ? 2 : 1 };
 }
 
 /** Largest run size buildable from the given pool. Useful for difficulty tuning. */

@@ -10,6 +10,7 @@ import {
   type DifficultyConfig,
   type DifficultyId,
 } from '../difficulty.ts';
+import { DEFAULT_TIER, getTier, type TierConfig } from '../tier.ts';
 import { playMusicFor, playSfx, setMuted as setAudioMuted } from '../../audio/audioManager.ts';
 import { initialValue } from '../domains/index.ts';
 import { generateChallenge, isRequirementSatisfied } from '../generator/challengeGenerator.ts';
@@ -24,6 +25,7 @@ import type {
   RunConfig,
   RunOutcome,
   StageId,
+  TierId,
   WidgetType,
 } from './types.ts';
 
@@ -42,6 +44,11 @@ type WidgetValues = Partial<Record<WidgetType, unknown>>;
 interface GameState {
   stage: StageId;
   difficulty: DifficultyConfig;
+  /**
+   * Which rules this run breaks. Independent of `difficulty`: the tier decides
+   * WHAT is shifted, the level decides how much of it there is.
+   */
+  tier: TierConfig;
   progress: PersistedProgress;
 
   /** Conventional mappings for Stage 1. Regenerated identically every run. */
@@ -53,6 +60,14 @@ interface GameState {
   values: WidgetValues;
 
   hintLevels: Partial<Record<WidgetType, HintLevel>>;
+  /**
+   * The gesture ladder, unwound separately from the semantic one.
+   *
+   * Two tracks rather than one longer ladder: "what does this mean" and "how do
+   * I work it" are different questions, and a player stuck on one should not
+   * have to buy answers to the other to reach it.
+   */
+  operationHintLevels: Partial<Record<WidgetType, HintLevel>>;
   /** Interpreted values the player has seen per widget, oldest first. */
   observations: Partial<Record<WidgetType, string[]>>;
 
@@ -77,13 +92,17 @@ interface GameState {
   beginChallenge: () => void;
   setValue: (widget: WidgetType, value: unknown) => void;
   useHint: (widget: WidgetType) => void;
+  useOperationHint: (widget: WidgetType) => void;
   revealRules: () => void;
+  /** Leave the finished bench for the debrief. Only meaningful once stabilized. */
+  openReport: () => void;
   giveUp: () => void;
   retrySameReality: () => void;
   nextUniverse: () => void;
   returnToIntro: () => void;
   openBriefing: () => void;
   setDifficulty: (id: DifficultyId) => void;
+  setTier: (id: TierId) => void;
   setMuted: (muted: boolean) => void;
 }
 
@@ -97,6 +116,12 @@ function freshValues(mappings: Mapping[]): WidgetValues {
  * Shared by `setValue` and `beginChallenge` so completion cannot depend on
  * which of them happened to notice — returns the state patch, or null if there
  * is still something left to do.
+ *
+ * Deliberately does NOT move to the result screen. Landing the last requirement
+ * used to fling the player straight into a diagnosis, which stepped on the one
+ * moment the run has been building to: the bench, finally all locked, sitting
+ * there finished. The run stays on the challenge screen, wearing its outcome,
+ * until the player asks for the report (`openReport`).
  */
 function completionPatch(
   get: () => GameState,
@@ -116,7 +141,6 @@ function completionPatch(
   saveProgress(nextProgress);
 
   return {
-    stage: 'result',
     outcome: 'stabilized',
     challengeEndedAt: Date.now(),
     distance: distance + 1,
@@ -125,8 +149,12 @@ function completionPatch(
 }
 
 /** Build the shifted universe plus its challenge card from one seed. */
-function buildUniverse(seed: string, difficulty: DifficultyConfig) {
-  const run = generateRun({ seed, count: difficulty.mappingCount });
+function buildUniverse(seed: string, difficulty: DifficultyConfig, tier: TierConfig) {
+  const run = generateRun({
+    seed,
+    count: difficulty.mappingCount,
+    operationShift: tier.operationShift,
+  });
   // A separate stream, so changing challenge generation cannot shift the
   // mappings a shared seed already produced.
   const requirements = generateChallenge(
@@ -140,6 +168,7 @@ function buildUniverse(seed: string, difficulty: DifficultyConfig) {
 export const useGameStore = create<GameState>((set, get) => ({
   stage: 'intro',
   difficulty: getDifficulty(DEFAULT_DIFFICULTY),
+  tier: getTier(DEFAULT_TIER),
   progress: loadProgress(),
 
   calibration: null,
@@ -149,6 +178,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   values: {},
 
   hintLevels: {},
+  operationHintLevels: {},
   observations: {},
 
   requirements: [],
@@ -163,14 +193,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   attempt: 0,
 
   beginRun: (seed) => {
-    const { difficulty, progress } = get();
+    const { difficulty, tier, progress } = get();
     const runSeed = seed ?? createSeed();
 
     // Usually already playing from the level picker; this covers the player
     // who pressed start without touching the picker at all.
     setAudioMuted(progress.audioMuted);
     if (!progress.audioMuted) playMusicFor(difficulty.id);
-    const { run, requirements } = buildUniverse(runSeed, difficulty);
+    const { run, requirements } = buildUniverse(runSeed, difficulty, tier);
 
     // Conventional pairings only — this is the universe the player already
     // lives in. `accept: ['normal']` reuses the same generator machinery.
@@ -193,6 +223,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       calibration,
       calibrationValues: freshValues(calibration.mappings),
       hintLevels: {},
+      operationHintLevels: {},
       observations: {},
       lockedWidgets: [],
       challengeStartedAt: null,
@@ -228,7 +259,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     const at = Date.now();
     const run = get().run;
     if (!run) {
-      set({ stage: 'challenge', challengeStartedAt: at });
+      set({
+        stage: 'challenge',
+        challengeStartedAt: at,
+        hintLevels: {},
+        operationHintLevels: {},
+      });
       return;
     }
 
@@ -240,6 +276,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       stage: 'challenge',
       challengeStartedAt: at,
       values: freshValues(run.mappings),
+      // Both hint ladders wind back too. A hint bought while exploring was
+      // free (it is not scored), and leaving its text on the card would hand
+      // that answer over again at the moment it finally costs something —
+      // stabilization would open with the deduction already done.
+      hintLevels: {},
+      operationHintLevels: {},
     });
 
     const { requirements, values, events } = get();
@@ -339,7 +381,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   useHint: (widget) => {
-    const { hintLevels, run, events } = get();
+    const { hintLevels, run, events, stage } = get();
     if (!run) return;
     const current = hintLevels[widget] ?? 0;
     if (current >= 3) return;
@@ -347,8 +389,53 @@ export const useGameStore = create<GameState>((set, get) => ({
     playSfx('zorblet_chirp');
     set({
       hintLevels: { ...hintLevels, [widget]: level },
-      events: [...events, { type: 'hint', widget, level, at: Date.now() }],
+      events: [
+        ...events,
+        {
+          type: 'hint',
+          widget,
+          level,
+          at: Date.now(),
+          phase: stage === 'challenge' ? 'challenge' : 'explore',
+        },
+      ],
     });
+  },
+
+  /**
+   * The gesture ladder. A near-copy of `useHint` on purpose: the two tracks
+   * behave identically, they simply answer different questions, and sharing an
+   * implementation would mean one record deciding when the other may advance.
+   */
+  useOperationHint: (widget) => {
+    const { operationHintLevels, run, events, stage } = get();
+    if (!run) return;
+    const current = operationHintLevels[widget] ?? 0;
+    if (current >= 3) return;
+    const level = (current + 1) as 1 | 2 | 3;
+    playSfx('zorblet_chirp');
+    set({
+      operationHintLevels: { ...operationHintLevels, [widget]: level },
+      events: [
+        ...events,
+        {
+          type: 'hint',
+          widget,
+          level,
+          at: Date.now(),
+          track: 'operation' as const,
+          phase: stage === 'challenge' ? 'challenge' : 'explore',
+        },
+      ],
+    });
+  },
+
+  openReport: () => {
+    // Guarded rather than a bare stage set: the report reads a completed run's
+    // outcome and timings, so reaching it any other way would show a debrief
+    // of nothing.
+    if (get().outcome === null) return;
+    set({ stage: 'result' });
   },
 
   revealRules: () =>
@@ -408,15 +495,16 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   /** A brand new universe, one step further from normality. */
   nextUniverse: () => {
-    const { difficulty, distance, outcome } = get();
+    const { difficulty, tier, distance, outcome } = get();
     const seed = createSeed();
-    const { run, requirements } = buildUniverse(seed, difficulty);
+    const { run, requirements } = buildUniverse(seed, difficulty, tier);
     set({
       stage: 'shift',
       run,
       requirements,
       values: freshValues(run.mappings),
       hintLevels: {},
+      operationHintLevels: {},
       observations: {},
       lockedWidgets: [],
       challengeStartedAt: null,
@@ -442,6 +530,14 @@ export const useGameStore = create<GameState>((set, get) => ({
    * it. The click is also the user gesture browsers require before audio may
    * play, so this is the earliest honest moment to start.
    */
+  /**
+   * Only meaningful from the intro; a run's tier is fixed once it starts.
+   *
+   * No music change: the soundtrack follows the LEVEL, which is the axis the
+   * player is choosing an intensity on.
+   */
+  setTier: (id) => set({ tier: getTier(id) }),
+
   setDifficulty: (id) => {
     const difficulty = getDifficulty(id);
     if (!get().progress.audioMuted) playMusicFor(id);

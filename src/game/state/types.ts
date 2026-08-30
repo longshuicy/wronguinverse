@@ -53,6 +53,32 @@ export type SemanticType =
 export type Compatibility = 'yes' | 'maybe' | 'no' | 'normal';
 
 /**
+ * How a control is physically worked.
+ *
+ * Tier 1 leaves every control on `native`. Tier 2 "Operation Shift" replaces
+ * the gesture with one the control has no business wanting, which the player
+ * has to discover the same way they discover a semantic. Which gestures a
+ * widget may be given lives in `src/widgets/operations.ts`.
+ */
+export type OperationType =
+  | 'native'
+  /** Slider: click a detent. Dragging does nothing. */
+  | 'clickStep'
+  /** Dropdown, number: the wheel steps through values. */
+  | 'wheelCycle'
+  /** Checkbox: drag across a box rather than clicking it. */
+  | 'dragToggle'
+  /** Radio, colour: press and hold rather than clicking. */
+  | 'holdToSelect'
+  /** Text: typing only drafts; Enter commits. */
+  | 'commitOnEnter'
+  /** Calendar: the header arrows move the selection; the days are dead. */
+  | 'stepArrows';
+
+/** Which rules a run breaks. Tier 3 (gesture shift) is not built. */
+export type TierId = 1 | 2;
+
+/**
  * A generated body of information, independent of how it is displayed.
  *
  * Domains expose a normalized `[0, 1]` projection so a widget can drive them
@@ -83,11 +109,16 @@ export interface SemanticDomain<T = unknown> {
  */
 export type AnyDomain = SemanticDomain<unknown>;
 
-/** One widget and the semantic it means for the duration of a run. */
+/** One widget, what it means, and how it is worked, for one run. */
 export interface Mapping {
   widget: WidgetType;
   semantic: SemanticType;
   domain: AnyDomain;
+  /**
+   * Required rather than optional: a Tier 1 mapping says `native` out loud.
+   * Optional would let a consumer silently forget the axis exists.
+   */
+  operation: OperationType;
 }
 
 /**
@@ -101,6 +132,8 @@ export interface RunConfig {
   seed: string;
   mappings: Mapping[];
   stage: Stage;
+  /** Which shift this universe applies. Calibration is always tier 1. */
+  tier: TierId;
 }
 
 /** Screens in the run loop. See docs/WrongUInverse-technical-design.md §12. */
@@ -134,7 +167,22 @@ export type HintLevel = 0 | 1 | 2 | 3;
  */
 export type GameEvent =
   | { type: 'interaction'; widget: WidgetType; at: number; interpretedValue: unknown }
-  | { type: 'hint'; widget: WidgetType; level: 1 | 2 | 3; at: number }
+  | {
+      type: 'hint';
+      widget: WidgetType;
+      level: 1 | 2 | 3;
+      at: number;
+      /** Which ladder was unwound. Absent means the semantic one. */
+      track?: 'semantic' | 'operation';
+      /**
+       * Where the hint was bought.
+       *
+       * Recorded rather than inferred from the timestamp: a hint taken in the
+       * same millisecond the challenge starts is otherwise indistinguishable,
+       * and only `challenge` hints are scored.
+       */
+      phase?: 'explore' | 'challenge';
+    }
   | { type: 'mapping_discovered'; widget: WidgetType; at: number }
   | { type: 'challenge_attempt'; widget: WidgetType; correct: boolean; at: number }
   | { type: 'give_up'; at: number }
@@ -156,4 +204,6 @@ export interface WidgetAdapterProps {
   value: unknown;
   onChange: (value: unknown) => void;
   mode: Stage;
+  /** The gesture this control answers to. `native` is how it looks. */
+  operation: OperationType;
 }

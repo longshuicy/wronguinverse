@@ -7,27 +7,17 @@ import { useState } from 'react';
 import { MUSIC_CREDITS } from '../../content/music.ts';
 import { TAGLINE } from '../../content/flavorText.ts';
 import { availableDifficulties } from '../difficulty.ts';
+import { availableTiers, UNBUILT_TIERS } from '../tier.ts';
 import { seedFromLocation } from '../generator/seededRandom.ts';
 import { useGameStore } from '../state/gameStore.ts';
-
-/**
- * The three tiers from game design §3, all visible.
- *
- * Showing the locked ones is the point: it makes clear that this release is
- * one third of an idea rather than the whole of it, and what the other two
- * thirds do to you.
- */
-const TIERS = [
-  { name: 'SEMANTIC SHIFT', blurb: 'Wrong meanings.', available: true },
-  { name: 'OPERATION SHIFT', blurb: 'Wrong operation.', available: false },
-  { name: 'GESTURE SHIFT', blurb: 'Wrong gestures.', available: false },
-];
 
 export function IntroStage() {
   const openBriefing = useGameStore((s) => s.openBriefing);
   const progress = useGameStore((s) => s.progress);
   const difficulty = useGameStore((s) => s.difficulty);
   const setDifficulty = useGameStore((s) => s.setDifficulty);
+  const tier = useGameStore((s) => s.tier);
+  const setTier = useGameStore((s) => s.setTier);
   const setMuted = useGameStore((s) => s.setMuted);
   const [urlSeed] = useState(seedFromLocation);
   const [showCredits, setShowCredits] = useState(false);
@@ -40,19 +30,39 @@ export function IntroStage() {
       </h1>
       <p className="wui-tagline">{TAGLINE}</p>
 
-      {/* Plain rows, not buttons: only one is selectable, so anything that
-          looks pressable is a promise the page cannot keep. */}
+      {/* Built tiers are buttons now that there is a real choice to make;
+          the unbuilt one stays a plain row, because anything that looks
+          pressable is a promise the page cannot keep. */}
       <ul className="wui-tiers" aria-label="Tier">
-        {TIERS.map((tier, i) => (
-          <li key={tier.name} className={tier.available ? 'wui-tier is-active' : 'wui-tier'}>
-            <span className="wui-tier-caret" aria-hidden="true">
-              {tier.available ? '▶' : ''}
-            </span>
+        {availableTiers().map((option) => {
+          const selected = option.id === tier.id;
+          return (
+            <li key={option.name} className={selected ? 'wui-tier is-active' : 'wui-tier'}>
+              <button
+                type="button"
+                className="wui-tier-button"
+                aria-pressed={selected}
+                onClick={() => setTier(option.id)}
+              >
+                <span className="wui-tier-caret" aria-hidden="true">
+                  {selected ? '▶' : ''}
+                </span>
+                <span className="wui-tier-name">
+                  TIER {option.id} · {option.name}
+                </span>
+                <span className="wui-tier-blurb">{option.blurb}</span>
+              </button>
+            </li>
+          );
+        })}
+        {UNBUILT_TIERS.map((option, i) => (
+          <li key={option.name} className="wui-tier">
+            <span className="wui-tier-caret" aria-hidden="true" />
             <span className="wui-tier-name">
-              TIER {i + 1} · {tier.name}
+              TIER {availableTiers().length + i + 1} · {option.name}
             </span>
-            <span className="wui-tier-blurb">{tier.blurb}</span>
-            {!tier.available && <span className="wui-tier-tag">SOON</span>}
+            <span className="wui-tier-blurb">{option.blurb}</span>
+            <span className="wui-tier-tag">SOON</span>
           </li>
         ))}
       </ul>
@@ -73,7 +83,13 @@ export function IntroStage() {
             </button>
           ))}
         </div>
-        <p className="wui-level-blurb">{difficulty.blurb}</p>
+        {/* The gesture shift needs a wheel and a press-and-hold, neither of
+            which a touch screen offers. Said here rather than in the tier row,
+            which has no width left for it. */}
+        <p className="wui-level-blurb">
+          {difficulty.blurb}
+          {tier.operationShift && ' Bring a mouse.'}
+        </p>
       </section>
 
       <div className="wui-actions wui-actions-centred">

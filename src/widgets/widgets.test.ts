@@ -11,6 +11,7 @@ import { conventionalSemantic } from '../game/generator/compatibility.ts';
 import { createRng } from '../game/generator/seededRandom.ts';
 import { generateRun } from '../game/generator/mappingGenerator.ts';
 import { calendarRegions } from './DateWidget.tsx';
+import { shiftableWidgets, shiftedOperations, supportsOperation } from './operations.ts';
 import { implementedWidgets, reachableValues, supports } from './registry.ts';
 
 const SEEDS = Array.from({ length: 40 }, (_, i) => `widget-seed-${i}`);
@@ -34,6 +35,61 @@ describe('widget adapters', () => {
         for (const seed of SEEDS.slice(0, 10)) {
           const domain = generateDomain(semantic, createRng(seed));
           expect(reachableValues(widget, domain).length).toBeGreaterThanOrEqual(2);
+        }
+      }
+    }
+  });
+});
+
+describe('operation shift (tier 2)', () => {
+  it('every implemented widget has a shifted gesture to offer', () => {
+    // A tier 2 run shifts EVERY control. A widget with an empty row would
+    // silently fall back to `native` and quietly hand the player a free one.
+    for (const widget of implementedWidgets()) {
+      expect(shiftedOperations(widget).length).toBeGreaterThan(0);
+    }
+  });
+
+  it('never offers a gesture the adapter does not implement', () => {
+    for (const widget of implementedWidgets()) {
+      for (const operation of shiftedOperations(widget)) {
+        expect(operation).not.toBe('native');
+        expect(supportsOperation(widget, operation)).toBe(true);
+      }
+    }
+  });
+
+  it('leaves at least two values reachable under every shifted gesture', () => {
+    // Coarsening a control is fine; stranding it on one value is not.
+    for (const widget of shiftableWidgets()) {
+      for (const operation of shiftedOperations(widget)) {
+        for (const semantic of implementedSemantics()) {
+          if (!supports(widget, semantic)) continue;
+          for (const seed of SEEDS.slice(0, 10)) {
+            const domain = generateDomain(semantic, createRng(seed));
+            expect(reachableValues(widget, domain, operation).length).toBeGreaterThanOrEqual(2);
+          }
+        }
+      }
+    }
+  });
+
+  it('never invents a value the native control could not reach', () => {
+    // A gesture may take reach AWAY — a clicked slider is coarser than a
+    // dragged one — but it must never open up a value the control cannot
+    // otherwise express, or the shift would be changing the domain rather
+    // than the gesture.
+    for (const widget of shiftableWidgets()) {
+      for (const operation of shiftedOperations(widget)) {
+        for (const semantic of implementedSemantics()) {
+          if (!supports(widget, semantic)) continue;
+          const domain = generateDomain(semantic, createRng(`${widget}-${semantic}-subset`));
+          const native = new Set(
+            reachableValues(widget, domain).map((value) => domain.display(value)),
+          );
+          for (const value of reachableValues(widget, domain, operation)) {
+            expect(native.has(domain.display(value))).toBe(true);
+          }
         }
       }
     }

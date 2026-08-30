@@ -7,7 +7,7 @@
 // once: comparing what two controls read as is the core act of deduction, and
 // that is impossible if half of them are below the fold.
 
-import { hintText } from '../content/flavorText.ts';
+import { hintText, operationHintText } from '../content/flavorText.ts';
 import type { HintLevel, Mapping, Requirement, Stage, WidgetType } from '../game/state/types.ts';
 import { getWidgetDefinition } from '../widgets/registry.ts';
 import { planSpecimens, Specimen } from './SceneDecor.tsx';
@@ -40,6 +40,14 @@ interface WidgetBenchProps {
   hintLevels?: Partial<Record<WidgetType, HintLevel>>;
   onHint?: (widget: WidgetType) => void;
   hintsEnabled?: boolean;
+  /**
+   * The gesture ladder, unwound separately from the semantic one.
+   *
+   * Only rendered for a control whose operation is actually shifted, so a
+   * Tier 1 bench looks exactly as it did.
+   */
+  operationHintLevels?: Partial<Record<WidgetType, HintLevel>>;
+  onOperationHint?: (widget: WidgetType) => void;
   /** Run seed, used to give each station a stable specimen. */
   seed?: string;
   /**
@@ -74,6 +82,8 @@ export function WidgetBench({
   hintLevels = {},
   onHint,
   hintsEnabled = false,
+  operationHintLevels = {},
+  onOperationHint,
   seed,
   observations,
   observationDetail = 'full',
@@ -90,6 +100,7 @@ export function WidgetBench({
         const value = values[mapping.widget];
         const locked = lockedWidgets.includes(mapping.widget);
         const level = hintLevels[mapping.widget] ?? 0;
+        const operationLevel = operationHintLevels[mapping.widget] ?? 0;
         const requirement = requirements?.find((r) => r.widget === mapping.widget);
 
         return (
@@ -123,6 +134,7 @@ export function WidgetBench({
                 value={value}
                 onChange={(next) => onChange(mapping.widget, next)}
                 mode={mode}
+                operation={mapping.operation}
               />
             </div>
 
@@ -147,22 +159,51 @@ export function WidgetBench({
               </p>
             )}
 
-            {hintsEnabled && onHint && (
+            {/* One quiet strip, not two panels. Two full-width buttons and
+                two dividers made asking for help the loudest thing on a card
+                whose job is to show a control. */}
+            {hintsEnabled && (onHint || onOperationHint) && (
               <div className="wui-station-hint">
                 {level > 0 && (
                   <p className="wui-hint-text">
                     {hintText(mapping.widget, mapping.semantic, level as 1 | 2 | 3)}
                   </p>
                 )}
-                {level < 3 && (
-                  <button
-                    type="button"
-                    className="wui-hint-button"
-                    onClick={() => onHint(mapping.widget)}
-                  >
-                    {level === 0 ? 'Ask the universe' : 'Ask again'}
-                  </button>
+
+                {/* Only on a control whose gesture is actually shifted, so a
+                    tier 1 card is unchanged. */}
+                {mapping.operation !== 'native' && operationLevel > 0 && (
+                  <p className="wui-hint-text">
+                    {operationHintText(
+                      mapping.widget,
+                      mapping.operation,
+                      operationLevel as 1 | 2 | 3,
+                    )}
+                  </p>
                 )}
+
+                <div className="wui-hint-actions">
+                  {onHint && level < 3 && (
+                    <button
+                      type="button"
+                      className="wui-hint-button"
+                      onClick={() => onHint(mapping.widget)}
+                    >
+                      {/* Label stays put as the ladder unwinds: two buttons
+                          both reading "again?" would be a coin toss. */}
+                      meaning?
+                    </button>
+                  )}
+                  {onOperationHint && mapping.operation !== 'native' && operationLevel < 3 && (
+                    <button
+                      type="button"
+                      className="wui-hint-button"
+                      onClick={() => onOperationHint(mapping.widget)}
+                    >
+                      gesture?
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </section>

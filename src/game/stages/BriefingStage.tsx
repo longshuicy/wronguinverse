@@ -6,9 +6,9 @@
 // printing it. That is a deliberate cost: it is the only screen that asks the
 // player to slow down, and the fiction only lands if somebody reads it.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AmbientClip } from '../../components/AmbientClip.tsx';
-import { BRIEFING_PARAGRAPHS } from '../../content/flavorText.ts';
+import { briefingParagraphs } from '../../content/flavorText.ts';
 import { seedFromLocation } from '../generator/seededRandom.ts';
 import { useGameStore } from '../state/gameStore.ts';
 
@@ -17,11 +17,13 @@ const CHAR_MS = 14;
 /** A beat between paragraphs, so they do not run together. */
 const PARAGRAPH_MS = 320;
 
-const FULL_TEXT = BRIEFING_PARAGRAPHS.join('\n');
-
 export function BriefingStage() {
   const returnToIntro = useGameStore((s) => s.returnToIntro);
   const beginRun = useGameStore((s) => s.beginRun);
+  // The index describes the rules the player is about to meet, so it follows
+  // the tier they picked on the way in.
+  const tier = useGameStore((s) => s.tier);
+  const fullText = useMemo(() => briefingParagraphs(tier.id).join('\n'), [tier.id]);
 
   // The run starts here now, so the ?seed= override has to be read here too
   // (technical design §9).
@@ -32,24 +34,24 @@ export function BriefingStage() {
   );
   // Reduced motion gets the whole text at once: an animation the reader cannot
   // turn off is exactly what that preference is asking us not to do.
-  const [revealed, setRevealed] = useState(reducedMotion ? FULL_TEXT.length : 0);
-  const done = revealed >= FULL_TEXT.length;
+  const [revealed, setRevealed] = useState(reducedMotion ? fullText.length : 0);
+  const done = revealed >= fullText.length;
   const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (done) return;
     // Pause a little longer at a line break than mid-sentence.
-    const atBreak = FULL_TEXT[revealed] === '\n';
+    const atBreak = fullText[revealed] === '\n';
     const timer = setTimeout(() => setRevealed((n) => n + 1), atBreak ? PARAGRAPH_MS : CHAR_MS);
     return () => clearTimeout(timer);
-  }, [revealed, done]);
+  }, [revealed, done, fullText]);
 
   // Keep the newest line in view without yanking the page around.
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight });
   }, [revealed]);
 
-  const shown = FULL_TEXT.slice(0, revealed).split('\n');
+  const shown = fullText.slice(0, revealed).split('\n');
 
   return (
     <main className="wui-screen wui-briefing">
@@ -78,7 +80,7 @@ export function BriefingStage() {
         {/* Fills the text in without moving on, for a reader who is ahead of
             the typing but still wants to read it. */}
         {!done && (
-          <button type="button" className="wui-ghost" onClick={() => setRevealed(FULL_TEXT.length)}>
+          <button type="button" className="wui-ghost" onClick={() => setRevealed(fullText.length)}>
             Show it all
           </button>
         )}
