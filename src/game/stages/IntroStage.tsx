@@ -27,7 +27,7 @@ import { useState } from 'react';
 import { MUSIC_CREDITS } from '../../content/music.ts';
 import { runManifest, TAGLINE } from '../../content/flavorText.ts';
 import { availableDifficulties } from '../difficulty.ts';
-import { availableTiers, DEFAULT_TIER, UNBUILT_TIERS } from '../tier.ts';
+import { availableTiers, DEFAULT_TIER } from '../tier.ts';
 import { seedFromLocation } from '../generator/seededRandom.ts';
 import { useGameStore } from '../state/gameStore.ts';
 
@@ -87,14 +87,6 @@ export function IntroStage() {
                 </li>
               );
             })}
-            {UNBUILT_TIERS.map((option) => (
-              <li key={option.name} className="wui-tier">
-                <span className="wui-tier-caret" aria-hidden="true" />
-                <span className="wui-tier-name">{option.name}</span>
-                <span className="wui-tier-blurb">{option.blurb}</span>
-                <span className="wui-tier-tag">SOON</span>
-              </li>
-            ))}
           </ul>
         </section>
 

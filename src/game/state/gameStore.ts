@@ -16,6 +16,7 @@ import { playMusicFor, playSfx, setMuted as setAudioMuted } from '../../audio/au
 import { initialValue } from '../domains/index.ts';
 import { generateChallenge, isRequirementSatisfied } from '../generator/challengeGenerator.ts';
 import { generateRun, regenerateGoals } from '../generator/mappingGenerator.ts';
+import { brainType, computeMetrics } from '../metrics.ts';
 import { createRng, createSeed, seedFromLocation } from '../generator/seededRandom.ts';
 import { loadProgress, saveProgress, type PersistedProgress } from './persistence.ts';
 import type {
@@ -164,6 +165,25 @@ function completionPatch(
     distance: distance + 1,
     progress: nextProgress,
   };
+}
+
+/**
+ * Add the type this run earned to the cast the player has collected.
+ *
+ * Recorded when the REPORT is reached rather than when the run ends: the run
+ * sits finished on the bench for as long as the player likes, and anything they
+ * do in that time still counts toward the reading. Recording early would file a
+ * type the report then disagreed with.
+ */
+function rememberBrainType(get: () => GameState): PersistedProgress {
+  const { events, challengeStartedAt, challengeEndedAt, run, progress } = get();
+  const metrics = computeMetrics(events, challengeStartedAt, challengeEndedAt);
+  const earned = brainType(metrics, run?.mappings.length ?? 0).id;
+  if (progress.typesSeen.includes(earned)) return progress;
+
+  const next = { ...progress, typesSeen: [...progress.typesSeen, earned] };
+  saveProgress(next);
+  return next;
 }
 
 /**
@@ -487,7 +507,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     // outcome and timings, so reaching it any other way would show a debrief
     // of nothing.
     if (get().outcome === null) return;
-    set({ stage: 'result' });
+    set({ stage: 'result', progress: rememberBrainType(get) });
   },
 
   revealRules: () =>
@@ -500,13 +520,17 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Deliberately the mismatch tone and not a failure sting: the design docs
     // are explicit that giving up is met with sympathy, never a buzzer.
     playSfx('mismatch');
-    return set((state) => ({
+    set((state) => ({
       stage: 'result',
       outcome: 'gaveUp',
       challengeEndedAt: Date.now(),
       rulesRevealed: true,
       events: [...state.events, { type: 'give_up', at: Date.now() }],
     }));
+    // After the give_up event is in, so the type recorded is the one the
+    // report will show: PERSON WITH BOUNDARIES, not whatever the partial run
+    // would otherwise have been read as.
+    set({ progress: rememberBrainType(get) });
   },
 
   /**

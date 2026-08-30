@@ -15,6 +15,7 @@
 
 import { useEffect, useMemo } from 'react';
 import { AssetImage } from '../../components/AssetImage.tsx';
+import { CastGallery } from '../../components/CastGallery.tsx';
 import { CountUp } from '../../components/CountUp.tsx';
 import { Mascot } from '../../components/Mascot.tsx';
 import { StageBar } from '../../components/StageBar.tsx';
@@ -30,8 +31,8 @@ import { useStagedReveal } from '../useStagedReveal.ts';
 import { playSfx } from '../../audio/audioManager.ts';
 import { useGameStore } from '../state/gameStore.ts';
 
-/** Verdict, specimen, numbers, rules. */
-const BEATS = 4;
+/** Verdict, specimen, numbers, rules, cast. */
+const BEATS = 5;
 
 export function ResultStage() {
   const run = useGameStore((s) => s.run);
@@ -213,6 +214,11 @@ export function ResultStage() {
           ))}
         </ul>
       </section>
+      {/* Last, and after the answer: the run is explained, and this is what
+          there is to come back for. */}
+      <div className="wui-beat" data-shown={shown >= 5}>
+        <CastGallery seen={progress.typesSeen} current={brain.id} />
+      </div>
     </main>
   );
 }

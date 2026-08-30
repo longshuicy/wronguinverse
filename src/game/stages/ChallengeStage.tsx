@@ -5,6 +5,7 @@
 // present, and neither shames the player. A single wrong value never ends the
 // run. See docs/WrongUInverse-game-design.md §4, §10.
 
+import { InstabilityMeter } from '../../components/InstabilityMeter.tsx';
 import { Mascot } from '../../components/Mascot.tsx';
 import { OrderPanel } from '../../components/OrderPanel.tsx';
 import { StageBar } from '../../components/StageBar.tsx';
@@ -129,6 +130,15 @@ export function ChallengeStage() {
               <p className="wui-eyebrow">STABILIZATION PROTOCOL · {run.seed}</p>
             </div>
           </div>
+
+          {/* Under the order, where the player looks after a miss. Cosmetic:
+              see the header of InstabilityMeter for why it must stay that way. */}
+          <InstabilityMeter
+            misses={
+              events.filter((event) => event.type === 'challenge_attempt' && !event.correct).length
+            }
+            mappingCount={run.mappings.length}
+          />
 
           <OrderPanel requirements={requirements} lockedWidgets={lockedWidgets} />
 

@@ -12,6 +12,15 @@ export interface PersistedProgress {
   universesStabilized: number;
   furthestDistance: number;
   audioMuted: boolean;
+  /**
+   * Which Interface Brain Types this player has been, ever.
+   *
+   * The one piece of progress that is a COLLECTION rather than a counter, and
+   * the only reason to play a tier or a level you would otherwise skip: two of
+   * the seven are unreachable without behaving unusually, and one of them
+   * requires giving up on purpose.
+   */
+  typesSeen: string[];
 }
 
 export const DEFAULT_PROGRESS: PersistedProgress = {
@@ -19,6 +28,7 @@ export const DEFAULT_PROGRESS: PersistedProgress = {
   universesStabilized: 0,
   furthestDistance: 0,
   audioMuted: false,
+  typesSeen: [],
 };
 
 /**
@@ -39,6 +49,12 @@ export function loadProgress(): PersistedProgress {
       universesStabilized: Number(parsed.universesStabilized) || 0,
       furthestDistance: Number(parsed.furthestDistance) || 0,
       audioMuted: Boolean(parsed.audioMuted ?? DEFAULT_PROGRESS.audioMuted),
+      // Absent in stores written before the cast existed, and worth reading
+      // defensively anyway: this is the one field a hand-edited save is likely
+      // to contain something odd in.
+      typesSeen: Array.isArray(parsed.typesSeen)
+        ? parsed.typesSeen.filter((id): id is string => typeof id === 'string')
+        : [],
     };
   } catch {
     return { ...DEFAULT_PROGRESS };

@@ -40,15 +40,3 @@ export function sfxUrl(file: string): string {
 export function sfxFiles(id: SfxId): string[] {
   return VARIANTS[id] ?? [id];
 }
-
-export const ALL_SFX: SfxId[] = [
-  'ui_click',
-  'value_tick',
-  'selection_confirm',
-  'semantic_blip',
-  'reality_shift',
-  'requirement_correct',
-  'stabilization_complete',
-  'mismatch',
-  'zorblet_chirp',
-];

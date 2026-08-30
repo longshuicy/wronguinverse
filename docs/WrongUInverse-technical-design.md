@@ -10,12 +10,14 @@ Build a frontend-only browser game in which visual UI widgets and
 semantic input domains are independent systems that can be randomly
 paired at runtime.
 
-V0 implements Tier 1 only:
+The core pairing, present in every tier:
 
 **Visual Widget → Random Compatible Semantic Domain**
 
-The architecture must make Tier 2 and Tier 3 possible later without
-rewriting Tier 1.
+All three tiers now ship, and the architecture held: Tier 2 layered an
+OPERATION onto each mapping, and Tier 3 added a page-wide pointer LAW
+beside the mapping table rather than inside it. Neither required Tier 1
+to be rewritten.
 
 ## 2. Suggested Stack
 

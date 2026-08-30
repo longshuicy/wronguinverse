@@ -19,8 +19,6 @@ export interface RunMetrics {
   /** Requirements hit without a single wrong value for that widget first. */
   firstAttemptHits: number;
   challengeAttempts: number;
-  /** ms between entering explore and touching anything. */
-  timeToFirstInteraction: number | null;
   widgetsTouched: number;
   gaveUp: boolean;
   rulesRevealed: boolean;
@@ -48,9 +46,6 @@ export function computeMetrics(
     }
   }
 
-  const firstInteraction = interactions[0];
-  const exploreStart = events[0]?.at ?? null;
-
   return {
     challengeMs:
       challengeStartedAt !== null && challengeEndedAt !== null
@@ -61,8 +56,6 @@ export function computeMetrics(
     hintWeight: hints.reduce((sum, e) => sum + (e.type === 'hint' ? e.level : 0), 0),
     firstAttemptHits: [...firstAttemptByWidget.values()].filter(Boolean).length,
     challengeAttempts: attempts.length,
-    timeToFirstInteraction:
-      firstInteraction && exploreStart !== null ? firstInteraction.at - exploreStart : null,
     widgetsTouched: new Set(interactions.map((e) => (e.type === 'interaction' ? e.widget : '')))
       .size,
     gaveUp: events.some((e) => e.type === 'give_up'),

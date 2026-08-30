@@ -75,9 +75,6 @@ const TIERS: TierConfig[] = [
   },
 ];
 
-/** Nothing is promised any more; every tier in the row is playable. */
-export const UNBUILT_TIERS: { name: string; blurb: string }[] = [];
-
 export function availableTiers(): TierConfig[] {
   return TIERS;
 }

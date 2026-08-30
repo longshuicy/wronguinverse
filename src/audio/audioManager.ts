@@ -6,7 +6,7 @@
 // (the effect budget and its character).
 
 import { Howl, Howler } from 'howler';
-import { musicUrl, trackForTier, type MusicTrack } from '../content/music.ts';
+import { musicUrl, trackForTier } from '../content/music.ts';
 import { sfxFiles, sfxUrl, type SfxId } from '../content/sfx.ts';
 import type { TierId } from '../game/state/types.ts';
 
@@ -68,15 +68,6 @@ export function setMuted(next: boolean): void {
     current.howl.play();
     current.howl.fade(0, VOLUME, FADE_MS);
   }
-}
-
-export function isMuted(): boolean {
-  return muted;
-}
-
-/** The track currently scheduled, for the credit line shown while playing. */
-export function currentTrack(tier: TierId): MusicTrack {
-  return trackForTier(tier);
 }
 
 // --- sound effects ---

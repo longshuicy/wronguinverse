@@ -1947,9 +1947,8 @@ input[type='range']::-moz-range-thumb {
   text-align: left;
 }
 
-/* The button has to BE the row rather than sit inside it, or the caret/name/
-   blurb columns stop lining up with the unbuilt row below, which is still
-   plain markup. */
+/* The button IS the row rather than sitting inside it, so the caret, name and
+   blurb line up as columns down the list. */
 .wui-tier-button {
   flex: 1;
   display: flex;
@@ -2650,4 +2649,115 @@ input[type='range']::-moz-range-thumb {
   color: var(--accent-hint);
   font-size: 11px;
   line-height: 1.7;
+}
+
+/* --- the cast ---
+   A set the player is collecting, so the ones they have not been are drawn as
+   blanked silhouettes rather than left out. A gap you can see is an invitation;
+   a gap you cannot see is nothing at all. */
+
+.wui-cast h2 {
+  margin: 0 0 calc(var(--px) * 3);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--accent-hint);
+}
+
+.wui-cast ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--px) * 4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A grid rather than a stacked flex column, so every creature stands on the
+   same line. Sprites are cleaned to a longest side of 96px, which means their
+   HEIGHTS differ: a cube is nothing like as tall as an antenna. Left to
+   themselves they each sat at the top of their own cell, so the short ones
+   floated above the row like they had come loose. The first row is a fixed
+   slot the sprite is bottom-aligned inside; the name and tag rows below it
+   then line up across the whole cast. */
+.wui-cast-member {
+  display: grid;
+  grid-template-rows: calc(var(--px) * 24) auto auto;
+  align-items: end;
+  justify-items: center;
+  gap: var(--px);
+  min-width: calc(var(--px) * 16);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.wui-cast-member img {
+  align-self: end;
+}
+
+/* Blanked, not hidden: the shape is the tease, so it has to be VISIBLE as a
+   shape. `brightness(0)` alone made a pure black cut-out, which on a
+   near-black panel is a smudge rather than a silhouette; keeping a little
+   luminance leaves the outline readable while giving nothing away about
+   colour, and the drop shadow keeps the edge off the panel behind it. */
+.wui-cast-member.is-unknown img {
+  filter: grayscale(1) brightness(0.45) opacity(0.75)
+    drop-shadow(0 0 1px color-mix(in srgb, var(--accent-anomaly) 40%, transparent));
+}
+
+.wui-cast-member.is-unknown .wui-cast-name {
+  color: var(--line-strong);
+}
+
+.wui-cast-tag {
+  color: var(--accent-success);
+}
+
+/* --- instability ---
+   Cosmetic. It reacts to every miss so the challenge screen has something that
+   answers the player continuously, and it gates nothing at all. */
+
+.wui-instability {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 2);
+  margin-bottom: calc(var(--px) * 3);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+
+.wui-instability-label {
+  color: var(--text-secondary);
+}
+
+.wui-instability-bar {
+  display: flex;
+  gap: 2px;
+}
+
+.wui-instability-pip {
+  width: var(--px);
+  height: calc(var(--px) * 3);
+  background: var(--line);
+}
+
+.wui-instability-pip.is-lit {
+  background: var(--accent-success);
+}
+
+.wui-instability[data-level='mid'] .wui-instability-pip.is-lit {
+  background: var(--accent-hint);
+}
+
+/* The one place it is allowed to be loud, because by now the player has missed
+   a lot and the joke is that the terminal is panicking, not them. */
+.wui-instability[data-level='high'] .wui-instability-pip.is-lit {
+  background: var(--accent-danger);
+  animation: wui-blink 0.9s steps(2, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wui-instability[data-level='high'] .wui-instability-pip.is-lit {
+    animation: none;
+  }
 }

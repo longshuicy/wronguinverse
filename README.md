@@ -12,13 +12,17 @@ domains are independent systems, randomly paired at runtime. See
 
 **Play it:** <https://longshuicy.github.io/wronguinverse/>
 
-**WrongUIᴎverse 1.0 — Tier 1, Semantic Shift, and Tier 2, Operation Shift.**
-Playable end to end, with three difficulty levels, music and art.
+**WrongUIᴎverse 1.0.0-alpha: all three tiers playable.**
+Semantic Shift, Operation Shift and Gesture Shift, each at three levels,
+end to end with music and art.
 
-> **Tier vs level.** A _tier_ is which rules are broken — Tier 1 Semantic
-> Shift and Tier 2 Operation Shift (both playable), Tier 3 Gesture Shift (not
-> built). A _level_ is how hard a run within a tier is. The player picks both;
-> tiers ship over time. See [game design §3](docs/WrongUInverse-game-design.md).
+> **Two axes, not one.** A _tier_ is which rules are broken: Semantic Shift
+> (wrong meanings), Operation Shift (wrong meanings and wrong gestures) and
+> Gesture Shift (wrong meanings and a pointer that is not yours). A _level_ is
+> how much of the bench a run reaches: four, six or eight controls. They are
+> INDEPENDENT, so there are nine runs rather than three, and the landing page
+> calls them WHAT DRIFTED and HOW DEEP because "tier" and "level" read as
+> synonyms. See [game design §3](docs/WrongUInverse-game-design.md).
 
 What exists:
 
@@ -30,20 +34,29 @@ What exists:
   table. Thousands of distinct universe shapes.
 - Seeded generation — a seed reproduces the mapping, labels and targets exactly.
   Add `?seed=REALITY-XXXX` to replay a specific universe.
-- Three difficulty levels — 4, 6 and 8 mappings — each with its own music.
+- Three levels of 4, 6 and 8 mappings. Music follows the TIER, not the level:
+  the tier is what a run is, the level is only how much of it there is.
   Eight is the ceiling: a run gives every widget a distinct semantic.
 - Exploration is untimed. Effort is measured by counting interactions, which
   is what the result screen reports.
 - Progressive hints (nudge → category → reveal), a field-notes panel that
   records observed values but never semantic labels, and a result screen that
   diagnoses how you argued with the interface.
+- Tier 2 gives each control a gesture it has no business wanting: a slider you
+  click, a checkbox you drag, a dropdown you scroll.
+- Tier 3 imposes one page-wide pointer LAW per run, drawn from five: the cursor
+  commits on dwell, once is not enough, presses land off-target, the pointer
+  runs backwards, or a hurried hand is ignored. The keyboard is never governed,
+  and the law is printed in the chrome for free.
+- Seven Interface Brain Types, collected as a cast across runs. One of them can
+  only be earned by walking out on a dimension.
 - Pixel-art presentation: self-hosted pixel type, notched 8-bit frames, the
   Zorblet mascot reacting to play, and per-universe creatures and anomalies.
 
 Still to come: the remaining polish in the design docs (cursed universes,
-Daily Reality, the endless distance run), then Tier 3. Art assets
-are produced separately; anything missing from `public/` degrades to a CSS
-fallback rather than blocking play.
+Daily Reality, the endless distance run), more widgets, and richer Tier 2
+shifts. Art assets are produced separately; anything missing from `public/`
+degrades to a CSS fallback rather than blocking play.
 
 ## Stack
 
