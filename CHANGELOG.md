@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0-alpha.1
+## 1.0.0-beta3
 
 The first release with all three tiers playable. A run is now chosen on two
 independent axes: which rules are broken, and how much of the bench they reach.

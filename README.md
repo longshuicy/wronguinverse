@@ -12,7 +12,7 @@ domains are independent systems, randomly paired at runtime. See
 
 **Play it:** <https://longshuicy.github.io/wronguinverse/>
 
-**WrongUIᴎverse 1.0.0-alpha: all three tiers playable.**
+**WrongUIᴎverse 1.0.0-beta3: all three tiers playable.**
 Semantic Shift, Operation Shift and Gesture Shift, each at three levels,
 end to end with music and art.
 
