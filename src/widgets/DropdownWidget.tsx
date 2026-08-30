@@ -3,10 +3,17 @@
 // sampled into a finite option set by `enumerateDomain`, so the adapter never
 // needs to know which semantic it is showing.
 //
-// Under `wheelCycle` the list never opens: the closed control scrolls through
-// its own options instead.
+// The list is built here rather than being a native `<select>`, for the same
+// reason the colour and date controls build their own: a native option list is
+// drawn by the operating system, outside the page entirely. That put it beyond
+// every rule the game imposes — a Tier 3 pointer law cannot open it (no
+// synthetic press carries the user activation the popup needs), and Tier 2's
+// wheel could only ever scrub a control that stayed shut, which meant scrolling
+// a list the player could not see.
+//
+// Owning the list costs a few dozen lines and buys back both tiers.
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { enumerateDomain } from '../game/domains/index.ts';
 import type { AnyDomain, WidgetAdapterProps } from '../game/state/types.ts';
 import { useNonPassiveWheel, useRefusal } from './operationShift.ts';
@@ -24,6 +31,7 @@ export function DropdownWidget({ domain, value, onChange, operation }: WidgetAda
   const wheel = operation === 'wheelCycle';
   const wrapper = useRef<HTMLDivElement | null>(null);
   const { refusing, refuse } = useRefusal();
+  const [open, setOpen] = useState(false);
 
   const index = options.findIndex((option) => domain.display(option) === currentLabel);
 
@@ -39,81 +47,90 @@ export function DropdownWidget({ domain, value, onChange, operation }: WidgetAda
     onChange(options[next]!);
   }
 
+  // Bound to the wrapper, so the wheel works over the trigger and over the open
+  // list alike — under this operation the list is a readout, not a menu, and
+  // the player should not have to find one specific strip of it to scrub.
   useNonPassiveWheel(wrapper, step, wheel);
 
-  const select = (
-    <select
-      className={wheel ? 'wui-dropdown is-shifted' : 'wui-dropdown'}
-      // Options are addressed by their display label: domain values may be
-      // objects, which cannot round-trip through a DOM value attribute.
-      value={currentLabel}
-      onChange={(event) => {
-        // Belt and braces. The popup should never open — the element has
-        // `pointer-events: none` under the shift — but suppressing a <select>
-        // popup is the least reliable thing in this file across engines, and a
-        // pick that slips through would hand over the answer. Refusing here
-        // means the worst case is a flinch, not a free win.
-        if (wheel) {
-          refuse();
-          return;
-        }
-        const picked = options.find((option) => domain.display(option) === event.target.value);
-        if (picked !== undefined) onChange(picked);
-      }}
-      tabIndex={wheel ? -1 : undefined}
-      aria-hidden={wheel ? true : undefined}
-      aria-label="Dropdown control"
-    >
-      {/* The current value may fall between sampled options; show it so the
-          control never displays something other than its actual state. */}
-      {!options.some((option) => domain.display(option) === currentLabel) && (
-        <option value={currentLabel}>{currentLabel}</option>
-      )}
-      {options.map((option) => {
-        const label = domain.display(option);
-        return (
-          <option key={label} value={label}>
-            {label}
-          </option>
-        );
-      })}
-    </select>
-  );
-
-  if (!wheel) return select;
+  function pick(option: unknown) {
+    if (wheel) {
+      // The whole of Tier 2 is that this control answers to the wheel and
+      // nothing else. The list still OPENS under the shift — seeing the options
+      // go past is what makes scrolling legible — but picking from it directly
+      // would be a second, unearned route to the value.
+      refuse();
+      return;
+    }
+    onChange(option);
+    setOpen(false);
+  }
 
   return (
-    // `preventDefault` on mousedown does not reliably stop a <select> popup —
-    // Safari opens it regardless — so the element is taken out of pointer
-    // reach entirely and this wrapper owns the gesture instead.
     <div
       ref={wrapper}
-      className={['wui-shift-wrap', refusing ? 'is-refusing' : ''].filter(Boolean).join(' ')}
-      // Not `listbox`: that role promises selectable `option` children, and
-      // the real options are inside a `select` this wrapper has hidden. A
-      // labelled group that announces its current reading is the honest
-      // description of what this now is.
-      role="group"
-      tabIndex={0}
-      aria-label={`Dropdown control, currently ${currentLabel}`}
-      onClick={refuse}
-      onKeyDown={(event) => {
-        // PageUp/PageDown are the keyboard's wheel. The arrow keys and
-        // type-ahead are taken away deliberately: leaving them would let a
-        // keyboard player skip the tier entirely.
-        if (event.key === 'PageDown') {
-          event.preventDefault();
-          step(1);
-        } else if (event.key === 'PageUp') {
-          event.preventDefault();
-          step(-1);
-        } else if (event.key !== 'Tab' && event.key !== 'Shift') {
-          event.preventDefault();
-          refuse();
-        }
-      }}
+      className={['wui-dropdown-shell', refusing ? 'is-refusing' : ''].filter(Boolean).join(' ')}
     >
-      {select}
+      <button
+        type="button"
+        className={wheel ? 'wui-dropdown-trigger is-shifted' : 'wui-dropdown-trigger'}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`Dropdown control, currently ${currentLabel}`}
+        onClick={() => setOpen((wasOpen) => !wasOpen)}
+        onKeyDown={(event) => {
+          if (!wheel) return;
+          // PageUp/PageDown are the keyboard's wheel. The arrow keys and
+          // type-ahead are taken away deliberately: leaving them would let a
+          // keyboard player skip the tier entirely. Enter and Space still open
+          // the list, because seeing the options is never the puzzle.
+          if (event.key === 'PageDown') {
+            event.preventDefault();
+            step(1);
+          } else if (event.key === 'PageUp') {
+            event.preventDefault();
+            step(-1);
+          } else if (!['Tab', 'Shift', 'Enter', ' ', 'Escape'].includes(event.key)) {
+            event.preventDefault();
+            refuse();
+          }
+        }}
+      >
+        <span className="wui-dropdown-value">{currentLabel}</span>
+        <span className="wui-dropdown-caret" aria-hidden="true">
+          {open ? '▲' : '▼'}
+        </span>
+      </button>
+
+      {open && (
+        <div
+          className="wui-dropdown-list"
+          role="listbox"
+          aria-label="Dropdown control"
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') setOpen(false);
+          }}
+        >
+          {options.map((option) => {
+            const label = domain.display(option);
+            const selected = label === currentLabel;
+            return (
+              <button
+                type="button"
+                key={label}
+                // A real button carrying the option role: the game's laws
+                // govern buttons, and a `<li>` the pointer cannot press is
+                // exactly the hole the native `<select>` left.
+                role="option"
+                aria-selected={selected}
+                className={selected ? 'wui-dropdown-option is-current' : 'wui-dropdown-option'}
+                onClick={() => pick(option)}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

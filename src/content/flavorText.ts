@@ -177,12 +177,6 @@ export function resultHeadline(outcome: 'stabilized' | 'gaveUp'): string {
 export const TAGLINE = 'Every control lies. None of them are broken.';
 
 /**
- * The Reality Index: the lore, typed out at reading pace.
- *
- * One string per paragraph. Kept short enough that a player who wants to get
- * on with it is not held hostage by a typewriter.
- */
-/**
  * The Reality Index, as read before a run.
  *
  * Tier-dependent because the lore has to describe the rules the player is
@@ -193,22 +187,25 @@ export const TAGLINE = 'Every control lies. None of them are broken.';
  * That is the game's actual thesis, and stating it here means the shift reads
  * as a different set of agreements rather than as damage.
  *
- * Every sentence is typed out a character at a time on the briefing screen, so
- * length here is time the player waits. Keep it tight.
+ * Every character is typed out on the briefing screen, so length here is time
+ * the player SITS THERE. That makes this the one piece of copy where cutting a
+ * good sentence is usually right: the thesis needs one paragraph, not three,
+ * and the examples are more convincing on the bench than in prose. Anything
+ * added here has to be worth the wait it costs.
  */
 export function briefingParagraphs(tier: TierId): string[] {
   const drift =
-    tier === 2
-      ? 'Here a slider may select a date, and refuse to be dragged. A checkbox may name a creature, and only answer to being dragged across. Two agreements lapsed instead of one: what a control MEANS, and what it wants you to DO. The hardware is fine. Both were only ever agreements.'
-      : 'Here a slider may select a date. A checkbox may name a creature. A calendar may hold a percentage, and a colour picker may be the only way to set a time. The hardware is fine. This universe simply settled on different agreements than yours.';
+    tier === 3
+      ? 'A slider may select a date. A checkbox may name a creature. And past the drift the pointer stops being yours — you will be told which rule took it. Your keyboard answers to you throughout.'
+      : tier === 2
+        ? 'A slider may select a date, and refuse to be dragged. A checkbox may name a creature, and only answer to a drag across it. Two agreements lapsed instead of one: what a control MEANS, and what it wants you to DO.'
+        : 'A slider may select a date. A checkbox may name a creature. A calendar may hold a percentage. The hardware is fine — this universe simply settled on different agreements than yours.';
 
   return [
     'REALITY CALIBRATION TERMINAL // CLEARANCE: PROVISIONAL',
-    'An experiment two sectors over went wrong in a way nobody has finished writing up. Nearby universes now overlap. Most of the overlap is harmless: slightly different gravity, slightly different Tuesdays.',
-    'Interface conventions were not harmless. Not because they broke, but because they were never laws. A slider means a quantity the way a red light means stop: by agreement, repeated until it felt like physics. Here the agreement lapsed.',
+    'An experiment two sectors over went wrong. Nearby universes now overlap. Most of it is harmless: slightly different gravity, slightly different Tuesdays.',
+    'Interface conventions were not harmless — not because they broke, but because they were never laws. A slider means a quantity the way a red light means stop: by agreement, repeated until it felt like physics. Here the agreement lapsed.',
     drift,
-    'Your terminal still works. It simply no longer agrees with you, and it is not obviously the one that is wrong.',
-    'Each contact begins with a calibration pass in your own universe, so you remember what normal feels like. Then the drift hits, and you find out what these controls mean HERE before you are asked to stabilize the dimension with them.',
-    'Nothing during exploration is scored. Poke everything. The operators who adapt fastest are the ones who never believed the conventions were true.',
+    'You calibrate in your own universe first, so you remember what normal feels like. Then the drift hits. Nothing during exploration is scored, so poke everything.',
   ];
 }

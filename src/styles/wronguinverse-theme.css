@@ -922,7 +922,12 @@ body {
   border: none;
   border-radius: 0;
   background: none;
-  color: var(--line-strong);
+  /* Quiet, but a colour meant for TEXT. This was `--line-strong`, a border
+     token, which on the panel is about 1.9:1 — under the accent-shifted
+     universe palettes the hint links were effectively invisible, and a hint
+     nobody can find is a hint that does not exist. Mixed toward the panel
+     rather than made transparent, so it lands the same on every palette. */
+  color: color-mix(in srgb, var(--text-secondary) 70%, var(--bg-panel));
   text-decoration: underline;
   text-underline-offset: calc(var(--px) * 1);
   cursor: pointer;
@@ -1294,25 +1299,138 @@ input[type='range']::-moz-range-thumb {
 
 /* The native element keeps its looks and its ARIA but stops taking pointer
    input, so the wrapper can own the shifted gesture. Used where cancelling the
-   native gesture with preventDefault is engine-dependent — a <select> popup in
-   particular reopens in Safari regardless. */
+   native gesture with preventDefault is engine-dependent. */
 
-.wui-slider.is-shifted,
-.wui-dropdown.is-shifted {
+.wui-slider.is-shifted {
   pointer-events: none;
 }
 
-/* A stepper you cannot type into should not offer spinners it will not honour. */
+/* The dropdown, built out of buttons rather than a native <select> — see the
+   header of DropdownWidget for why. The trigger and every option are real
+   buttons, which is what puts the whole control inside the rules. */
 
-.wui-number.is-shifted::-webkit-inner-spin-button,
-.wui-number.is-shifted::-webkit-outer-spin-button {
+.wui-dropdown-shell {
+  position: relative;
+  width: 100%;
+}
+
+.wui-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--px);
+  width: 100%;
+  padding: calc(var(--px) * 1.5) calc(var(--px) * 2);
+  border: var(--border) solid var(--line-strong);
+  background: var(--bg-control);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.wui-dropdown-trigger:hover,
+.wui-dropdown-trigger[aria-expanded='true'] {
+  border-color: var(--accent-primary);
+}
+
+.wui-dropdown-caret {
+  color: var(--accent-primary);
+  font-size: 0.45rem;
+}
+
+/* In flow rather than floated over the bench: an absolutely positioned menu
+   gets clipped by the station card that owns it, and a menu that escapes the
+   card lands on top of the neighbouring controls — which under a pointer law
+   means it swallows presses meant for them. Growing the card is the honest
+   option. */
+.wui-dropdown-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 9.5rem;
+  margin-top: var(--px);
+  overflow-y: auto;
+  border: var(--border) solid var(--line-strong);
+  background: var(--bg-panel);
+}
+
+.wui-dropdown-option {
+  padding: calc(var(--px) * 1.25) calc(var(--px) * 2);
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.wui-dropdown-option:hover {
+  background: var(--bg-control);
+  color: var(--text-primary);
+}
+
+.wui-dropdown-option.is-current {
+  color: var(--accent-primary);
+}
+
+/* The native spinner is gone in EVERY mode, not just the shifted one: the
+   browser draws it inside the input's own box, where nothing but a genuine
+   press on that strip of pixels can reach it — dead under a Tier 3 pointer
+   law, and an ungoverned second route to the value under Tier 2. The arrows
+   next to it are real buttons instead (see NumberWidget). */
+
+.wui-number::-webkit-inner-spin-button,
+.wui-number::-webkit-outer-spin-button {
   appearance: none;
   margin: 0;
 }
 
-.wui-number.is-shifted {
+.wui-number {
   appearance: textfield;
   -moz-appearance: textfield;
+}
+
+.wui-number-stepper {
+  display: flex;
+  align-items: stretch;
+  gap: var(--px);
+  width: 100%;
+}
+
+.wui-number-stepper .wui-number {
+  flex: 1;
+  min-width: 0;
+}
+
+.wui-number-arrows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wui-number-arrow {
+  /* Deliberately generous for their glyph. Under a pointer law every control
+     is harder to hit than it looks, and a 12px-tall arrow turns `offsetCursor`
+     from a handicap into a dexterity test. */
+  min-width: calc(var(--px) * 7);
+  min-height: calc(var(--px) * 5);
+  padding: 0 calc(var(--px) * 1.5);
+  border: var(--border) solid var(--line-strong);
+  background: var(--bg-control);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.wui-number-arrow:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 /* Wrappers are pure gesture surfaces. They must own a real box — a
@@ -2074,4 +2192,196 @@ input[type='range']::-moz-range-thumb {
   letter-spacing: 0.06em;
   line-height: 1.6;
   color: var(--text-secondary);
+}
+
+/* ---------------------------------------------------------------------------
+   TIER 3 — the pointer law
+
+   The ring is the tier's whole legibility story. Tier 2 flinches AFTER a wrong
+   gesture; Tier 3 has to show what is about to happen BEFORE it does, because
+   its failure mode is an accidental success. So this is information, not
+   decoration, and it is not dimmed under reduced motion — only stilled.
+--------------------------------------------------------------------------- */
+
+.wui-cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 900;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms linear;
+  /* The dwell arc, written frame by frame from PointerLaw.tsx. A conic gradient
+     rather than an SVG stroke so the whole thing is one compositor-friendly
+     paint with no layout behind it. */
+  background: conic-gradient(var(--accent-anomaly) calc(var(--dwell, 0) * 360deg), transparent 0);
+  mask: radial-gradient(circle, transparent 58%, #000 60%);
+  -webkit-mask: radial-gradient(circle, transparent 58%, #000 60%);
+}
+
+/* One arc, four meanings — which is the point: whatever the law, the cursor is
+   answering the same question, "what is about to happen". `is-dwelling` fills
+   toward a commit, `is-armed` drains as a window closes, `is-held` says the
+   value will land on release, `is-hot` says the hand is moving too fast to be
+   heard. */
+.wui-cursor-ring.is-dwelling,
+.wui-cursor-ring.is-armed {
+  opacity: 1;
+}
+
+/* The calm-hand meter is always up: unlike the other three it reports a
+   condition of the pointer rather than of a control, so there is no moment at
+   which showing it would be news. */
+.wui-cursor-ring.wui-law-calmHand {
+  opacity: 0.75;
+}
+
+.wui-cursor-ring.is-hot {
+  opacity: 1;
+  background: conic-gradient(var(--accent-danger) calc(var(--dwell, 0) * 360deg), transparent 0);
+}
+
+/* Under the two laws that move the aim point, the ring is the only honest
+   cursor on screen — it sits where the press will land, not where the hand is
+   — so it must NEVER fade out. Fading it was what made `invertedPointer` look
+   like it was doing nothing: with the ring invisible, the only cursor the
+   player could see was the real one, still moving the way they moved it. */
+.wui-cursor-ring.wui-law-offsetCursor,
+.wui-cursor-ring.wui-law-invertedPointer {
+  opacity: 1;
+  border: var(--border) solid color-mix(in srgb, var(--accent-anomaly) 45%, transparent);
+}
+
+.wui-cursor-ring.wui-law-offsetCursor.is-dwelling,
+.wui-cursor-ring.wui-law-invertedPointer.is-dwelling {
+  border-color: var(--accent-anomaly);
+}
+
+/* Crosshairs, so the true cursor is legible as a cursor at a glance rather
+   than as one more circle on a screen that already has several. */
+.wui-cursor-ring.wui-law-invertedPointer::before,
+.wui-cursor-ring.wui-law-invertedPointer::after {
+  position: absolute;
+  background: var(--accent-anomaly);
+  content: '';
+}
+
+.wui-cursor-ring.wui-law-invertedPointer::before {
+  top: 50%;
+  left: -8px;
+  width: calc(100% + 16px);
+  height: 2px;
+}
+
+.wui-cursor-ring.wui-law-invertedPointer::after {
+  top: -8px;
+  left: 50%;
+  width: 2px;
+  height: calc(100% + 16px);
+}
+
+/* The commit, and the refusal of a press. Deliberately different shapes: one
+   expands outward (something happened), one shudders (nothing did). */
+.wui-cursor-ring.is-committing {
+  opacity: 1;
+  animation: wui-law-commit 200ms ease-out;
+}
+
+.wui-cursor-ring.is-refusing {
+  opacity: 1;
+  background: conic-gradient(var(--accent-danger) 360deg, transparent 0);
+  animation: wui-law-refuse 220ms steps(4);
+}
+
+@keyframes wui-law-commit {
+  from {
+    transform-origin: center;
+    scale: 1;
+  }
+  to {
+    scale: 1.7;
+    opacity: 0;
+  }
+}
+
+@keyframes wui-law-refuse {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 3px 0;
+  }
+}
+
+/* Free, permanent, unpurchasable — the law is framing, not a hint. */
+.wui-law-strip {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 890;
+  margin: 0;
+  padding: calc(var(--px) * 1.5) var(--px);
+  border-top: var(--border) solid var(--accent-anomaly);
+  background: var(--bg-panel);
+  color: var(--accent-anomaly);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Room for the strip, which is fixed and would otherwise sit on the last row
+   of whichever screen is up. */
+.wui-under-law {
+  padding-bottom: calc(var(--px) * 7);
+}
+
+/* The cursor is the instrument now, so stop promising a click does anything. */
+.wui-under-law button,
+.wui-under-law [role='button'],
+.wui-under-law a[href] {
+  cursor: crosshair;
+}
+
+/* The terminal's own flinch when a law refuses a press. Bigger than the
+   cursor's, because the cursor is not where the player is looking. */
+.wui-law-shock {
+  animation: wui-law-shock 220ms steps(3);
+}
+
+@keyframes wui-law-shock {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  33% {
+    translate: -4px 1px;
+  }
+  66% {
+    translate: 3px -2px;
+  }
+}
+
+/* The advice, sharing the strip with the law's name. Dimmer, so the strip
+   still reads as one line rather than two competing ones. */
+.wui-law-strip-advice {
+  color: var(--text-secondary);
+  letter-spacing: 0.08em;
+}
+
+.wui-law-strip-advice::before {
+  content: ' · ';
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wui-cursor-ring.is-committing,
+  .wui-cursor-ring.is-refusing {
+    animation: none;
+  }
 }

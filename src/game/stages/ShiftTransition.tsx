@@ -33,6 +33,12 @@ export function ShiftTransition() {
       <div className={reducedMotion ? 'wui-shift-panel' : 'wui-shift-panel wui-shift-animated'}>
         <p className="wui-shift-headline">{SHIFT_HEADLINE}</p>
         <p className="wui-shift-subhead">{SHIFT_SUBHEAD}</p>
+        {/* Tier 3's law is deliberately NOT printed here. This screen is two
+            and a half seconds long and cannot be paused, so anything set on it
+            is a line the player is asked to read against a clock — and a rule
+            half-read is worse than one not read at all. The law lives in the
+            chrome strip instead, which is permanent and can be reread whenever
+            the player wants it. */}
       </div>
 
       {/* No skip. The transition is about two seconds and is the payoff the

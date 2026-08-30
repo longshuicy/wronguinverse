@@ -9,7 +9,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AmbientClip } from '../../components/AmbientClip.tsx';
 import { briefingParagraphs } from '../../content/flavorText.ts';
-import { seedFromLocation } from '../generator/seededRandom.ts';
 import { useGameStore } from '../state/gameStore.ts';
 
 /** Milliseconds per character. Fast enough to read along with, not wait for. */
@@ -25,9 +24,6 @@ export function BriefingStage() {
   const tier = useGameStore((s) => s.tier);
   const fullText = useMemo(() => briefingParagraphs(tier.id).join('\n'), [tier.id]);
 
-  // The run starts here now, so the ?seed= override has to be read here too
-  // (technical design §9).
-  const [urlSeed] = useState(seedFromLocation);
   const [reducedMotion] = useState(
     () =>
       typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches,
@@ -74,7 +70,7 @@ export function BriefingStage() {
       <div className="wui-actions wui-actions-centred">
         {/* Always available: a player who does not want the lore should not
             have to sit through it to reach the game. */}
-        <button type="button" className="wui-start" onClick={() => beginRun(urlSeed ?? undefined)}>
+        <button type="button" className="wui-start" onClick={() => beginRun()}>
           Begin calibration
         </button>
         {/* Fills the text in without moving on, for a reader who is ahead of

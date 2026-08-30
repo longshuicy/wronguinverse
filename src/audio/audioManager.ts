@@ -103,6 +103,9 @@ const THROTTLE_MS: Partial<Record<SfxId, number>> = {
   value_tick: 60,
   semantic_blip: 90,
   ui_click: 40,
+  // A Tier 3 refusal plays this, and a refused player presses again straight
+  // away — without a throttle the takes stack into a single flat buzz.
+  mismatch: 160,
 };
 
 const lastPlayed = new Map<SfxId, number>();

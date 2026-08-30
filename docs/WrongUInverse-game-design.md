@@ -77,7 +77,7 @@ Examples:
 The widget is still operated in a reasonably familiar way. Only the
 semantic interpretation changes.
 
-### Tier 2 --- Operation Shift --- Future
+### Tier 2 --- Operation Shift --- shipped
 
 The widget's expected operation changes.
 
@@ -87,22 +87,71 @@ Examples:
 - Checkbox changes by dragging rather than clicking.
 - Dropdown cycles by scrolling rather than opening normally.
 
-Tier 2 should not be implemented until Tier 1 is proven fun.
+Tier 2 was held back until Tier 1 was proven fun; it is additive on
+Tier 1, keeping the semantic shift and layering gestures on top.
 
-### Tier 3 --- Gesture Shift --- Future
+### Tier 3 --- Gesture Shift --- shipped
 
-Low-level pointer behavior is remapped.
+Low-level pointer behavior is remapped. One LAW per run, drawn from a
+pool and applied to the whole page --- the chrome and the lore screen
+included, not just the bench. That universality is the teaching
+mechanism: a player learns the law by watching it act on a button they
+did not care about.
 
-Examples:
+The pool:
 
-- "Select" is triggered by hover.
-- "Click" requires a double click.
-- "Drag" requires click-and-hold followed by movement from a specific
-  direction.
-- A value changes based on cursor speed, dwell time, or entry
-  direction.
+- **Hover commits.** Dwelling on a control is the press.
+- **Once is not enough.** Every commit needs two presses in a window.
+- **The cursor is not where you left it.** Presses land at a fixed
+  offset from the pointer; the ring shows the true point, and the
+  player aims off-target to compensate.
+- **The pointer runs backwards.** A virtual cursor moves opposite to the
+  real one; the ring is the only honest cursor on screen.
+- **A hurried hand is ignored.** The control answers only a pointer that
+  has come to a stop and stayed stopped while the ring fills.
 
-Tier 3 is intended as expert/chaos mode.
+Dragging survives every law. A law swallows the press, and for a
+while that swallowed the drag with it, leaving sliders placeable only
+one press at a time. Granting a commit on a positional control now
+grants a grip on it too: movement keeps committing until the grip ends
+— on release for the laws that judge a press, on stepping off the
+control for `hoverCommit`, which has no button to hold. A drag is never
+re-judged while it runs, or `A hurried hand` would read every frame of
+one as hurry.
+
+Three rules hold across every law:
+
+1. **Pointer only.** The keyboard is never governed. That is what keeps
+   hints reachable, Escape honest, and the tier playable without a
+   mouse-accurate hand.
+2. **The law is not a hint.** It is printed in the chrome for free and
+   cannot be bought. Knowing how the cursor commits says nothing about
+   what a control MEANS, so the Tier 1 puzzle survives intact.
+A law can be opened directly for debugging with `?law=<id>`, which
+overrides both the tier's pool and the seed's draw.
+
+Two controls had to stop being native for any of this to hold. A
+`<select>`'s option list and an `<input type="number">`'s spinner are
+drawn outside the page, where no rule the game imposes can reach them:
+under Tier 3 they were simply dead to the pointer, and under Tier 2 the
+spinner was a second, ungoverned route to the value. Both are built out
+of real buttons now, which is also what lets Tier 2's wheel scroll a
+list the player can actually see.
+
+3. **It arrives with the drift, and is named as it arrives.** The
+   reality index and the calibration pass are the player's HOME
+   universe and stay untouched — no law, and no universe palette. The
+   shift screen prints the law in full, and the first bench under it is
+   Explore, which is unscored.
+
+Tier 3 layers on Tier 1 and NOT on Tier 2 --- it keeps the wrong
+meanings and leaves every gesture native. The two are different second
+wrongnesses on the same base, and neither contains the other. Stacked,
+each widget's shifted gesture would have to survive the run's pointer
+law, and half those pairings are incoherent rather than hard (a checkbox
+that wants a drag, under a law that already committed it on hover). All
+three at once belongs later, as a modifier with the broken pairings
+excluded --- not as the definition of a tier.
 
 ## 4. Core Round Structure
 

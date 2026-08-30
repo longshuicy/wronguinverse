@@ -88,7 +88,7 @@ export function IntroStage() {
             which has no width left for it. */}
         <p className="wui-level-blurb">
           {difficulty.blurb}
-          {tier.operationShift && ' Bring a mouse.'}
+          {(tier.operationShift || tier.pointerLaws) && ' Bring a mouse.'}
         </p>
       </section>
 

@@ -75,8 +75,8 @@ export type OperationType =
   /** Calendar: the header arrows move the selection; the days are dead. */
   | 'stepArrows';
 
-/** Which rules a run breaks. Tier 3 (gesture shift) is not built. */
-export type TierId = 1 | 2;
+/** Which rules a run breaks. See `src/game/tier.ts`. */
+export type TierId = 1 | 2 | 3;
 
 /**
  * A generated body of information, independent of how it is displayed.

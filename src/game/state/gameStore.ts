@@ -10,12 +10,13 @@ import {
   type DifficultyConfig,
   type DifficultyId,
 } from '../difficulty.ts';
+import { pickPointerLaw, pointerLawFromLocation, type PointerLawId } from '../pointerLaw.ts';
 import { DEFAULT_TIER, getTier, type TierConfig } from '../tier.ts';
 import { playMusicFor, playSfx, setMuted as setAudioMuted } from '../../audio/audioManager.ts';
 import { initialValue } from '../domains/index.ts';
 import { generateChallenge, isRequirementSatisfied } from '../generator/challengeGenerator.ts';
 import { generateRun, regenerateGoals } from '../generator/mappingGenerator.ts';
-import { createRng, createSeed } from '../generator/seededRandom.ts';
+import { createRng, createSeed, seedFromLocation } from '../generator/seededRandom.ts';
 import { loadProgress, saveProgress, type PersistedProgress } from './persistence.ts';
 import type {
   GameEvent,
@@ -54,6 +55,23 @@ interface GameState {
   /** Conventional mappings for Stage 1. Regenerated identically every run. */
   calibration: RunConfig | null;
   calibrationValues: WidgetValues;
+
+  /**
+   * The pointer law in force, or `null` outside Tier 3.
+   *
+   * Held here rather than read off the tier because it is drawn per RUN: the
+   * tier owns the pool, a run owns the law. Drawn from the run's own seed, so
+   * `?seed=` reproduces the cursor as well as the mappings.
+   */
+  pointerLaw: PointerLawId | null;
+  /**
+   * The seed the next run will use, chosen when the briefing opens.
+   *
+   * Chosen that early because the briefing's door obeys the law (it is the
+   * tutorial for it), and the law cannot be drawn before the seed it comes
+   * from exists.
+   */
+  pendingSeed: string | null;
 
   /** The shifted universe. Survives Retry, replaced by Next. */
   run: RunConfig | null;
@@ -148,6 +166,22 @@ function completionPatch(
   };
 }
 
+/**
+ * The pointer law for a run, or `null` if this tier does not impose one.
+ *
+ * Its own seed stream (`::law`), like the challenge card's, so that adding
+ * laws to the pool later cannot shift the mappings an existing seed produces.
+ */
+function drawPointerLaw(seed: string, tier: TierConfig): PointerLawId | null {
+  // `?law=` wins over both the pool and the draw, and over the tier having no
+  // pool at all: the point of it is to reach one law directly without playing
+  // the odds. Development only — nothing in the game links to it.
+  const forced = pointerLawFromLocation();
+  if (forced) return forced;
+  if (!tier.pointerLaws?.length) return null;
+  return pickPointerLaw(tier.pointerLaws, createRng(`${seed}::law`));
+}
+
 /** Build the shifted universe plus its challenge card from one seed. */
 function buildUniverse(seed: string, difficulty: DifficultyConfig, tier: TierConfig) {
   const run = generateRun({
@@ -174,6 +208,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   calibration: null,
   calibrationValues: {},
 
+  pointerLaw: null,
+  pendingSeed: null,
+
   run: null,
   values: {},
 
@@ -193,8 +230,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   attempt: 0,
 
   beginRun: (seed) => {
-    const { difficulty, tier, progress } = get();
-    const runSeed = seed ?? createSeed();
+    const { difficulty, tier, progress, pendingSeed } = get();
+    // The briefing already chose one, and its door has been teaching the law
+    // that seed drew. Taking a fresh seed here would move the goalposts between
+    // the tutorial and the run.
+    const runSeed = seed ?? pendingSeed ?? createSeed();
 
     // Usually already playing from the level picker; this covers the player
     // who pressed start without touching the picker at all.
@@ -500,6 +540,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { run, requirements } = buildUniverse(seed, difficulty, tier);
     set({
       stage: 'shift',
+      // A new universe is a new draw. Two Tier 3 runs in a row under the same
+      // law would make the tier feel like one gimmick rather than a pool.
+      pointerLaw: drawPointerLaw(seed, tier),
+      pendingSeed: seed,
       run,
       requirements,
       values: freshValues(run.mappings),
@@ -518,9 +562,20 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
   },
 
-  returnToIntro: () => set({ stage: 'intro' }),
+  returnToIntro: () => set({ stage: 'intro', pointerLaw: null, pendingSeed: null }),
 
-  openBriefing: () => set({ stage: 'briefing' }),
+  /**
+   * Open the Reality Index, and settle what universe is behind it.
+   *
+   * The seed is chosen here rather than at `beginRun` because the briefing's
+   * door obeys the run's pointer law — it is where the player learns it — and
+   * a law cannot be drawn before its seed exists. Technical design §9's
+   * `?seed=` override is read here for the same reason.
+   */
+  openBriefing: () => {
+    const seed = seedFromLocation() ?? createSeed();
+    set({ stage: 'briefing', pendingSeed: seed, pointerLaw: drawPointerLaw(seed, get().tier) });
+  },
 
   /**
    * Only meaningful from the intro; a run's level is fixed once it starts.
@@ -536,7 +591,13 @@ export const useGameStore = create<GameState>((set, get) => ({
    * No music change: the soundtrack follows the LEVEL, which is the axis the
    * player is choosing an intensity on.
    */
-  setTier: (id) => set({ tier: getTier(id) }),
+  setTier: (id) => {
+    const tier = getTier(id);
+    // The law belongs to a run, and no run is pending from the intro — leaving
+    // a stale one set would put the landing page under the rules of a tier the
+    // player has just switched away from.
+    set({ tier, pointerLaw: null, pendingSeed: null });
+  },
 
   setDifficulty: (id) => {
     const difficulty = getDifficulty(id);
