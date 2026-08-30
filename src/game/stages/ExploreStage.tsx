@@ -7,10 +7,12 @@ import { Mascot } from '../../components/Mascot.tsx';
 import { StageBar } from '../../components/StageBar.tsx';
 import { WidgetBench } from '../../components/WidgetBench.tsx';
 import { EXPLORE_INTRO } from '../../content/flavorText.ts';
+import { mascotState, zorbletLine } from '../mascot.ts';
 import { useGameStore } from '../state/gameStore.ts';
 
 export function ExploreStage() {
   const run = useGameStore((s) => s.run);
+  const events = useGameStore((s) => s.events);
   const values = useGameStore((s) => s.values);
   const setValue = useGameStore((s) => s.setValue);
   const observations = useGameStore((s) => s.observations);
@@ -63,6 +65,11 @@ export function ExploreStage() {
             <div>
               <h1 className="wui-stage-title">Semantic drift detected</h1>
               <p className="wui-lede">{EXPLORE_INTRO}</p>
+              {/* Zorblet reacting out loud. Behaviour only, never meaning:
+                  see the rules at the top of `content/zorbletLines.ts`. */}
+              <p className="wui-zorblet-line">
+                {zorbletLine(mascotState('explore', null, events), events)}
+              </p>
               <p className="wui-eyebrow">SHIFTED · {run.seed}</p>
             </div>
           </div>

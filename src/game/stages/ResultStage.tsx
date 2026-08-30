@@ -1,10 +1,22 @@
 // ResultStage.tsx
-// Not a points summary — a playful diagnosis of how the player argued with the
+// Not a points summary: a playful diagnosis of how the player argued with the
 // interface. Giving up is reported without shaming.
 // See docs/WrongUInverse-game-design.md §11, technical design §12.
+//
+// Dealt out in beats rather than rendered whole. The content was never the
+// problem; the pacing was. Everything landed in one frame, so the verdict, the
+// read, the numbers and the rules all competed for the same instant and the
+// screen read as a page that had finished loading. Four beats, about 1.7
+// seconds, and any press or key ends it early (see `useStagedReveal`).
+//
+// The rules table is deliberately LAST. It is the answer to the puzzle the
+// player has just spent a run failing to solve, and it used to sit at the
+// bottom of a completed page as though it were a footnote.
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { AssetImage } from '../../components/AssetImage.tsx';
+import { CountUp } from '../../components/CountUp.tsx';
+import { Mascot } from '../../components/Mascot.tsx';
 import { StageBar } from '../../components/StageBar.tsx';
 import {
   GIVE_UP_RESPONSE,
@@ -14,7 +26,12 @@ import {
   WIDGET_DISPLAY_NAME,
 } from '../../content/flavorText.ts';
 import { brainType, computeMetrics, conventionalThinking } from '../metrics.ts';
+import { useStagedReveal } from '../useStagedReveal.ts';
+import { playSfx } from '../../audio/audioManager.ts';
 import { useGameStore } from '../state/gameStore.ts';
+
+/** Verdict, specimen, numbers, rules. */
+const BEATS = 4;
 
 export function ResultStage() {
   const run = useGameStore((s) => s.run);
@@ -35,6 +52,17 @@ export function ResultStage() {
   );
   const conventional = conventionalThinking(metrics, mappingCount);
   const brain = brainType(metrics, mappingCount);
+  const { shown } = useStagedReveal(BEATS);
+
+  // One tick per beat as it lands, so the report is heard being assembled
+  // rather than just watched. Skipping fires no burst: `shown` jumps straight
+  // to the end and this only runs on change.
+  useEffect(() => {
+    // Beat 1 is on screen from the first frame, so it gets no tick: a sound
+    // for something the player never saw arrive is a sound with no cause.
+    if (shown > 1 && shown < BEATS) playSfx('value_tick');
+    if (shown === BEATS) playSfx('selection_confirm');
+  }, [shown]);
 
   if (!run || !outcome) return null;
 
@@ -69,9 +97,18 @@ export function ResultStage() {
         }
       />
 
-      <header className="wui-screen-head">
-        <h1>{resultHeadline(outcome)}</h1>
-        {outcome === 'gaveUp' && <p className="wui-lede">{GIVE_UP_RESPONSE}</p>}
+      <header className="wui-screen-head wui-beat" data-shown={shown >= 1}>
+        {/* Zorblet was built with a success and a confused state and appeared
+            on no screen where either applied. It watches the player argue with
+            a calendar for a whole run; it should be there at the end of it. */}
+        {/* Scale 1, not the 2 the bench uses: beside a heading rather than
+            alone in a column, and at 2 it was taller than the verdict it is
+            reacting to. */}
+        <Mascot scale={1} />
+        <div>
+          <h1 className="wui-verdict">{resultHeadline(outcome)}</h1>
+          {outcome === 'gaveUp' && <p className="wui-lede">{GIVE_UP_RESPONSE}</p>}
+        </div>
       </header>
 
       {/* Two columns, not one centred stack. The panel is far wider than a
@@ -79,7 +116,7 @@ export function ResultStage() {
           and stacked five blocks at three different alignments. The specimen
           card is the part a player recognises and shares; the read is prose
           and belongs in a column of its own. */}
-      <section className="wui-diagnosis">
+      <section className="wui-diagnosis wui-beat" data-shown={shown >= 2}>
         {/* Each brain type has a specimen; the pairing lives in
             content/brainTypes.ts so it is not re-invented per screen. */}
         <div className="wui-diagnosis-specimen">
@@ -93,7 +130,11 @@ export function ResultStage() {
               slot is still filled rather than removed, so the card keeps its
               shape and the absence reads as deliberate. */}
           <p className="wui-diagnosis-metric-value">
-            {conventional === null ? 'N/A' : `${conventional}%`}
+            {conventional === null ? (
+              'N/A'
+            ) : (
+              <CountUp value={conventional} start={shown >= 2} suffix="%" />
+            )}
           </p>
           <p className="wui-diagnosis-metric-label">
             {conventional === null ? 'NO READING TAKEN' : 'CONVENTIONAL THINKING'}
@@ -109,17 +150,21 @@ export function ResultStage() {
         </div>
       </section>
 
-      <dl className="wui-stats">
+      <dl className="wui-stats wui-beat" data-shown={shown >= 3}>
         {/* Interactions, not elapsed time. The run is untimed, so reporting
             seconds would grade the player on something the game never asked
             them to manage — and would punish anyone who stopped to think. */}
         <div>
           <dt>Interactions</dt>
-          <dd>{metrics.interactions}</dd>
+          <dd>
+            <CountUp value={metrics.interactions} start={shown >= 3} />
+          </dd>
         </div>
         <div>
           <dt>Hints used</dt>
-          <dd>{metrics.hintsUsed}</dd>
+          <dd>
+            <CountUp value={metrics.hintsUsed} start={shown >= 3} />
+          </dd>
         </div>
         <div>
           <dt>First-attempt</dt>
@@ -129,7 +174,9 @@ export function ResultStage() {
         </div>
         <div>
           <dt>Controls used</dt>
-          <dd>{metrics.widgetsTouched}</dd>
+          <dd>
+            <CountUp value={metrics.widgetsTouched} start={shown >= 3} />
+          </dd>
         </div>
         <div>
           <dt>Distance</dt>
@@ -137,15 +184,20 @@ export function ResultStage() {
         </div>
         <div>
           <dt>Stabilized</dt>
-          <dd>{progress.universesStabilized}</dd>
+          <dd>
+            <CountUp value={progress.universesStabilized} start={shown >= 3} />
+          </dd>
         </div>
       </dl>
 
-      <section className="wui-rules">
+      <section className="wui-rules wui-beat" data-shown={shown >= 4}>
         <h2>THIS UNIVERSE'S RULES</h2>
         <ul>
-          {run.mappings.map((mapping) => (
-            <li key={mapping.widget}>
+          {run.mappings.map((mapping, index) => (
+            // Staggered against each other as well as against the beat: the
+            // rules are a list of answers, and a list of answers appearing all
+            // at once is read as a block rather than as answers.
+            <li key={mapping.widget} style={{ animationDelay: `${index * 70}ms` }}>
               {WIDGET_DISPLAY_NAME[mapping.widget] ?? mapping.widget.toUpperCase()} →{' '}
               {SEMANTIC_DISPLAY_NAME[mapping.semantic] ?? mapping.semantic.toUpperCase()}
               {/* On a tier 2 run the meaning is only half the rule; a debrief

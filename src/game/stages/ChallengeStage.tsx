@@ -17,6 +17,7 @@ import {
 } from '../../content/flavorText.ts';
 import { useEffect, useRef } from 'react';
 import { computeMetrics } from '../metrics.ts';
+import { mascotState, zorbletLine } from '../mascot.ts';
 import { useGameStore } from '../state/gameStore.ts';
 
 /** `92s` / `2m 14s`. Short enough to sit in a stat cell. */
@@ -120,6 +121,11 @@ export function ChallengeStage() {
             <div>
               <h1 className="wui-stage-title">Stabilize this dimension</h1>
               <p className="wui-lede">{CHALLENGE_INTRO}</p>
+              {/* Zorblet reacting out loud. Behaviour only, never meaning:
+                  see the rules at the top of `content/zorbletLines.ts`. */}
+              <p className="wui-zorblet-line">
+                {zorbletLine(mascotState('challenge', null, events), events)}
+              </p>
               <p className="wui-eyebrow">STABILIZATION PROTOCOL · {run.seed}</p>
             </div>
           </div>

@@ -7,6 +7,7 @@
 // Mapping from docs/WrongUInverse-technical-design.md §19.
 
 import type { MascotState } from '../content/assets.ts';
+import { ZORBLET_LINES } from '../content/zorbletLines.ts';
 import type { GameEvent, RunOutcome, StageId } from './state/types.ts';
 
 /** How many trailing challenge attempts must miss before Zorblet looks worried. */
@@ -56,4 +57,19 @@ export function mascotAltText(state: MascotState): string {
     case 'idle':
       return 'Zorblet, waiting';
   }
+}
+
+/**
+ * The line to go with the face.
+ *
+ * Chosen by how much has happened rather than at random. Two reasons: a random
+ * pick would re-roll on every render and flicker, and a line that changes on
+ * every single event reads as chatter rather than as a reaction to something.
+ * Stepping every few events means Zorblet's mood visibly develops over a run
+ * while staying still long enough to be read.
+ */
+export function zorbletLine(state: MascotState, events: GameEvent[]): string {
+  const lines = ZORBLET_LINES[state];
+  const step = Math.floor(events.length / 6);
+  return lines[step % lines.length]!;
 }

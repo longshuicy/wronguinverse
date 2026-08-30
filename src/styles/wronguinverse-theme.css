@@ -2558,3 +2558,96 @@ input[type='range']::-moz-range-thumb {
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   THE REPORT, DEALT OUT
+
+   Four beats. Each section is in the DOM from the first frame and hidden with
+   opacity rather than mounted late, so nothing reflows as the report assembles
+   and the scroll height never jumps under a player who is already reading.
+--------------------------------------------------------------------------- */
+
+.wui-beat {
+  opacity: 0;
+  transform: translateY(calc(var(--px) * 2));
+}
+
+.wui-beat[data-shown='true'] {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 0.18s steps(3, end),
+    transform 0.18s steps(3, end);
+}
+
+/* The verdict, with Zorblet beside it rather than above it: the line and the
+   creature reacting to it are one statement. */
+.wui-screen-head {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 4);
+}
+
+/* Stamped, not typeset. It arrives a beat before everything else and it is
+   the line people screenshot, so it is allowed to be loud. */
+.wui-verdict {
+  animation: wui-stamp 0.24s steps(3, end);
+}
+
+@keyframes wui-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Each rule is an answer to something the player just failed to work out, so
+   they land one at a time rather than as a block of text. */
+.wui-rules[data-shown='true'] li {
+  animation: wui-rule-in 0.2s steps(2, end) backwards;
+}
+
+@keyframes wui-rule-in {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--px) * -2));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wui-beat,
+  .wui-beat[data-shown='true'] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .wui-verdict,
+  .wui-rules[data-shown='true'] li {
+    animation: none;
+  }
+}
+
+/* Zorblet, out loud. Set apart from the stage's own lede: that text is the
+   terminal briefing the player, this is a creature in the room with them, and
+   they should not read as one voice. */
+.wui-zorblet-line {
+  margin: calc(var(--px) * 3) 0 0;
+  padding-left: calc(var(--px) * 2);
+  border-left: var(--border) solid var(--accent-hint);
+  color: var(--accent-hint);
+  font-size: 11px;
+  line-height: 1.7;
+}
