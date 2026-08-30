@@ -78,8 +78,18 @@ export function computeMetrics(
  * before landing each requirement, how heavily hints were leaned on, and
  * whether the rules were revealed outright. It is a made-up index tuned to read
  * amusingly, not a measurement of anything real.
+ *
+ * `null` for an abandoned run, and null rather than zero on purpose. Every term
+ * in the formula is a RATIO against a run that finished: walking away after two
+ * requirements leaves most of the denominators unspent, so the index reads low
+ * — which would print a flattering number for giving up. Worse, revealing the
+ * rules on the way out adds a flat 0.25, so quitting after a peek scores WORSE
+ * than quitting in silence. Neither number means anything. The screen says so
+ * instead of showing one, which also keeps the promise that giving up is
+ * reported without shaming (game design §11).
  */
-export function conventionalThinking(metrics: RunMetrics, mappingCount: number): number {
+export function conventionalThinking(metrics: RunMetrics, mappingCount: number): number | null {
+  if (metrics.gaveUp) return null;
   if (mappingCount === 0) return 0;
 
   const wrongAttempts = Math.max(0, metrics.challengeAttempts - metrics.firstAttemptHits);
@@ -105,6 +115,14 @@ export function conventionalThinking(metrics: RunMetrics, mappingCount: number):
  */
 export function brainType(metrics: RunMetrics, mappingCount: number): BrainType {
   const { interactions, hintsUsed, firstAttemptHits, widgetsTouched } = metrics;
+
+  // Before anything else: an abandoned run cannot be read. Every test below
+  // compares against a run that FINISHED, so a player who left after touching
+  // nothing satisfies THE THEORIST's "barely touched anything, just knew" and
+  // gets congratulated on insight they did not have, about a dimension they
+  // walked out of. Same reasoning as `conventionalThinking` returning null.
+  if (metrics.gaveUp) return BRAIN_TYPES.walkedAway;
+
   const perMapping = mappingCount > 0 ? interactions / mappingCount : interactions;
 
   if (perMapping > 25) return BRAIN_TYPES.poker;

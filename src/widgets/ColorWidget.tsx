@@ -55,7 +55,7 @@ function Swatch({
       // The swatch is colour-only, so the label must reach assistive tech
       // some other way — and the title gives sighted players a tooltip.
       aria-label={label}
-      title={hold ? `${label} — press and hold` : label}
+      title={hold ? `${label}: press and hold` : label}
       className={classes.join(' ')}
       style={{ background: hex }}
       {...(hold ? handlers : {})}

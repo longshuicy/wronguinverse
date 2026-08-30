@@ -88,9 +88,16 @@ export function ResultStage() {
           </div>
           <p className="wui-diagnosis-creature-name">{brain.creatureName}</p>
           {/* The one number that summarises the read, so it is set as a
-              figure rather than as a grey footnote under the prose. */}
-          <p className="wui-diagnosis-metric-value">{conventional}%</p>
-          <p className="wui-diagnosis-metric-label">CONVENTIONAL THINKING</p>
+              figure rather than as a grey footnote under the prose.
+              An abandoned run has no number: see `conventionalThinking`. The
+              slot is still filled rather than removed, so the card keeps its
+              shape and the absence reads as deliberate. */}
+          <p className="wui-diagnosis-metric-value">
+            {conventional === null ? 'N/A' : `${conventional}%`}
+          </p>
+          <p className="wui-diagnosis-metric-label">
+            {conventional === null ? 'NO READING TAKEN' : 'CONVENTIONAL THINKING'}
+          </p>
         </div>
 
         <div className="wui-diagnosis-read">

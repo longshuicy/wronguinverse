@@ -3,6 +3,7 @@
 // component and wraps it in the terminal shell.
 // See docs/WrongUInverse-technical-design.md §12.
 
+import { useInterfaceSounds } from './audio/useInterfaceSounds.ts';
 import { PointerLaw } from './components/PointerLaw.tsx';
 import { TerminalShell } from './components/TerminalShell.tsx';
 import { BriefingStage } from './game/stages/BriefingStage.tsx';
@@ -55,6 +56,9 @@ const BEFORE_THE_SHIFT: StageId[] = ['intro', 'briefing', 'normal'];
 function App() {
   const stage = useGameStore((s) => s.stage);
   const shifted = !BEFORE_THE_SHIFT.includes(stage);
+  // Bound at the root so every press in the game is audible, including ones
+  // added long after this line.
+  useInterfaceSounds();
   // A universe's palette belongs to a RUN, and specifically to the part of it
   // after the drift. Leaving the run in state on the way back to the intro used
   // to tint the landing page with whichever universe was last played; applying
@@ -70,7 +74,14 @@ function App() {
 
   return (
     <TerminalShell stage={stage} seed={seed}>
-      <CurrentStage />
+      {/* Keyed by stage so React remounts this wrapper on every change, which
+          restarts the animation on it. Without a transition the run reads as a
+          series of pages loading rather than as one machine changing state:
+          the shift already gets its clip, and this gives every other move the
+          same courtesy at a twentieth of the length. */}
+      <div className="wui-stage-swap" key={stage}>
+        <CurrentStage />
+      </div>
       {law && <PointerLaw law={law} />}
     </TerminalShell>
   );

@@ -53,12 +53,19 @@ The desired player realization is:
 > **"Tier" and "level" are different things.** They were both called "tier"
 > in earlier drafts, which caused steady confusion.
 >
-> - A **TIER** is *which rules are broken*. There are three, below. They are
->   a roadmap, not a setting: the player cannot choose one. This release is
->   Tier 1.
+> - A **TIER** is *which rules are broken*. There are three, below, and all
+>   three ship. This is what the music follows.
 > - A **LEVEL** is *how hard a run within a tier is* --- how many mappings and
->   how much help. There are three, in §11. This is what the player picks on
->   the landing page, and what the music follows.
+>   how much help. There are three, in §11.
+>
+> The two are INDEPENDENT: every tier is played at every level, so there are
+> nine runs, not three. The landing page calls them WHAT DRIFTED and HOW DEEP
+> rather than tier and level --- in game vocabulary those two words are
+> synonyms, both meaning "how far up", and players read the pair as one
+> difficulty scale with a diagonal through it. The page draws a kind (stacked
+> rows) and a quantity (a meter of pips) so they cannot be mistaken for each
+> other, prints a sentence assembled from both, and lets only the tier change
+> the music.
 >
 > "WrongUIᴎverse 1.0 --- Semantic Shift" is Tier 1 with three levels.
 
@@ -488,6 +495,29 @@ Optional humorous metric:
 **Conventional Thinking: 68%**\
 _"You still trust calendars."_
 
+### An abandoned run is not scored
+
+Giving up produces **no percentage and no earned brain type**. Both
+outputs are read against a run that FINISHED: every term in the
+Conventional Thinking index is a ratio whose denominator assumes the
+player worked through all their requirements, and the brain-type tests
+compare interaction counts to the same. So walking away early scored
+flatteringly low, revealing the rules on the way out scored *worse* than
+leaving in silence, and a player who quit after touching nothing was told
+they were THE THEORIST, who "thought about it and was mostly RIGHT".
+
+Being congratulated on insight you did not have, about a dimension you
+walked out of, is the worst thing the report could say. So the report
+prints `N/A --- NO READING TAKEN` in place of the figure, and shows a
+seventh brain type reserved for it:
+
+**PERSON WITH BOUNDARIES** (`SKEDD`) --- *"Decided the dimension could
+stabilize itself."*
+
+This is the only type not earned by how a run was played, and its tone
+follows `GIVE_UP_RESPONSE`: leaving is a legitimate ending, not a failure
+state, and the report never shames it.
+
 ## 11.1 Difficulty Levels
 
 Three levels within Tier 1. Difficulty scales by widening the mapping set
@@ -514,7 +544,7 @@ Eight is the ceiling, not an arbitrary stopping point: a run gives every
 widget a distinct semantic, and there are eight of each. A fourth level
 needs a ninth semantic implemented first.
 
-Each level has its own music (art guide §11).
+Music belongs to the TIER, not the level (art guide §11).
 
 ## 12. Session Length
 

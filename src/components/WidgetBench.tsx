@@ -128,7 +128,10 @@ export function WidgetBench({
               </p>
             )}
 
-            <div className="wui-station-control">
+            {/* Marked so the global click sound leaves it alone: what a
+                widget reports is a VALUE, and the store already answers those
+                with their own tick. See `audio/useInterfaceSounds.ts`. */}
+            <div className="wui-station-control" data-widget>
               <Widget
                 domain={mapping.domain}
                 value={value}
@@ -141,7 +144,15 @@ export function WidgetBench({
             {showInterpreted && (
               <p className="wui-station-output">
                 <span className="wui-station-output-label">READS AS</span>
-                <span className="wui-station-output-value">
+                {/* Keyed by the reading itself: a new value is a new element,
+                    so the flash replays on every change without any state to
+                    keep. This is the only feedback a shifted control gives, and
+                    a number that silently becomes a different number is easy to
+                    miss while the player is looking at the control instead. */}
+                <span
+                  className="wui-station-output-value"
+                  key={value === undefined ? '--' : mapping.domain.display(value)}
+                >
                   {value === undefined ? '--' : mapping.domain.display(value)}
                 </span>
               </p>

@@ -6,7 +6,7 @@
 // rendered in the game, not just recorded here — see the credits panel on the
 // intro screen. Do not ship a track without its credit.
 
-import type { DifficultyId } from '../game/difficulty.ts';
+import type { TierId } from '../game/state/types.ts';
 
 export interface MusicTrack {
   /** File slug under public/sound/music. */
@@ -46,23 +46,29 @@ export const MUSIC_TRACKS: Record<string, MusicTrack> = {
 };
 
 /**
- * Which track scores which difficulty LEVEL — one per level, not per Tier.
+ * Which track scores which TIER — one per tier, not per level.
  *
- * "Tier" means which rules are broken (Tier 1 Semantic Shift, and later
- * Operation and Gesture); "level" means how hard a Tier 1 run is. The music
- * follows the level, because that is what the player chooses and what lasts a
- * whole session. See src/game/difficulty.ts.
+ * It used to follow the level, on the reasoning that the level is what the
+ * player picks and what lasts a session. But so is the tier, and the two axes
+ * are not the same kind of thing: the tier is what a run IS (which agreement
+ * lapsed), the level is only how much of it there is. Music is identity, not
+ * quantity — scoring the control count meant three different universes sounded
+ * identical while three helpings of the same universe did not.
  *
- * The score gets less calm as the level gets harder.
+ * It also earns its keep on the landing page, which has to teach that these
+ * axes are independent: choosing a tier changes what you hear and choosing a
+ * level does not, so the page says it before anybody reads a word.
+ *
+ * The score gets less settled as the drift reaches further down.
  */
-const LEVEL_MUSIC: Record<DifficultyId, string> = {
-  slightlyWrong: 'airship-serenity',
-  uxHell: 'video-dungeon-boss',
-  wronguinverse: 'club-diver',
+const TIER_MUSIC: Record<TierId, string> = {
+  1: 'airship-serenity',
+  2: 'video-dungeon-boss',
+  3: 'club-diver',
 };
 
-export function trackForDifficulty(id: DifficultyId): MusicTrack {
-  return MUSIC_TRACKS[LEVEL_MUSIC[id]] ?? MUSIC_TRACKS['airship-serenity']!;
+export function trackForTier(id: TierId): MusicTrack {
+  return MUSIC_TRACKS[TIER_MUSIC[id]] ?? MUSIC_TRACKS['airship-serenity']!;
 }
 
 export function musicUrl(track: MusicTrack): string {

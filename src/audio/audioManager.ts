@@ -1,14 +1,14 @@
 // audioManager.ts
 // Background music, one looping track at a time.
 //
-// Deliberately small: load the track for the current level, loop it, allow
+// Deliberately small: load the track for the current tier, loop it, allow
 // mute, and fire short one-shot effects. See art guide §11 (music) and §12-13
 // (the effect budget and its character).
 
 import { Howl, Howler } from 'howler';
-import { musicUrl, trackForDifficulty, type MusicTrack } from '../content/music.ts';
+import { musicUrl, trackForTier, type MusicTrack } from '../content/music.ts';
 import { sfxFiles, sfxUrl, type SfxId } from '../content/sfx.ts';
-import type { DifficultyId } from '../game/difficulty.ts';
+import type { TierId } from '../game/state/types.ts';
 
 let current: { howl: Howl; slug: string } | null = null;
 let muted = false;
@@ -25,8 +25,8 @@ const VOLUME = 0.35;
  * played. Browsers block audio until a user gesture, so this must be called
  * from a click — starting a run is the natural moment.
  */
-export function playMusicFor(difficulty: DifficultyId): void {
-  const track = trackForDifficulty(difficulty);
+export function playMusicFor(tier: TierId): void {
+  const track = trackForTier(tier);
   if (current?.slug === track.slug) return;
 
   stopMusic();
@@ -75,8 +75,8 @@ export function isMuted(): boolean {
 }
 
 /** The track currently scheduled, for the credit line shown while playing. */
-export function currentTrack(difficulty: DifficultyId): MusicTrack {
-  return trackForDifficulty(difficulty);
+export function currentTrack(tier: TierId): MusicTrack {
+  return trackForTier(tier);
 }
 
 // --- sound effects ---

@@ -20,6 +20,7 @@ export type AssetId =
   | 'creature_plim'
   | 'creature_noxu'
   | 'creature_wubbit'
+  | 'creature_skedd'
   | 'prop_flux_crystal'
   | 'prop_reactor_orb'
   | 'prop_antenna'
@@ -43,6 +44,7 @@ const ASSET_PATHS: Record<AssetId, string> = {
   creature_plim: 'creatures/creature_plim.png',
   creature_noxu: 'creatures/creature_noxu.png',
   creature_wubbit: 'creatures/creature_wubbit.png',
+  creature_skedd: 'creatures/creature_skedd.png',
 
   prop_flux_crystal: 'props/prop_flux_crystal.png',
   prop_reactor_orb: 'props/prop_reactor_orb.png',

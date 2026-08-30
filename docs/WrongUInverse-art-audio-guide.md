@@ -243,14 +243,64 @@ the pairing is not re-rolled on a whim.
   THE THEORIST               `creature_plim`
 
   THE NORMIE                 `creature_wubbit`
+
+  PERSON WITH BOUNDARIES     `creature_skedd`
   ------------------------------------------------------------------
 
 **Creatures appear only here.** Cards on the bench use props. Reusing the
 creatures as card decoration would dilute the association into wallpaper.
 
-All six brain types have their own portrait, so THE NORMIE no longer
-borrows Zorblet. The prompts that produced the last two are kept below as
-the reference for any future addition to the set.
+All seven brain types have their own portrait, so THE NORMIE no longer
+borrows Zorblet. The prompts that produced the most recent additions are
+kept below as the reference for any future one.
+
+### A014 --- `creature_skedd` --- LANDED
+
+**Filename:** `creatures/creature_skedd.png`\
+**Priority:** DONE --- completes the seven-type set (45x96, 1.2KB)\
+**Represents:** PERSON WITH BOUNDARIES --- *"Decided the dimension could
+stabilize itself."*
+
+The seventh type is the only one not earned by how a run was played: it
+is shown whenever a player gives up, because an abandoned run contains no
+honest reading (see `game/metrics.ts`). The tone must follow
+`GIVE_UP_RESPONSE`, which is the single word "Understandable." Leaving is
+a legitimate ending, so this creature must not look defeated, sheepish or
+sad. It looks *unbothered*. It has somewhere else to be.
+
+The joke is the pose, not the anatomy: **this is the one specimen the lab
+never got a good look at.** Seen from behind, mid-stride, already leaving
+the frame, one arm up in a casual backwards wave. No face. Every other
+creature in the set faces the player; this one has declined to.
+
+A strong back-view silhouette is the whole ask --- round body, legs
+caught mid-step, the raised arm breaking the outline so the walk reads at
+sprite scale.
+
+**Prompt:**
+
+> cute original alien creature seen from behind, walking away
+> mid-stride, small round soft body, tiny legs caught mid-step, one arm
+> raised in a casual backwards wave, no face visible, relaxed unbothered
+> posture, calmly leaving, quirky retro futuristic parallel universe
+> laboratory specimen, crisp 16-bit pixel art sprite, strong readable
+> back-view silhouette, isolated, limited palette, deep-space navy base
+> with warm amber accents, no text, plain solid background, no UI
+
+**Note:** if the generator insists on turning the figure around, add
+*"back turned to camera, facing away, rear view"* and drop the word
+*creature* to *character* --- the models bias hard toward faces.
+
+**Landed:** the raw generation is 189x400; `npm run art:clean` reduces it
+to 45x96 and 1.2KB, in budget with the rest of the set. It is the
+narrowest creature in the cast, which is correct: it is a figure walking
+away, not a specimen posing.
+
+**Reminder, since this one went astray on the way in:** raw art belongs
+in `art-source/creatures/`, never in `public/`. `public/` holds only what
+the cleanup script produced. A raw file dropped straight into `public/`
+ships at a hundred times the weight and defeats `image-rendering:
+pixelated`, and `npm run art:check` is what catches it.
 
 ### A012 --- `creature_wubbit` --- LANDED
 
@@ -937,29 +987,38 @@ The music should tolerate looping for many short runs.
 
 ## 11. Music
 
-V0 ships three loops, one per **difficulty LEVEL**.
+Three loops, one per **TIER**.
 
-> **Level, not tier.** A *tier* is which rules are broken (Tier 1
-> Semantic Shift, later Operation and Gesture) and is not selectable. A
-> *level* is how hard a Tier 1 run is, and is what the player picks. See
-> game design §3. The music follows the **level**.
+> **Tier, not level.** A *tier* is which rules are broken (Semantic,
+> Operation, Gesture Shift); a *level* is how much of the bench a run
+> reaches. The score used to follow the level, on the reasoning that the
+> level is what the player picks and what lasts a session --- but so is
+> the tier, and the two are not the same kind of thing. The tier is what
+> a run IS; the level is only how much of it there is. Music is
+> identity, not quantity. Scoring the control count meant three
+> different universes sounded identical while three helpings of the same
+> universe did not. See game design §3.
+
+It also earns its keep on the landing page, which has to teach that the
+two axes are independent: choosing a tier changes what you hear and
+choosing a level does not, which says it before anybody reads a word.
 
 It is also not keyed to *stage*: a track that re-cued every time the
 player moved from Explore to Challenge would be restless and would draw
-attention to itself. A level is chosen once and lasts the session.
+attention to itself. A tier is chosen once and lasts the session.
 
   ---------------------------------------------------------------------
-  Level                     Track
+  Tier                      Track
   ------------------------- -------------------------------------------
-  SLIGHTLY WRONG (4)        **Airship Serenity** --- slow and unhurried,
-                            for a player still learning that sliders
-                            slide
+  SEMANTIC SHIFT            **Airship Serenity** --- slow and unhurried,
+                            for a player still learning that a slider
+                            may not be a slider
 
-  DEEPLY WRONG (6)          **Video Dungeon Boss** --- a dungeon theme;
-                            the universe is now clearly against you
+  OPERATION SHIFT           **Video Dungeon Boss** --- a dungeon theme;
+                            the controls are now actively refusing you
 
-  THE WrongUIᴎverse (8)     **Club Diver** --- driving percussion for
-                            the level with the least help
+  GESTURE SHIFT             **Club Diver** --- driving percussion for
+                            the tier where the pointer is not yours
   ---------------------------------------------------------------------
 
 All three are by **Kevin MacLeod** (incompetech.com), licensed

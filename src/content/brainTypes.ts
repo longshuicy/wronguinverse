@@ -17,7 +17,7 @@
 import type { AssetId } from './assets.ts';
 
 export type BrainTypeId =
-  'poker' | 'reasonable' | 'uxDesigner' | 'engineer' | 'theorist' | 'normie';
+  'poker' | 'reasonable' | 'uxDesigner' | 'engineer' | 'theorist' | 'normie' | 'walkedAway';
 
 export interface BrainType {
   id: BrainTypeId;
@@ -110,6 +110,37 @@ export const BRAIN_TYPES: Record<BrainTypeId, BrainType> = {
       'model did not allow for, at which point you will sit there considerably longer.',
     because: 'A cube whose face moves between surfaces. Thinks in boxes.',
   },
+  /**
+   * The only type that is not earned by how a run was PLAYED.
+   *
+   * An abandoned run has no honest reading in it — the classifier judges
+   * interaction counts against a run that finished, so a player who left after
+   * touching nothing used to be told they were THE THEORIST, who "thought about
+   * it and was mostly RIGHT". Being congratulated on insight you did not have,
+   * for a dimension you walked out of, is the worst thing the report could say.
+   * Abandonment short-circuits to this instead, and the tone follows
+   * `GIVE_UP_RESPONSE`: leaving is a legitimate ending, not a failure state.
+   */
+  walkedAway: {
+    id: 'walkedAway',
+    creatureName: 'SKEDD',
+    creature: 'creature_skedd',
+    name: 'PERSON WITH BOUNDARIES',
+    blurb: 'Decided the dimension could stabilize itself.',
+    description:
+      'You reached the point where a reasonable person stops, and then you actually STOPPED, ' +
+      'which is rarer than it sounds. The meanings were wrong, the controls were hostile, and ' +
+      'rather than grind on out of spite you put it down and walked into the corridor. The ' +
+      'dimension remains unstable. It will go on being unstable. It was, on inspection, not ' +
+      'your dimension. Everyone else in this cast is still in there losing an argument with a ' +
+      'calendar, and you are outside in the light, having correctly worked out that no part of ' +
+      'your life improves by winning this. The universe would like you to know that it is fine. ' +
+      'It is not fine. That remains its problem.',
+    because:
+      'Seen only from behind, mid-stride, already leaving. The one specimen ' +
+      'the lab never got a good look at.',
+  },
+
   normie: {
     id: 'normie',
     creatureName: 'WUBBIT',

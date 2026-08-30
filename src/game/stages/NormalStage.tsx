@@ -99,7 +99,10 @@ export function NormalStage() {
                 </span>
               </p>
 
-              <div className="wui-station-control">
+              {/* Marked like the shifted bench's controls, so the global click
+                  sound leaves them to their own value tick. See
+                  `audio/useInterfaceSounds.ts`. */}
+              <div className="wui-station-control" data-widget>
                 <Widget
                   domain={mapping.domain}
                   value={value}

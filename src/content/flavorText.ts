@@ -177,6 +177,37 @@ export function resultHeadline(outcome: 'stabilized' | 'gaveUp'): string {
 export const TAGLINE = 'Every control lies. None of them are broken.';
 
 /**
+ * What a run IS, in one sentence, assembled from the two axes.
+ *
+ * The landing page's whole difficulty is that "which rules broke" and "how many
+ * controls" are independent, and two stacked pickers do not say so — they read
+ * as one difficulty scale with a diagonal through it. A sentence naming the
+ * product of the two choices is the shortest way to show that they compose:
+ * change either half and only that half of the sentence moves.
+ */
+const DRIFT_CLAUSE: Record<TierId, string> = {
+  1: 'nothing means what it looks like',
+  2: 'nothing means what it looks like, and nothing answers to the gesture it invites',
+  3: 'nothing means what it looks like, and the pointer is not yours',
+};
+
+const COUNT_WORD: Record<number, string> = { 4: 'four', 6: 'six', 8: 'all eight' };
+
+/**
+ * The count leads, and is named once.
+ *
+ * The first draft read "A universe where the controls mean the wrong things,
+ * across four controls" — which says "controls" twice and leans on "across" to
+ * carry a meaning it does not have. Putting the size of the bench in the
+ * opening clause lets the rest of the sentence describe the drift without
+ * having to name the things it is happening to.
+ */
+export function runManifest(tier: TierId, controlCount: number): string {
+  const count = COUNT_WORD[controlCount] ?? String(controlCount);
+  return `A universe of ${count} controls, where ${DRIFT_CLAUSE[tier]}.`;
+}
+
+/**
  * The Reality Index, as read before a run.
  *
  * Tier-dependent because the lore has to describe the rules the player is
@@ -194,17 +225,22 @@ export const TAGLINE = 'Every control lies. None of them are broken.';
  * added here has to be worth the wait it costs.
  */
 export function briefingParagraphs(tier: TierId): string[] {
+  // Each variant leads with the sentence that is NOT shared. Four of the five
+  // paragraphs are common to every tier, so a variant that opened with the same
+  // two examples as the others read as identical text to anyone who had seen
+  // the index before, and the one paragraph carrying the tier's actual warning
+  // went unread.
   const drift =
     tier === 3
-      ? 'A slider may select a date. A checkbox may name a creature. And past the drift the pointer stops being yours — you will be told which rule took it. Your keyboard answers to you throughout.'
+      ? 'Two agreements lapsed here instead of one: what a control MEANS, and who the pointer belongs to. A slider may select a date. Your cursor may not go where you send it. You will be told which rule has taken it, and your keyboard answers to you throughout.'
       : tier === 2
-        ? 'A slider may select a date, and refuse to be dragged. A checkbox may name a creature, and only answer to a drag across it. Two agreements lapsed instead of one: what a control MEANS, and what it wants you to DO.'
-        : 'A slider may select a date. A checkbox may name a creature. A calendar may hold a percentage. The hardware is fine — this universe simply settled on different agreements than yours.';
+        ? 'Two agreements lapsed here instead of one: what a control MEANS, and what it wants you to DO. A slider may select a date, and refuse to be dragged. A checkbox may name a creature, and answer only to a drag across it.'
+        : 'One agreement lapsed here. A slider may select a date. A checkbox may name a creature. A calendar may hold a percentage. The hardware is fine; this universe simply settled on different agreements than yours.';
 
   return [
     'REALITY CALIBRATION TERMINAL // CLEARANCE: PROVISIONAL',
     'An experiment two sectors over went wrong. Nearby universes now overlap. Most of it is harmless: slightly different gravity, slightly different Tuesdays.',
-    'Interface conventions were not harmless — not because they broke, but because they were never laws. A slider means a quantity the way a red light means stop: by agreement, repeated until it felt like physics. Here the agreement lapsed.',
+    'Interface conventions were not harmless, and not because they broke. They were never laws. A slider means a quantity the way a red light means stop: by agreement, repeated until it felt like physics. Here the agreement lapsed.',
     drift,
     'You calibrate in your own universe first, so you remember what normal feels like. Then the drift hits. Nothing during exploration is scored, so poke everything.',
   ];

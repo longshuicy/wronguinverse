@@ -1633,68 +1633,6 @@ input[type='range']::-moz-range-thumb {
   color: var(--accent-anomaly);
 }
 
-.wui-levels {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(var(--px) * 2);
-  width: 100%;
-}
-
-.wui-levels-label {
-  margin: 0;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  color: var(--text-secondary);
-}
-
-.wui-level-row {
-  display: flex;
-  gap: calc(var(--px) * 2);
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-/* Compact chips rather than description cards — three boxes of prose crowded
-   the page, and only the selected level's blurb is worth showing. */
-.wui-level {
-  display: flex;
-  align-items: baseline;
-  gap: calc(var(--px) * 2);
-  padding: calc(var(--px) * 2) calc(var(--px) * 3);
-  font: inherit;
-  font-size: 12px;
-  border: var(--border) solid var(--line);
-  border-radius: 0;
-  background: var(--bg-panel);
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.wui-level:hover {
-  border-color: var(--accent-anomaly);
-}
-
-.wui-level.is-active {
-  border-color: var(--accent-anomaly);
-  color: var(--accent-anomaly);
-}
-
-.wui-level-count {
-  font-size: 20px;
-  line-height: 1;
-}
-
-.wui-level-blurb {
-  margin: 0;
-  min-height: 3.4em;
-  max-width: 34rem;
-  font-size: 13px;
-  line-height: 1.8;
-  color: var(--text-secondary);
-  text-align: center;
-}
-
 /* The one thing to press. Filled, not outlined, so it never reads as another
    option in the row above it. */
 .wui-start {
@@ -1939,9 +1877,56 @@ input[type='range']::-moz-range-thumb {
   }
 }
 
-/* --- tier list ---
-   Plain rows. Only one tier is selectable, so anything with button chrome is
-   a promise the page cannot keep. */
+/* --- the two-axis picker ---
+
+   The page's one hard job is showing that a run is chosen on two INDEPENDENT
+   axes. Everything here exists to keep them from looking like the same
+   control twice:
+
+     WHAT DRIFTED  a kind      stacked full-width rows   amber
+     HOW DEEP      a quantity  a meter of pips           violet
+
+   Different layout, different accent, different unit. If these two ever
+   converge on a shared style, the page goes back to reading as one difficulty
+   scale with a diagonal through it. */
+
+.wui-picker {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 6);
+  width: 100%;
+  max-width: 32rem;
+}
+
+.wui-axis {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(var(--px) * 2);
+  width: 100%;
+  /* The screen centres its children; these two axes are lists and read as
+     lists, so they opt out. */
+  text-align: left;
+}
+
+.wui-axis-label {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--text-secondary);
+}
+
+/* The axis label carries its own axis's accent, so the two headings are
+   already telling different stories before the controls under them do. */
+.wui-axis-drift .wui-axis-label {
+  color: var(--accent-hint);
+}
+
+.wui-axis-depth .wui-axis-label {
+  color: var(--accent-anomaly);
+}
+
+/* --- axis one: what drifted --- */
 
 .wui-tiers {
   display: flex;
@@ -1951,7 +1936,6 @@ input[type='range']::-moz-range-thumb {
   padding: 0;
   list-style: none;
   width: 100%;
-  max-width: 30rem;
   font-size: 12px;
 }
 
@@ -1959,21 +1943,20 @@ input[type='range']::-moz-range-thumb {
   display: flex;
   align-items: baseline;
   gap: calc(var(--px) * 2);
-  padding: var(--px) 0;
-  color: var(--line-strong);
+  color: var(--text-secondary);
   text-align: left;
 }
 
-/* The built tiers are pressable. The button has to BE the row rather than sit
-   inside it, or the caret/name/blurb columns stop lining up with the unbuilt
-   row below, which is still plain markup. */
+/* The button has to BE the row rather than sit inside it, or the caret/name/
+   blurb columns stop lining up with the unbuilt row below, which is still
+   plain markup. */
 .wui-tier-button {
   flex: 1;
   display: flex;
   align-items: baseline;
   gap: calc(var(--px) * 2);
-  padding: 0;
-  border: 0;
+  padding: calc(var(--px) * 1.5) calc(var(--px) * 2);
+  border: var(--border) solid transparent;
   background: none;
   font: inherit;
   color: inherit;
@@ -1981,14 +1964,23 @@ input[type='range']::-moz-range-thumb {
   cursor: pointer;
 }
 
+.wui-tier-button:hover {
+  border-color: color-mix(in srgb, var(--accent-hint) 40%, transparent);
+}
+
 .wui-tier-button:hover .wui-tier-name {
   color: var(--accent-hint);
 }
 
-/* Amber, not violet: violet already carries the level chips and the stage
-   accent, so the tier list had nothing of its own and disappeared. */
+/* Amber, not violet: violet carries the depth axis, and an axis with no colour
+   of its own disappears next to one that has. */
 .wui-tier.is-active {
   color: var(--accent-hint);
+}
+
+.wui-tier.is-active .wui-tier-button {
+  border-color: var(--accent-hint);
+  background: color-mix(in srgb, var(--accent-hint) 8%, transparent);
 }
 
 .wui-tier.is-active .wui-tier-name {
@@ -2004,8 +1996,8 @@ input[type='range']::-moz-range-thumb {
 
 .wui-tier-name {
   letter-spacing: 0.05em;
-  /* The tier's own name is the row's identity and must never be the thing that
-     wraps; the blurb after it can give way instead. */
+  /* The name is the row's identity and must never be the thing that wraps;
+     the blurb after it can give way instead. */
   flex: none;
   white-space: nowrap;
 }
@@ -2014,81 +2006,135 @@ input[type='range']::-moz-range-thumb {
   color: var(--text-secondary);
 }
 
-.wui-tier.is-active .wui-tier-blurb {
-  color: var(--text-secondary);
-}
-
 .wui-tier:not(.is-active) .wui-tier-blurb {
-  color: var(--line-strong);
+  color: color-mix(in srgb, var(--text-secondary) 70%, var(--bg-page));
 }
 
 .wui-tier-tag {
   margin-left: auto;
   flex: none;
-  color: color-mix(in srgb, var(--accent-hint) 60%, var(--bg-page));
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--accent-hint) 70%, var(--bg-page));
 }
 
-/* --- level picker ---
-   Compact chips: three short names that fit on one line and need no prose. */
+/* --- axis two: how deep --- */
 
-.wui-picker-label {
-  margin: 0;
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  color: var(--text-secondary);
-}
-
-.wui-levels {
+.wui-depth-row {
   display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: calc(var(--px) * 2);
   width: 100%;
 }
 
-.wui-level-row {
+.wui-depth {
+  flex: 1;
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: calc(var(--px) * 2);
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.wui-level {
-  display: flex;
-  align-items: baseline;
-  gap: calc(var(--px) * 2);
-  padding: calc(var(--px) * 2) calc(var(--px) * 3);
-  font: inherit;
-  font-size: 12px;
+  padding: calc(var(--px) * 2.5);
   border: var(--border) solid var(--line);
-  border-radius: 0;
   background: var(--bg-panel);
+  font: inherit;
   color: var(--text-secondary);
+  text-align: left;
   cursor: pointer;
 }
 
-.wui-level:hover {
-  border-color: var(--accent-anomaly);
+.wui-depth:hover {
+  border-color: color-mix(in srgb, var(--accent-anomaly) 55%, transparent);
 }
 
-.wui-level.is-active {
+.wui-depth.is-active {
   border-color: var(--accent-anomaly);
   color: var(--accent-anomaly);
 }
 
-.wui-level-count {
-  font-size: 20px;
-  line-height: 1;
+/* One pip per control on the bench. A quantity drawn as a quantity: the
+   number used to be a numeral, which read as a rank — level 4, level 6 —
+   rather than as an amount of anything. */
+.wui-depth-pips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  min-height: calc(var(--px) * 2);
 }
 
-.wui-level-blurb {
+.wui-pip {
+  width: calc(var(--px) * 2);
+  height: calc(var(--px) * 2);
+  background: currentcolor;
+}
+
+.wui-depth-name {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+}
+
+/* --- the product of the two ---
+
+   Sits with the tagline, above the pickers: the premise, then the run, then
+   the two dials that edit it. A fixed min-height so the pickers below do not
+   jump a line up and down as the sentence grows and shrinks. */
+
+.wui-manifest {
   margin: 0;
-  min-height: 3.4em;
+  /* Two lines' worth: the sentence is one line for a short Semantic Shift run
+     and two for a Gesture Shift one. Reserved so the pickers below do not jump
+     up and down under the player's cursor as they compare options. */
+  min-height: 3.6em;
   max-width: 34rem;
   font-size: 13px;
   line-height: 1.8;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+/* The run tally, in words. */
+.wui-tally {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.8;
   color: var(--text-secondary);
   text-align: center;
+}
+
+/* Sized here rather than left to inherit from NES.css, which styles bare
+   `strong` at 32px and made the tally the loudest thing on the page after the
+   title. It is a quiet record of a player's history, not a headline: the count
+   sits at the same size as the sentence around it and lets colour alone carry
+   the emphasis. */
+.wui-tally-count {
+  font-size: inherit;
+  font-weight: inherit;
+  color: var(--accent-success);
+  white-space: nowrap;
+}
+
+@media (max-width: 34rem) {
+  /* The depth row is three cards of prose; side by side under about 34rem they
+     shrink past legibility, and eight pips start wrapping into a block. */
+  .wui-depth-row {
+    flex-direction: column;
+  }
+
+  /* Name above blurb rather than beside it. Side by side at this width the
+     blurb wraps to a second line that starts under the middle of the row,
+     which reads as centred text that lost its nerve. */
+  .wui-tier-button {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--px);
+  }
+
+  .wui-tier-caret {
+    display: none;
+  }
+
+  .wui-tier-tag {
+    margin-left: 0;
+  }
 }
 
 /* --- reality index --- */
@@ -2382,6 +2428,133 @@ input[type='range']::-moz-range-thumb {
 @media (prefers-reduced-motion: reduce) {
   .wui-cursor-ring.is-committing,
   .wui-cursor-ring.is-refusing {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   PRESSES THAT MOVE
+
+   A press with no physical answer is the other half of what made this read as
+   a web page: the sound now says something happened, and this says it happened
+   HERE. One pixel, on the way down only, on the chrome rather than the bench —
+   a bench control already answers by changing its reading, and a slider whose
+   whole box shifted under a drag would be a bug rather than feedback.
+
+   `steps` is not needed: the offset is a single whole pixel with no
+   intermediate position to land on.
+--------------------------------------------------------------------------- */
+
+.wui-start:active,
+.wui-primary:active,
+.wui-ghost:active,
+.wui-tier-button:active,
+.wui-depth:active,
+.wui-link:active,
+.wui-hint-button:active {
+  transform: translateY(var(--px));
+}
+
+/* The one button that is a lever rather than a link loses its shadow on the
+   way down, so it reads as travelling into the panel. */
+.wui-start:active {
+  box-shadow: none;
+}
+
+/* The report's specimen is a live creature, not an illustration. Every other
+   sprite in the game breathes (the mascot floats, station specimens float) and
+   this one sat perfectly still on the screen the player looks at longest. */
+.wui-diagnosis-creature {
+  animation: wui-float 2.4s steps(2, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wui-diagnosis-creature {
+    animation: none;
+  }
+
+  .wui-start:active,
+  .wui-primary:active,
+  .wui-ghost:active,
+  .wui-tier-button:active,
+  .wui-depth:active,
+  .wui-link:active,
+  .wui-hint-button:active {
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   MOMENTS
+
+   Three places where something HAPPENS and the screen said nothing about it:
+   changing stage, a reading changing, and a requirement locking. All three are
+   transform/opacity only, so none of them reflow the bench, and all three are
+   short enough to be felt rather than waited for.
+--------------------------------------------------------------------------- */
+
+/* A cut between stages. Deliberately not a fade: a fade is a web page
+   transition, and this terminal is meant to be switching channels. */
+@keyframes wui-stage-in {
+  0% {
+    opacity: 0;
+    transform: translateY(calc(var(--px) * -1));
+  }
+  40% {
+    opacity: 1;
+    transform: translateX(calc(var(--px) * 1));
+  }
+  70% {
+    transform: translateX(calc(var(--px) * -1));
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+
+.wui-stage-swap {
+  animation: wui-stage-in 0.22s steps(3, end);
+}
+
+/* A reading arriving. Brief and bright: the value is the one thing on the card
+   the player is trying to read. */
+@keyframes wui-reading-in {
+  0% {
+    color: var(--accent-success);
+    transform: translateY(calc(var(--px) * -1));
+  }
+  100% {
+    color: var(--accent-primary);
+    transform: translateY(0);
+  }
+}
+
+.wui-station-output-value {
+  display: inline-block;
+  animation: wui-reading-in 0.28s steps(2, end);
+}
+
+/* A requirement locking. The card has always turned green; now it also moves,
+   because this is the good moment in the whole run and it went by in silence. */
+@keyframes wui-station-lock {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(calc(var(--px) * -1));
+  }
+}
+
+.wui-station-locked {
+  animation: wui-station-lock 0.3s steps(2, end);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wui-stage-swap,
+  .wui-station-output-value,
+  .wui-station-locked {
     animation: none;
   }
 }

@@ -57,7 +57,10 @@ const TIERS: TierConfig[] = [
   {
     id: 2,
     name: 'OPERATION SHIFT',
-    blurb: 'And wrong gestures.',
+    // Spelled out rather than "And wrong gestures." — the row is read as a
+    // list of independent options, not top to bottom, so a blurb that only
+    // makes sense as a continuation of the row above it does not survive.
+    blurb: 'Wrong meanings, wrong gestures.',
     available: true,
     operationShift: true,
   },

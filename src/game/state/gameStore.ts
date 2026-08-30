@@ -239,7 +239,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Usually already playing from the level picker; this covers the player
     // who pressed start without touching the picker at all.
     setAudioMuted(progress.audioMuted);
-    if (!progress.audioMuted) playMusicFor(difficulty.id);
+    if (!progress.audioMuted) playMusicFor(tier.id);
     const { run, requirements } = buildUniverse(runSeed, difficulty, tier);
 
     // Conventional pairings only — this is the universe the player already
@@ -275,8 +275,20 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
   },
 
-  setCalibrationValue: (widget, value) =>
-    set((state) => ({ calibrationValues: { ...state.calibrationValues, [widget]: value } })),
+  setCalibrationValue: (widget, value) => {
+    // Calibration was silent. Stage 1 is the universe the player already lives
+    // in, and the whole point of it is to be a baseline for what NORMAL feels
+    // like — a bench where the controls make no sound at all, while the
+    // shifted bench blips at every reading, is a poor baseline. Same tick as
+    // `setValue` uses in the normal stage, for the same reason: it fires on a
+    // CHANGE, not on every pixel of a drag.
+    const { calibration, calibrationValues } = get();
+    const mapping = calibration?.mappings.find((m) => m.widget === widget);
+    const previous = calibrationValues[widget];
+    const changed = !mapping || previous === undefined || !mapping.domain.equals(previous, value);
+    if (changed) playSfx('value_tick');
+    set((state) => ({ calibrationValues: { ...state.calibrationValues, [widget]: value } }));
+  },
 
   skipCalibration: () => {
     const progress = { ...get().progress, tutorialCompleted: true };
@@ -578,32 +590,26 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   /**
-   * Only meaningful from the intro; a run's level is fixed once it starts.
-   *
-   * Switches the music straight away rather than waiting for the run to begin.
-   * The track is part of what a level IS, so picking one should let you hear
-   * it. The click is also the user gesture browsers require before audio may
-   * play, so this is the earliest honest moment to start.
-   */
-  /**
    * Only meaningful from the intro; a run's tier is fixed once it starts.
    *
-   * No music change: the soundtrack follows the LEVEL, which is the axis the
-   * player is choosing an intensity on.
+   * Switches the music straight away rather than waiting for the run to begin.
+   * The track is part of what a tier IS, so picking one should let you hear it
+   * — and on the landing page that is also the clearest statement that the two
+   * axes are different: this one you can hear, the other one you can only
+   * count. The click is the user gesture browsers require before audio may
+   * play, so this is the earliest honest moment to start.
    */
   setTier: (id) => {
     const tier = getTier(id);
     // The law belongs to a run, and no run is pending from the intro — leaving
     // a stale one set would put the landing page under the rules of a tier the
     // player has just switched away from.
+    if (!get().progress.audioMuted) playMusicFor(tier.id);
     set({ tier, pointerLaw: null, pendingSeed: null });
   },
 
-  setDifficulty: (id) => {
-    const difficulty = getDifficulty(id);
-    if (!get().progress.audioMuted) playMusicFor(id);
-    set({ difficulty });
-  },
+  /** No music change: the soundtrack belongs to the tier, not to how much of it. */
+  setDifficulty: (id) => set({ difficulty: getDifficulty(id) }),
 
   setMuted: (muted) => {
     const progress = { ...get().progress, audioMuted: muted };
