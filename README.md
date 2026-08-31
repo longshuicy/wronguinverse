@@ -39,9 +39,12 @@ What exists:
   Eight is the ceiling: a run gives every widget a distinct semantic.
 - Exploration is untimed. Effort is measured by counting interactions, which
   is what the result screen reports.
-- Progressive hints (nudge → category → reveal), a field-notes panel that
-  records observed values but never semantic labels, and a result screen that
-  diagnoses how you argued with the interface.
+- Progressive hints (nudge → category → reveal), open at every level and
+  carried across from exploration into stabilization at the rung you left
+  them on. A hint bought while exploring stays free; only ones bought after
+  stabilization begins are counted against you.
+- A field-notes panel that records observed values but never semantic labels,
+  and a result screen that diagnoses how you argued with the interface.
 - Tier 2 gives each control a gesture it has no business wanting: a slider you
   click, a checkbox you drag, a dropdown you scroll.
 - Tier 3 imposes one page-wide pointer LAW per run, drawn from five: the cursor

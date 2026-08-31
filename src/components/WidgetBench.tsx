@@ -39,7 +39,6 @@ interface WidgetBenchProps {
   lockedWidgets?: WidgetType[];
   hintLevels?: Partial<Record<WidgetType, HintLevel>>;
   onHint?: (widget: WidgetType) => void;
-  hintsEnabled?: boolean;
   /**
    * The gesture ladder, unwound separately from the semantic one.
    *
@@ -81,7 +80,6 @@ export function WidgetBench({
   lockedWidgets = [],
   hintLevels = {},
   onHint,
-  hintsEnabled = false,
   operationHintLevels = {},
   onOperationHint,
   seed,
@@ -173,7 +171,7 @@ export function WidgetBench({
             {/* One quiet strip, not two panels. Two full-width buttons and
                 two dividers made asking for help the loudest thing on a card
                 whose job is to show a control. */}
-            {hintsEnabled && (onHint || onOperationHint) && (
+            {(onHint || onOperationHint) && (
               <div className="wui-station-hint">
                 {level > 0 && (
                   <p className="wui-hint-text">

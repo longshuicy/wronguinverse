@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Hints
+
+- **Both hint ladders are open at every level.** THE WrongUIᴎverse used to
+  withhold them entirely, and because the chosen level survives every run in a
+  session, the strip stayed missing until the page was reloaded. That read as a
+  bug, not as a rule, and it took the nudges away from the players most likely
+  to need one. The `hintPolicy` field is gone rather than retuned: a level
+  narrows what the game volunteers unasked, never what the player may ask for.
+- **Hints carry into stabilization.** Both ladders now cross the stage boundary
+  at the rung the player left them on. Winding them back only made the same
+  hint get bought a second time, which taught nothing and cost a click. The
+  bench values still reset, so stabilization opens from the resting state the
+  order was generated against.
+- Exploration stays unscored, so a hint bought there is still free. Only hints
+  bought once stabilization has begun are counted in the report.
+
 ## 1.0.0-beta3
 
 The first release with all three tiers playable. A run is now chosen on two

@@ -91,7 +91,6 @@ export function ExploreStage() {
           onHint={useHint}
           operationHintLevels={operationHintLevels}
           onOperationHint={useOperationHint}
-          hintsEnabled={difficulty.hintPolicy !== 'limited'}
           observations={observations}
           observationDetail={difficulty.notebookDetail}
         />
