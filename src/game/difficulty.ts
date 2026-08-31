@@ -7,8 +7,14 @@
 //
 //   TIER  — which rules are broken. Tier 1 Semantic Shift (this release),
 //           Tier 2 Operation Shift, Tier 3 Gesture Shift. Not selectable.
-//   LEVEL — how hard a Tier 1 run is: how many mappings, how much help.
-//           This is what the player picks, and what the music follows.
+//   LEVEL — how hard a Tier 1 run is: how many mappings, how much the game
+//           volunteers. This is what the player picks, and what the music
+//           follows.
+//
+// A level narrows what the game TELLS you unasked — the notebook, the READS AS
+// readout. It never narrows what you can ask FOR: the hint ladders are open at
+// every level, because a player who is stuck on the hardest one is the player
+// who needs them, and taking them away there just ended the run.
 //
 // See docs/WrongUInverse-game-design.md §3 (tiers) and §12 (levels).
 
@@ -32,7 +38,6 @@ export interface DifficultyConfig {
    */
   challengeRequirementCount: number;
   notebookDetail: 'full' | 'reduced' | 'minimal';
-  hintPolicy: 'generous' | 'normal' | 'limited';
   /**
    * Whether the challenge still shows what each widget currently reads as.
    *
@@ -63,10 +68,9 @@ const LEVELS: LevelSpec[] = [
   {
     id: 'slightlyWrong',
     label: 'SLIGHTLY WRONG',
-    blurb: 'Four controls. The readings are visible and the universe is feeling generous.',
+    blurb: 'Four controls, every reading visible, and a notebook that forgets nothing.',
     mappingCount: 4,
     notebookDetail: 'full',
-    hintPolicy: 'generous',
     interpretedOutputInChallenge: true,
   },
   {
@@ -75,16 +79,15 @@ const LEVELS: LevelSpec[] = [
     blurb: 'Six controls, a shorter notebook, and a universe that has stopped explaining itself.',
     mappingCount: 6,
     notebookDetail: 'reduced',
-    hintPolicy: 'normal',
     interpretedOutputInChallenge: true,
   },
   {
     id: 'wronguinverse',
     label: 'THE WrongUIᴎverse',
-    blurb: 'All eight controls, and nothing tells you what any of them read as. Good luck.',
+    blurb:
+      'All eight controls, and nothing tells you what any of them read as. Zorblet will still answer, if you ask.',
     mappingCount: 8,
     notebookDetail: 'minimal',
-    hintPolicy: 'limited',
     interpretedOutputInChallenge: false,
   },
 ];

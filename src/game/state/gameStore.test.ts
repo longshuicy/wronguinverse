@@ -141,21 +141,34 @@ describe('run loop', () => {
     expect(useGameStore.getState().progress.universesStabilized).toBe(banked);
   });
 
-  it('winds both hint ladders back when stabilization begins', () => {
-    // A hint unwound while exploring must not still be sitting on the card
-    // when the scored phase opens, or the deduction arrives pre-solved.
+  it('carries both hint ladders into stabilization', () => {
+    // What a control MEANS is learned once. Winding the ladders back only made
+    // the player buy the same hint twice, so a hint unwound while exploring is
+    // still on the card when the scored phase opens.
     useGameStore.getState().setTier(2);
     useGameStore.getState().beginRun('REALITY-TEST');
     const widget = useGameStore.getState().run!.mappings[0]!.widget;
     useGameStore.getState().useHint(widget);
     useGameStore.getState().useOperationHint(widget);
-    expect(useGameStore.getState().hintLevels[widget]).toBe(1);
-    expect(useGameStore.getState().operationHintLevels[widget]).toBe(1);
 
     useGameStore.getState().beginChallenge();
 
-    expect(useGameStore.getState().hintLevels).toEqual({});
-    expect(useGameStore.getState().operationHintLevels).toEqual({});
+    expect(useGameStore.getState().hintLevels[widget]).toBe(1);
+    expect(useGameStore.getState().operationHintLevels[widget]).toBe(1);
+  });
+
+  it('continues a carried ladder rather than restarting it', () => {
+    // The rung the player arrives on is the rung they continue from: a ladder
+    // that carried over but re-charged from level 1 would hand back a nudge
+    // they already own.
+    useGameStore.getState().beginRun('REALITY-TEST');
+    const widget = useGameStore.getState().run!.mappings[0]!.widget;
+    useGameStore.getState().useHint(widget);
+    useGameStore.getState().useHint(widget);
+    useGameStore.getState().beginChallenge();
+    useGameStore.getState().useHint(widget);
+
+    expect(useGameStore.getState().hintLevels[widget]).toBe(3);
   });
 
   it('does not charge the run for hints spent while exploring', () => {

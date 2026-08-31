@@ -224,6 +224,15 @@ The player should be able to infer the mappings.
 Exploration output and explicit observation aids disappear or become
 limited.
 
+Hints are the exception, and deliberately so. Both ladders cross into
+this stage at exactly the rung the player left them on, at every level.
+What a control MEANS is learned once; resetting the ladders only made the
+player buy the same hint a second time, which taught nothing and cost a
+click. The bench values are what start fresh here, not the notes.
+
+Exploration remains unscored, so a hint bought there is still free. Only
+hints bought once stabilization has begun are counted in the report.
+
 The player receives a compound objective requiring several learned
 mappings.
 
@@ -543,6 +552,13 @@ is what a Tier is for.
 Eight is the ceiling, not an arbitrary stopping point: a run gives every
 widget a distinct semantic, and there are eight of each. A fourth level
 needs a ninth semantic implemented first.
+
+**Hints are not part of the scale.** Both ladders are open at every
+level. What a level narrows is what the game volunteers unasked --- the
+notebook, the READS AS readout --- never what the player may ask for.
+THE WrongUIᴎverse withheld them once, and the result was that the players
+who most needed a nudge were the only ones who could not buy one; a
+missing hint strip read as a broken build rather than as a rule.
 
 Music belongs to the TIER, not the level (art guide §11).
 

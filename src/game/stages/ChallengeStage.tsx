@@ -191,11 +191,9 @@ export function ChallengeStage() {
           observationDetail={difficulty.notebookDetail}
           // Hints follow the player into stabilization. Withholding them here
           // only punished someone who worked out WHICH control they were stuck
-          // on, which is the deduction the game is asking for. The hardest
-          // level still withholds them, as it does everywhere else.
+          // on, which is the deduction the game is asking for.
           hintLevels={hintLevels}
           onHint={useHint}
-          hintsEnabled={difficulty.hintPolicy !== 'limited'}
           operationHintLevels={operationHintLevels}
           onOperationHint={useOperationHint}
         />

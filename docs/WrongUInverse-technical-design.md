@@ -539,7 +539,6 @@ interface DifficultyConfig {
   mappingCount: number;
   challengeRequirementCount: number;
   notebookDetail: 'full' | 'reduced' | 'minimal';
-  hintPolicy: 'generous' | 'normal' | 'limited';
   interpretedOutputInChallenge: boolean;
   pairRequirementsWithWidgets: boolean;
 }
@@ -549,7 +548,7 @@ interface DifficultyConfig {
 
 - every objective printed on the control that answers it
 - interpreted output visible throughout
-- generous hints, full notebook
+- full notebook
 
 ### DEEPLY WRONG --- 6 mappings
 
@@ -562,7 +561,19 @@ interface DifficultyConfig {
 - every widget in play
 - the challenge does not show what a control reads as; a requirement
   locking is the only feedback
-- minimal notebook, limited hints
+- minimal notebook
+
+**Both hint ladders are open at every level**, and there is no
+`hintPolicy` field. A level narrows what the game volunteers --- the
+notebook, the READS AS readout --- never what the player may ask for.
+Withholding hints on THE WrongUIᴎverse only removed them from the player
+who needed them most, and read as a broken build rather than as a rule.
+
+**Both ladders also survive the move into stabilization.** `beginChallenge`
+resets the bench values and nothing else: what a control MEANS is learned
+once, and winding the ladders back only made the player buy the same hint
+a second time. Exploration stays unscored, so a hint taken there is still
+free --- `computeMetrics` counts only events with `phase: 'challenge'`.
 
 **There is no timer at any level.** Difficulty comes from the size of the
 mapping set and from what the game declines to tell you, not from haste.

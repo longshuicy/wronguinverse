@@ -331,12 +331,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const at = Date.now();
     const run = get().run;
     if (!run) {
-      set({
-        stage: 'challenge',
-        challengeStartedAt: at,
-        hintLevels: {},
-        operationHintLevels: {},
-      });
+      set({ stage: 'challenge', challengeStartedAt: at });
       return;
     }
 
@@ -348,12 +343,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       stage: 'challenge',
       challengeStartedAt: at,
       values: freshValues(run.mappings),
-      // Both hint ladders wind back too. A hint bought while exploring was
-      // free (it is not scored), and leaving its text on the card would hand
-      // that answer over again at the moment it finally costs something —
-      // stabilization would open with the deduction already done.
-      hintLevels: {},
-      operationHintLevels: {},
+      // Both hint ladders stay exactly where the player left them. Winding
+      // them back made a hint bought while exploring worthless the moment it
+      // mattered, and the player simply bought it again on the other side —
+      // so the reset taught nothing and cost a click. What a control MEANS is
+      // learned once; the bench is what starts fresh here, not the notes.
     });
 
     const { requirements, values, events } = get();
