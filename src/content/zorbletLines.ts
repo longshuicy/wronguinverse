@@ -26,6 +26,18 @@ import type { MascotState } from './assets.ts';
  * re-rolled on every render would flicker, and one that re-rolled on every
  * event would read as noise rather than as a reaction.
  */
+/**
+ * The reaction to the very first control the player moves in exploration.
+ *
+ * Its own constant rather than a `watching` line because it has a job the
+ * rotation cannot do: this is the moment the stage explains itself, and it has
+ * to be the line that plays, not one of four that might. Behaviour only, per
+ * rule 1 — something answered, it was not what the label promised, and it was
+ * free.
+ */
+export const ZORBLET_FIRST_TOUCH =
+  'Something answered. Not what the label promised, but something, and it cost you nothing.';
+
 export const ZORBLET_LINES: Record<MascotState, string[]> = {
   idle: [
     'Nothing has been touched yet. No rush.',

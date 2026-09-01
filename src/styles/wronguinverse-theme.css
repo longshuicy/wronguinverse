@@ -330,13 +330,6 @@ body {
 
 /* --- shift --- */
 
-.wui-shift {
-  min-height: 100vh;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
-
 /* Full-bleed behind the message, dimmed so the text stays legible over
    whatever the clip is doing. */
 .wui-ambient-clip {
@@ -377,6 +370,9 @@ body {
   --frame-color: var(--accent-anomaly);
   padding: calc(var(--px) * 8);
   background: var(--bg-panel);
+  /* Centred for the drift's two lines; the card that follows overrides it,
+     because a paragraph is read from a left edge. */
+  text-align: center;
 }
 
 .wui-shift-headline {
@@ -391,6 +387,64 @@ body {
   color: var(--text-secondary);
   font-size: 12px;
   letter-spacing: 0.06em;
+}
+
+/* The exploration card, laid over the bench. The scrim dims the controls
+   without hiding them: the card is describing what is behind it. */
+.wui-brief-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--px) * 6);
+  background: color-mix(in srgb, var(--bg-page) 82%, transparent);
+  transition: background 0.4s linear;
+}
+
+/* During the drift the bench is hidden, not dimmed: the clip and the bench
+   both competing for the same pixels is noise, and the reveal lands harder if
+   the shifted controls are first seen through the card that explains them. */
+.wui-brief-scrim.is-drift {
+  background: var(--bg-page);
+  /* Instant on the way in — the drift should black the bench out on the frame
+     it starts. The fade in the base rule then runs on the way OUT, uncovering
+     the shifted controls under the card that explains them. */
+  transition: none;
+}
+
+/* Same frame as the shift panel so the two read as one beat of the same
+   machine, but left-aligned and wider: this one is read. */
+.wui-brief-panel {
+  max-width: 62ch;
+  text-align: left;
+}
+
+.wui-brief-list {
+  margin: calc(var(--px) * 4) 0 calc(var(--px) * 6);
+  padding-left: calc(var(--px) * 5);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.wui-brief-list li + li {
+  margin-top: calc(var(--px) * 2);
+}
+
+/* The way out and what it costs, set apart from the three things to try. */
+.wui-brief-exit {
+  margin: 0 0 calc(var(--px) * 3);
+  color: var(--stage-ink, var(--accent-primary));
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* The consequence line is the quieter half: it warns, it does not shout. */
+.wui-brief-exit + .wui-brief-exit {
+  margin-bottom: calc(var(--px) * 6);
+  color: var(--text-secondary);
 }
 
 /* Whole-pixel steps: a sub-pixel glitch just looks blurry. */

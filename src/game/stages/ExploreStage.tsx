@@ -4,10 +4,11 @@
 // See docs/WrongUInverse-game-design.md §4, technical design §12.
 
 import { Mascot } from '../../components/Mascot.tsx';
+import { ShiftOverlay } from '../../components/ShiftOverlay.tsx';
 import { StageBar } from '../../components/StageBar.tsx';
 import { WidgetBench } from '../../components/WidgetBench.tsx';
 import { EXPLORE_INTRO } from '../../content/flavorText.ts';
-import { mascotState, zorbletLine } from '../mascot.ts';
+import { exploreLine } from '../mascot.ts';
 import { useGameStore } from '../state/gameStore.ts';
 
 export function ExploreStage() {
@@ -24,6 +25,13 @@ export function ExploreStage() {
   const difficulty = useGameStore((s) => s.difficulty);
   const requirements = useGameStore((s) => s.requirements);
   const returnToIntro = useGameStore((s) => s.returnToIntro);
+  const briefOpen = useGameStore((s) => s.exploreBriefOpen);
+  const dismissExploreBrief = useGameStore((s) => s.dismissExploreBrief);
+  // This screen is mounted for the shift too: the drift plays over the bench
+  // rather than on a page of its own, so the two never swap underneath the
+  // player. See ShiftOverlay for why.
+  const drifting = useGameStore((s) => s.stage === 'shift');
+  const beginExplore = useGameStore((s) => s.beginExplore);
 
   if (!run) return null;
 
@@ -67,9 +75,7 @@ export function ExploreStage() {
               <p className="wui-lede">{EXPLORE_INTRO}</p>
               {/* Zorblet reacting out loud. Behaviour only, never meaning:
                   see the rules at the top of `content/zorbletLines.ts`. */}
-              <p className="wui-zorblet-line">
-                {zorbletLine(mascotState('explore', null, events), events)}
-              </p>
+              <p className="wui-zorblet-line">{exploreLine(events)}</p>
               <p className="wui-eyebrow">SHIFTED · {run.seed}</p>
             </div>
           </div>
@@ -95,6 +101,13 @@ export function ExploreStage() {
           observationDetail={difficulty.notebookDetail}
         />
       </div>
+      {(drifting || briefOpen) && (
+        <ShiftOverlay
+          phase={drifting ? 'glitch' : 'brief'}
+          onGlitchEnd={beginExplore}
+          onDismiss={dismissExploreBrief}
+        />
+      )}
     </main>
   );
 }

@@ -7,7 +7,7 @@
 // Mapping from docs/WrongUInverse-technical-design.md §19.
 
 import type { MascotState } from '../content/assets.ts';
-import { ZORBLET_LINES } from '../content/zorbletLines.ts';
+import { ZORBLET_FIRST_TOUCH, ZORBLET_LINES } from '../content/zorbletLines.ts';
 import type { GameEvent, RunOutcome, StageId } from './state/types.ts';
 
 /** How many trailing challenge attempts must miss before Zorblet looks worried. */
@@ -72,4 +72,21 @@ export function zorbletLine(state: MascotState, events: GameEvent[]): string {
   const lines = ZORBLET_LINES[state];
   const step = Math.floor(events.length / 6);
   return lines[step % lines.length]!;
+}
+
+/**
+ * The exploration stage's line, which has one special case.
+ *
+ * The first control a player touches is the beat the whole stage turns on, so
+ * it gets a fixed line rather than the rotation. It holds until a SECOND widget
+ * is touched rather than for a fixed number of events: a single slider drag
+ * emits interactions by the dozen, and counting them would flash the line away
+ * before it could be read.
+ */
+export function exploreLine(events: GameEvent[]): string {
+  const touched = new Set(
+    events.filter((event) => event.type === 'interaction').map((event) => event.widget),
+  );
+  if (touched.size === 1) return ZORBLET_FIRST_TOUCH;
+  return zorbletLine(mascotState('explore', null, events), events);
 }

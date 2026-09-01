@@ -160,6 +160,36 @@ export const CALIBRATION_INTRO =
 export const EXPLORE_INTRO =
   'The controls are not broken. Work out what they mean, then stabilize the dimension.';
 
+/**
+ * The first-run card laid over the exploration bench.
+ *
+ * Says what this stage is, what it costs, and how to leave it — and nothing
+ * about the mapping. Naming the stage is help; naming the answer is the game.
+ */
+export const EXPLORE_BRIEF_HEADLINE = 'PRACTICE RANGE';
+export const EXPLORE_BRIEF_LINES = [
+  'Every control behind this card means something other than it looks like.',
+  'Push all of them and watch the readouts. Hints are free here.',
+  'Nothing is scored yet, and there is no clock.',
+];
+/**
+ * How the stage ends, and what ending it costs.
+ *
+ * The button is QUOTED rather than described: a player scanning the bar is
+ * matching letters, and a paraphrase would send them looking for a control
+ * that is not there. No directions to a corner of the screen either, since the
+ * stage bar's actions sit right on a wide window and wrap left on a narrow one.
+ *
+ * The second line is the part testers were missing. They read exploration as
+ * the game, pressed the button to see what it did, and found themselves in a
+ * scored round they had not agreed to start.
+ */
+export const EXPLORE_BRIEF_EXIT = [
+  'When you have it worked out, press "I understand this universe" in the bar at the top.',
+  'That ends practice for good. The next screen is the real run: it is scored, hints cost you, and the readings have to be right.',
+];
+export const EXPLORE_BRIEF_DISMISS = 'Let me poke it';
+
 export const CHALLENGE_INTRO = 'Set every reading to stabilize this dimension.';
 
 /** Result-screen sign-off, chosen by outcome rather than score. */

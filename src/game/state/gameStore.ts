@@ -52,6 +52,15 @@ interface GameState {
    */
   tier: TierConfig;
   progress: PersistedProgress;
+  /**
+   * Whether the card explaining the exploration stage is up.
+   *
+   * Raised every time the stage is entered, not once per player. It names the
+   * stage, says nothing is scored, and says what pressing "I understand this
+   * universe" will cost — and that last part is worth restating on every
+   * universe, since it is the one irreversible move on the screen.
+   */
+  exploreBriefOpen: boolean;
 
   /** Conventional mappings for Stage 1. Regenerated identically every run. */
   calibration: RunConfig | null;
@@ -108,6 +117,8 @@ interface GameState {
   skipCalibration: () => void;
   setCalibrationValue: (widget: WidgetType, value: unknown) => void;
   beginExplore: () => void;
+  /** Put away the card that sits over the bench, for this visit to the stage. */
+  dismissExploreBrief: () => void;
   beginChallenge: () => void;
   setValue: (widget: WidgetType, value: unknown) => void;
   useHint: (widget: WidgetType) => void;
@@ -224,6 +235,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   difficulty: getDifficulty(DEFAULT_DIFFICULTY),
   tier: getTier(DEFAULT_TIER),
   progress: loadProgress(),
+  exploreBriefOpen: false,
 
   calibration: null,
   calibrationValues: {},
@@ -325,7 +337,9 @@ export const useGameStore = create<GameState>((set, get) => ({
    * theory. The run ends when the player says they understand the universe.
    * Effort is still measured, by counting interactions rather than seconds.
    */
-  beginExplore: () => set({ stage: 'explore' }),
+  beginExplore: () => set({ stage: 'explore', exploreBriefOpen: true }),
+
+  dismissExploreBrief: () => set({ exploreBriefOpen: false }),
 
   beginChallenge: () => {
     const at = Date.now();

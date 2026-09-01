@@ -3,9 +3,9 @@
 // giving up must never be mocked (game design §4).
 
 import { describe, expect, it } from 'vitest';
-import { mascotAltText, mascotState, zorbletLine } from './mascot.ts';
+import { exploreLine, mascotAltText, mascotState, zorbletLine } from './mascot.ts';
 import type { MascotState } from '../content/assets.ts';
-import { ZORBLET_LINES } from '../content/zorbletLines.ts';
+import { ZORBLET_FIRST_TOUCH, ZORBLET_LINES } from '../content/zorbletLines.ts';
 import type { GameEvent } from './state/types.ts';
 
 const at = 0;
@@ -102,5 +102,32 @@ describe('what Zorblet says', () => {
         expect(line).not.toMatch(forbidden);
       }
     }
+  });
+});
+
+describe('exploreLine', () => {
+  it('says nothing special before anything is touched', () => {
+    expect(exploreLine([])).not.toBe(ZORBLET_FIRST_TOUCH);
+  });
+
+  it('marks the first control the player moves', () => {
+    expect(exploreLine([touch])).toBe(ZORBLET_FIRST_TOUCH);
+  });
+
+  it('holds through a long drag on that one control', () => {
+    // A slider emits interactions by the dozen; counting events rather than
+    // widgets would flash the line away before it could be read.
+    const drag: GameEvent[] = Array.from({ length: 40 }, (_, i) => ({ ...touch, at: i }));
+    expect(exploreLine(drag)).toBe(ZORBLET_FIRST_TOUCH);
+  });
+
+  it('goes back to the rotation once a second control is touched', () => {
+    const second: GameEvent = {
+      type: 'interaction',
+      widget: 'dropdown',
+      at: 1,
+      interpretedValue: 1,
+    };
+    expect(exploreLine([touch, second])).not.toBe(ZORBLET_FIRST_TOUCH);
   });
 });

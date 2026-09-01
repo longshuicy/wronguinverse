@@ -12,7 +12,6 @@ import { ExploreStage } from './game/stages/ExploreStage.tsx';
 import { IntroStage } from './game/stages/IntroStage.tsx';
 import { NormalStage } from './game/stages/NormalStage.tsx';
 import { ResultStage } from './game/stages/ResultStage.tsx';
-import { ShiftTransition } from './game/stages/ShiftTransition.tsx';
 import { useGameStore } from './game/state/gameStore.ts';
 import type { StageId } from './game/state/types.ts';
 
@@ -32,8 +31,10 @@ function CurrentStage() {
       return <BriefingStage />;
     case 'normal':
       return <NormalStage />;
+    // The shift is not a screen of its own any more: it is an overlay the
+    // exploration bench wears for two and a half seconds, so that the drift
+    // and the card explaining it are one layer rather than two in a row.
     case 'shift':
-      return <ShiftTransition />;
     case 'explore':
       return <ExploreStage />;
     case 'challenge':
@@ -79,7 +80,10 @@ function App() {
           series of pages loading rather than as one machine changing state:
           the shift already gets its clip, and this gives every other move the
           same courtesy at a twentieth of the length. */}
-      <div className="wui-stage-swap" key={stage}>
+      {/* Keyed so shift and explore share one key: they are the same screen
+          wearing an overlay, and remounting between them would restart the
+          swap animation in the middle of the drift. */}
+      <div className="wui-stage-swap" key={stage === 'shift' ? 'explore' : stage}>
         <CurrentStage />
       </div>
       {law && <PointerLaw law={law} />}
