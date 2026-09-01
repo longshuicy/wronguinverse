@@ -1980,71 +1980,65 @@ input[type='range']::-moz-range-thumb {
   color: var(--accent-anomaly);
 }
 
-/* --- axis one: what drifted --- */
+/* --- axis one: what drifted ---
+   The page's real choice, and drawn as one: three framed rows, one of them
+   pressed. They used to be transparent-bordered lines of text that grew a
+   border on hover, which made the primary axis the only thing on the page that
+   did not look clickable — and on a touch screen, where nothing ever hovers,
+   it never looked like anything at all. */
 
 .wui-tiers {
   display: flex;
   flex-direction: column;
-  gap: var(--px);
+  gap: calc(var(--px) * 1.5);
   margin: 0;
   padding: 0;
-  list-style: none;
   width: 100%;
   font-size: 12px;
 }
 
-.wui-tier {
-  display: flex;
-  align-items: baseline;
-  gap: calc(var(--px) * 2);
-  color: var(--text-secondary);
-  text-align: left;
-}
-
-/* The button IS the row rather than sitting inside it, so the caret, name and
-   blurb line up as columns down the list. */
 .wui-tier-button {
-  flex: 1;
   display: flex;
   align-items: baseline;
   gap: calc(var(--px) * 2);
-  padding: calc(var(--px) * 1.5) calc(var(--px) * 2);
-  border: var(--border) solid transparent;
-  background: none;
+  width: 100%;
+  padding: calc(var(--px) * 2.5) calc(var(--px) * 3);
+  border: var(--border) solid var(--line);
+  background: var(--bg-panel);
   font: inherit;
-  color: inherit;
+  color: var(--text-secondary);
   text-align: left;
   cursor: pointer;
 }
 
 .wui-tier-button:hover {
-  border-color: color-mix(in srgb, var(--accent-hint) 40%, transparent);
-}
-
-.wui-tier-button:hover .wui-tier-name {
+  border-color: color-mix(in srgb, var(--accent-hint) 55%, transparent);
   color: var(--accent-hint);
 }
 
 /* Amber, not violet: violet carries the depth axis, and an axis with no colour
    of its own disappears next to one that has. */
-.wui-tier.is-active {
-  color: var(--accent-hint);
-}
-
-.wui-tier.is-active .wui-tier-button {
+.wui-tier-button.is-active {
   border-color: var(--accent-hint);
-  background: color-mix(in srgb, var(--accent-hint) 8%, transparent);
-}
-
-.wui-tier.is-active .wui-tier-name {
+  background: color-mix(in srgb, var(--accent-hint) 10%, var(--bg-panel));
   color: var(--accent-hint);
 }
 
-/* Reserved whether filled or not, so rows do not shift. */
+.wui-tier-button.is-active .wui-tier-name {
+  color: var(--accent-hint);
+}
+
+/* Drawn on every row, filled on the chosen one. The empty slot is what says
+   "one of these three", and it is the only marker a player gets before they
+   have picked anything. */
 .wui-tier-caret {
   flex: none;
   width: 1em;
   color: var(--accent-hint);
+}
+
+.wui-tier-button:not(.is-active) .wui-tier-caret {
+  color: color-mix(in srgb, var(--accent-hint) 45%, var(--bg-panel));
 }
 
 .wui-tier-name {
@@ -2059,7 +2053,7 @@ input[type='range']::-moz-range-thumb {
   color: var(--text-secondary);
 }
 
-.wui-tier:not(.is-active) .wui-tier-blurb {
+.wui-tier-button:not(.is-active) .wui-tier-blurb {
   color: color-mix(in srgb, var(--text-secondary) 70%, var(--bg-page));
 }
 
@@ -2071,58 +2065,102 @@ input[type='range']::-moz-range-thumb {
   color: color-mix(in srgb, var(--accent-hint) 70%, var(--bg-page));
 }
 
-/* --- axis two: how deep --- */
+/* --- axis two: how deep ---
+   A dial, not a choice of kinds: one muted line of names under the rows, with
+   the amount drawn ONCE as a gauge on the label line. Per-option pips were the
+   same quantity drawn three times, and three names plus three sets of them
+   could not share a line at a size anyone could read. */
 
-.wui-depth-row {
+.wui-axis-depth .wui-axis-label {
   display: flex;
-  gap: calc(var(--px) * 2);
+  align-items: center;
+  gap: calc(var(--px) * 3);
   width: 100%;
 }
 
-.wui-depth {
-  flex: 1;
+/* One pip per control on the bench, filled to the level selected. A quantity
+   drawn as a quantity: the number used to be a numeral, which read as a rank —
+   level 4, level 6 — rather than as an amount of anything. */
+.wui-depth-meter {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: calc(var(--px) * 2);
-  padding: calc(var(--px) * 2.5);
-  border: var(--border) solid var(--line);
-  background: var(--bg-panel);
-  font: inherit;
-  color: var(--text-secondary);
-  text-align: left;
-  cursor: pointer;
-}
-
-.wui-depth:hover {
-  border-color: color-mix(in srgb, var(--accent-anomaly) 55%, transparent);
-}
-
-.wui-depth.is-active {
-  border-color: var(--accent-anomaly);
-  color: var(--accent-anomaly);
-}
-
-/* One pip per control on the bench. A quantity drawn as a quantity: the
-   number used to be a numeral, which read as a rank — level 4, level 6 —
-   rather than as an amount of anything. */
-.wui-depth-pips {
-  display: flex;
-  flex-wrap: wrap;
   gap: 3px;
-  min-height: calc(var(--px) * 2);
 }
 
 .wui-pip {
   width: calc(var(--px) * 2);
   height: calc(var(--px) * 2);
-  background: currentcolor;
+  background: var(--accent-anomaly);
 }
 
-.wui-depth-name {
-  font-size: 11px;
+/* The rest of the bench, shown rather than omitted: the gauge only reads as a
+   gauge if the unfilled part of it is visible. */
+.wui-pip.is-off {
+  background: color-mix(in srgb, var(--accent-anomaly) 22%, var(--bg-page));
+}
+
+/* The numeral survives beside the pips, for anyone who would rather read it
+   than count them. */
+.wui-depth-count {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--accent-anomaly) 75%, var(--text-secondary));
+}
+
+.wui-depth-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--px) * 3);
+  width: 100%;
+}
+
+.wui-depth {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 1.5);
+  padding: calc(var(--px) * 1) calc(var(--px) * 1.5);
+  border: none;
+  /* A resting underline, dim but present. It is what makes three words look
+     like three controls before anything is hovered or chosen. */
+  border-bottom: var(--border) solid color-mix(in srgb, var(--accent-anomaly) 30%, var(--bg-page));
+  background: none;
+  font: inherit;
+  /* Full secondary ink. This axis is the quieter of the two, but quiet is the
+     job of the missing frame and the missing tint; dimming the labels as well
+     just made them hard to read on a near-black page. */
+  color: var(--text-secondary);
+  font-size: 12px;
   letter-spacing: 0.06em;
-  line-height: 1.5;
+  cursor: pointer;
+}
+
+.wui-depth:hover {
+  color: var(--accent-anomaly);
+  border-bottom-color: color-mix(in srgb, var(--accent-anomaly) 60%, var(--bg-page));
+}
+
+.wui-depth:hover .wui-depth-mark {
+  border-color: var(--accent-anomaly);
+}
+
+.wui-depth.is-active {
+  color: var(--accent-anomaly);
+  border-bottom-color: var(--accent-anomaly);
+}
+
+/* The pick, as a box that is empty or filled. Ten pixels with a two-pixel edge:
+   at the gauge's own 8px with a 4px border there was no hole left to see, and
+   every option looked chosen. */
+.wui-depth-mark {
+  width: calc(var(--px) * 2.5);
+  height: calc(var(--px) * 2.5);
+  flex: none;
+  border: var(--border) solid color-mix(in srgb, var(--accent-anomaly) 50%, var(--bg-page));
+}
+
+.wui-depth-mark.is-on {
+  border-color: var(--accent-anomaly);
+  background: var(--accent-anomaly);
 }
 
 /* --- the product of the two ---
@@ -2166,27 +2204,30 @@ input[type='range']::-moz-range-thumb {
 }
 
 @media (max-width: 34rem) {
-  /* The depth row is three cards of prose; side by side under about 34rem they
-     shrink past legibility, and eight pips start wrapping into a block. */
-  .wui-depth-row {
-    flex-direction: column;
-  }
-
-  /* Name above blurb rather than beside it. Side by side at this width the
-     blurb wraps to a second line that starts under the middle of the row,
-     which reads as centred text that lost its nerve. */
-  .wui-tier-button {
+  /* Below this width even the bare names cannot share a line, so they stack
+     into three rows rather than wrapping into a ragged two. */
+  .wui-depth-strip {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--px);
   }
 
-  .wui-tier-caret {
-    display: none;
+  /* Blurb below the name rather than beside it. Side by side at this width it
+     wraps to a second line that starts under the middle of the row, which
+     reads as centred text that lost its nerve. The caret stays on the first
+     line with the name: it is the marker that says this row is one of three,
+     and it is needed most on the screens that cannot hover. */
+  .wui-tier-button {
+    flex-wrap: wrap;
+  }
+
+  .wui-tier-blurb {
+    width: 100%;
+    padding-left: calc(1em + var(--px) * 2);
   }
 
   .wui-tier-tag {
-    margin-left: 0;
+    margin-left: auto;
   }
 }
 
@@ -2718,9 +2759,13 @@ input[type='range']::-moz-range-thumb {
 }
 
 .wui-cast ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: calc(var(--px) * 4);
+  /* Even columns rather than a wrapping flex row. Sprites are cleaned to a
+     longest side of 96px, so their WIDTHS differ as much as their heights;
+     packed by flex they left ragged gaps and a last row that did not line up
+     with the one above it. A collection should read as a shelf. */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--px) * 28), 1fr));
+  gap: calc(var(--px) * 4) calc(var(--px) * 2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -2736,17 +2781,26 @@ input[type='range']::-moz-range-thumb {
 .wui-cast-member {
   display: grid;
   grid-template-rows: calc(var(--px) * 24) auto auto;
+  /* Packed from the top of the cell. Left to stretch, the rows absorbed the
+     cell's spare height unevenly — a member carrying a THIS RUN tag has three
+     rows where the others have two, so its name sat on a different line from
+     everyone else's. */
+  align-content: start;
   align-items: end;
   justify-items: center;
   gap: var(--px);
-  min-width: calc(var(--px) * 16);
   font-size: 10px;
   letter-spacing: 0.06em;
+  text-align: center;
   color: var(--text-secondary);
 }
 
 .wui-cast-member img {
   align-self: end;
+  /* A sprite wider than its column would otherwise push the grid out of its
+     even tracks. */
+  max-width: 100%;
+  height: auto;
 }
 
 /* Blanked, not hidden: the shape is the tease, so it has to be VISIBLE as a
