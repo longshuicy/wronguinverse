@@ -4,7 +4,9 @@
 // Drawn as a progress track, not a row of chips. Boxed labels read as buttons
 // and invite clicks that do nothing, so there are no borders, no panels and no
 // hover states here: just a connecting line, a marker on the current step, and
-// three levels of dimming.
+// three levels of dimming. The marker itself is a diamond rather than a
+// square, so it does not read as an unchecked checkbox sitting in front of
+// its label (see the `.wui-rail-mark` comment in the theme stylesheet).
 
 import type { StageId } from '../game/state/types.ts';
 

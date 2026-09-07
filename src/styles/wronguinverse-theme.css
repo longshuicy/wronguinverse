@@ -18,7 +18,7 @@ body {
   min-height: 100vh;
   background: var(--bg-page);
   color: var(--text-primary);
-  font-family: 'Silkscreen', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 16px;
   line-height: 1.6;
   /* Pixel faces are drawn, not hinted — let them stay crisp. */
@@ -26,12 +26,11 @@ body {
   font-smooth: never;
 }
 
-/* Prose is Silkscreen too — the theme is pixel art all the way down, with no
-   system-font escape hatch (§16).
-   A pixel face set as a paragraph needs help that a system face does not:
-   generous leading so the rows of pixels do not merge, no extra tracking on
-   top of the font's own spacing, and a hard limit on line length. Without
-   those three it becomes a wall. */
+/* Prose is JetBrains Mono too, same as the rest of the chrome (§16) — the
+   pixel-grid faces this used to be set in read as a wall past a couple of
+   sentences, and a hinted text face does not need the same rescue: it still
+   gets generous leading and a hard limit on line length, but no tracking
+   adjustment, because unlike a pixel face it was drawn to be read in a row. */
 .wui-lede,
 .wui-diagnosis-blurb,
 .wui-diagnosis-description {
@@ -207,10 +206,15 @@ body {
   margin-left: calc(var(--px) * 4);
 }
 
+/* A diamond, not a square: an axis-aligned square reads as an unchecked
+   checkbox sitting in front of a label, which invited the exact tap-to-toggle
+   this bar exists to refuse. Rotating it forty-five degrees keeps the "no
+   curves" rule (§1) while it no longer parses as a control. */
 .wui-rail-mark {
   width: calc(var(--px) * 2);
   height: calc(var(--px) * 2);
   background: var(--line-strong);
+  transform: rotate(45deg);
 }
 
 .wui-rail-step.is-done {
@@ -301,7 +305,7 @@ body {
 
 .wui-title {
   margin: 0;
-  font-family: 'Press Start 2P', 'Silkscreen', monospace;
+  font-family: 'Press Start 2P', 'JetBrains Mono', monospace;
   font-size: clamp(20px, 5vw, 40px);
   font-weight: 400;
   line-height: 1.5;
@@ -884,9 +888,9 @@ body {
 
 /* One alignment for everything that is prose. The specimen card is the only
    centred block on the screen, because it is a label under a picture. */
-/* Silkscreen sets its caps well below the line box, so a heading whose box
-   starts level with the sprite still *looks* higher than it. This pulls the
-   cap-height down onto the sprite's top edge. */
+/* The body face sets its caps a little below the line box, so a heading whose
+   box starts level with the sprite still *looks* higher than it. This pulls
+   the cap-height down onto the sprite's top edge. */
 .wui-diagnosis-read {
   text-align: left;
   padding-top: var(--px);
