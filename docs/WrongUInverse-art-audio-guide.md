@@ -1197,52 +1197,53 @@ another universe.
 
 Both are SIL Open Font License 1.1 and are **self-hosted** in
 `src/styles/fonts/` --- the game must not depend on the network at
-runtime (technical design §1). Total cost is about 11 KB.
+runtime (technical design §1).
 
 -   **Press Start 2P** --- the wordmark, and nothing else. Gloriously
     chunky and nearly unreadable in quantity.
--   **Silkscreen** --- **everything else, with no exceptions**: headings,
-    labels, values, form controls, buttons, and running prose.
+-   **JetBrains Mono** --- **everything else, with no exceptions**:
+    headings, labels, values, form controls, buttons, and running prose.
 
-Set `-webkit-font-smoothing: none` so the pixel faces stay crisp.
+This replaces an earlier pixel-grid face (Silkscreen, then briefly
+Pixelify Sans) that lost the argument on its home ground: readability.
+A dot-matrix face set small and read in quantity — the Reality Index's
+typed paragraphs, the calibration readouts — asked the player to squint
+at exactly the moments the game needed them reading closely. JetBrains
+Mono is a real hinted text face rather than a pixel grid, so it does not
+need the same rescue typesetting a pixel face does; it keeps the
+terminal-in-another-universe voice through the monospace rhythm and the
+wordmark contrast alone. Set `-webkit-font-smoothing: none` still
+applies to Press Start 2P.
 
 ### No system-font escape hatch
 
 There is **no fallback to a system UI font anywhere in the theme**, not
-even for descriptive paragraphs. A single sans-serif paragraph in the
-middle of a pixel interface is instantly legible as "this part is a
-website" and undoes the illusion the rest of the screen is building. The
-world is a terminal in another universe; its terminal does not have
-system-ui.
+even for descriptive paragraphs. A single proportional sans paragraph in
+the middle of a monospace interface is instantly legible as "this part
+is a website" and undoes the illusion the rest of the screen is
+building. The world is a terminal in another universe; its terminal is
+set in one face throughout.
 
-This overrides the usual advice to reach for a readable UI font in body
-copy. Prose is set in Silkscreen and made readable by *typesetting*
-rather than by changing typeface:
+Prose is set in JetBrains Mono with modest typesetting on top:
 
--   **Leading of about 2.0.** Rows of pixels merge without it; this is
-    the single most important setting.
+-   **Leading of about 2.0** on the longer prose blocks, kept from the
+    pixel-face era. Less critical for a hinted face, but still gives
+    long paragraphs room to breathe.
 -   **No added letter-spacing.** The face already carries its own.
 -   **Line length capped around 58ch.**
 -   14px minimum for paragraphs.
 
-Silkscreen renders as small caps, so prose reads as uppercase terminal
-output. That is the intended voice, not a defect.
-
 ### Legibility floor
 
-Pixel faces fall apart when set small and tracked wide. Learned the hard
-way:
-
--   **Minimum 12px** for Silkscreen. At 10px it is mush.
--   **Keep tracking under about 0.08em.** Wide letter-spacing on a pixel
-    face separates glyphs into unreadable fragments; it does not look
-    more "terminal".
+-   **Minimum 12px.** Below that even a hinted face compresses.
+-   **Keep tracking under about 0.08em.** Wide letter-spacing fights a
+    monospace face's own fixed rhythm.
 -   Size on the `--px` grid: 12, 14, 16, 20.
--   De-emphasised text needs **more** contrast than it would in a system
-    face, not less. A pixel glyph has no anti-aliased edge to help it.
+-   De-emphasised text still wants real contrast, not just a lighter
+    shade — the palette weighting in §7 applies here too.
 
-Readability is bought with size, leading and contrast --- never by
-abandoning the typeface.
+Readability is bought with size, leading and contrast, same as before ---
+the difference is that the typeface no longer has to be forgiven for it.
 
 ## 17. Animation Budget
 

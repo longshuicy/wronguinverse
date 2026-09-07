@@ -22,6 +22,13 @@
 // The music is the fourth statement of the same thing, and the only one that
 // needs no reading: the tier picker changes what you hear, the level picker
 // does not (see `content/music.ts`).
+//
+// HOW DEEP sits above WHAT DRIFTED, in that order, because the two are not
+// symmetric any more: there is no "Begin" button on this page. Depth is set
+// quietly, then picking a drift row IS the button — it commits both axes and
+// moves on. Setting the quiet dial first and pressing the loud choice second
+// reads as one motion; the reverse order would ask the player to press
+// "start" and then keep configuring.
 
 import { useState } from 'react';
 import { useRadioAxis } from '../../components/useRadioAxis.ts';
@@ -47,17 +54,30 @@ export function IntroStage() {
   const levels = availableDifficulties();
   /** The full bench, so the meter's empty pips show what is being left out. */
   const deepest = Math.max(...levels.map((level) => level.mappingCount));
+
+  // Depth is set quietly and does not move the player on: it is the dial you
+  // set before the choice that matters, not the choice itself.
+  const chooseDifficulty = setDifficulty;
+  // Drift is the choice that starts the run — there is no separate "Begin"
+  // button any more, so picking a drift IS pressing it. Depth is read from
+  // the store rather than closed over, so a depth change just made in the
+  // same render is not lost to a stale closure.
+  const chooseTier = (id: (typeof tiers)[number]['id']) => {
+    setTier(id);
+    openBriefing();
+  };
+
   // Both axes are one-of-N choices, so both behave like radio groups: one tab
   // stop, arrows to move, selection following focus.
-  const driftKeys = useRadioAxis(
-    tiers.map((option) => option.id),
-    tier.id,
-    setTier,
-  );
   const depthKeys = useRadioAxis(
     levels.map((level) => level.id),
     difficulty.id,
-    setDifficulty,
+    chooseDifficulty,
+  );
+  const driftKeys = useRadioAxis(
+    tiers.map((option) => option.id),
+    tier.id,
+    chooseTier,
   );
 
   return (
@@ -75,58 +95,9 @@ export function IntroStage() {
       <p className="wui-manifest">{runManifest(tier.id, difficulty.mappingCount)}</p>
 
       <div className="wui-picker">
-        {/* Axis one: a KIND. Stacked full-width rows, each naming a different
-            way for the universe to be wrong — never a scale. */}
-        <section className="wui-axis wui-axis-drift">
-          <p className="wui-axis-label" id="wui-axis-drift-label">
-            WHAT DRIFTED
-          </p>
-          {/* Framed at rest, not only when hovered or chosen. They used to be
-              transparent-bordered text, which made the page's PRIMARY choice
-              the only thing on it that did not look clickable — and on a touch
-              screen, where there is no hover, look is all there is. */}
-          <div
-            className="wui-tiers"
-            role="radiogroup"
-            aria-labelledby="wui-axis-drift-label"
-            onKeyDown={driftKeys.onKeyDown}
-          >
-            {tiers.map((option) => {
-              const selected = option.id === tier.id;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  ref={driftKeys.itemRef(option.id)}
-                  className={selected ? 'wui-tier-button is-active' : 'wui-tier-button'}
-                  role="radio"
-                  aria-checked={selected}
-                  // One tab stop for the group, then arrows within it.
-                  tabIndex={selected ? 0 : -1}
-                  onClick={() => setTier(option.id)}
-                >
-                  {/* Drawn either way. An empty slot on the unchosen rows is
-                      what says there are three of these and one is taken. */}
-                  <span className="wui-tier-caret" aria-hidden="true">
-                    {selected ? '▶' : '▷'}
-                  </span>
-                  <span className="wui-tier-name">{option.name}</span>
-                  <span className="wui-tier-blurb">{option.blurb}</span>
-                  {/* Order is not difficulty, but it IS a reading order, and
-                      a first-time player deserves to be told where to start
-                      rather than left to infer it from the list. */}
-                  {!progress.tutorialCompleted && option.id === DEFAULT_TIER && (
-                    <span className="wui-tier-tag">START HERE</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Axis two: a QUANTITY, and the quieter of the two. No frames and no
-            panels: the drift rows above are the choice, this is the dial on
-            it.
+        {/* Axis one, set first and quietly: a QUANTITY. No frames and no
+            panels, and no navigation either — this is the dial you set
+            before making the choice that starts the run below it.
 
             The amount is drawn ONCE, as a gauge beside the label, rather than
             once per option. Three sets of pips plus three full names could not
@@ -167,7 +138,7 @@ export function IntroStage() {
                   // said here instead: a screen reader gets the same "and this
                   // one is eight controls" the meter gives everyone else.
                   aria-label={`${level.label}, ${level.mappingCount} controls`}
-                  onClick={() => setDifficulty(level.id)}
+                  onClick={() => chooseDifficulty(level.id)}
                 >
                   {/* Drawn on every option, filled on the chosen one. Without
                       a marker and a resting underline these were three pieces
@@ -183,17 +154,61 @@ export function IntroStage() {
             })}
           </div>
         </section>
-      </div>
 
-      <div className="wui-actions wui-actions-centred">
-        {/* `?seed=…` reproduces a specific universe exactly (technical §9). */}
-        {/* Every run opens on the Reality Index rather than dropping straight
-            into calibration. It carries a skip, so this costs a returning
-            player one click and gives a new one the reason any of it makes
-            sense. */}
-        <button type="button" className="wui-start" onClick={openBriefing}>
-          {progress.tutorialCompleted ? 'Contact a new universe' : 'Begin'}
-        </button>
+        {/* Axis two, set second: a KIND, and the one that starts the run.
+            Stacked full-width rows, each naming a different way for the
+            universe to be wrong — never a scale. There is no separate "Begin"
+            button any more: picking a row here IS pressing it, `?seed=…`
+            reproduces a specific universe exactly (technical §9), and every
+            run still opens on the Reality Index rather than dropping straight
+            into calibration — that page carries its own skip for a returning
+            player. */}
+        <section className="wui-axis wui-axis-drift">
+          <p className="wui-axis-label" id="wui-axis-drift-label">
+            WHAT DRIFTED
+          </p>
+          {/* Framed at rest, not only when hovered or chosen. They used to be
+              transparent-bordered text, which made the page's PRIMARY choice
+              the only thing on it that did not look clickable — and on a touch
+              screen, where there is no hover, look is all there is. */}
+          <div
+            className="wui-tiers"
+            role="radiogroup"
+            aria-labelledby="wui-axis-drift-label"
+            onKeyDown={driftKeys.onKeyDown}
+          >
+            {tiers.map((option) => {
+              const selected = option.id === tier.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  ref={driftKeys.itemRef(option.id)}
+                  className={selected ? 'wui-tier-button is-active' : 'wui-tier-button'}
+                  role="radio"
+                  aria-checked={selected}
+                  // One tab stop for the group, then arrows within it.
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => chooseTier(option.id)}
+                >
+                  {/* Drawn either way. An empty slot on the unchosen rows is
+                      what says there are three of these and one is taken. */}
+                  <span className="wui-tier-caret" aria-hidden="true">
+                    {selected ? '▶' : '▷'}
+                  </span>
+                  <span className="wui-tier-name">{option.name}</span>
+                  <span className="wui-tier-blurb">{option.blurb}</span>
+                  {/* Order is not difficulty, but it IS a reading order, and
+                      a first-time player deserves to be told where to start
+                      rather than left to infer it from the list. */}
+                  {!progress.tutorialCompleted && option.id === DEFAULT_TIER && (
+                    <span className="wui-tier-tag">START HERE</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </section>
       </div>
 
       {/* Spelled out rather than filed in the meta line as "23 STABILIZED".
@@ -252,7 +267,7 @@ export function IntroStage() {
           </ul>
           <h2>TYPE</h2>
           <ul>
-            <li>Press Start 2P and Silkscreen, SIL Open Font License 1.1.</li>
+            <li>Press Start 2P and JetBrains Mono, SIL Open Font License 1.1.</li>
           </ul>
           <h2>CODE</h2>
           <ul>

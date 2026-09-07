@@ -5,8 +5,8 @@ bundling and redistribution with this project.
 
 - **Press Start 2P** — © 2012 Cody "CodeMan38" Boisclair.
   <https://fonts.google.com/specimen/Press+Start+2P>
-- **Silkscreen** — © 2001 Jason Kottke.
-  <https://fonts.google.com/specimen/Silkscreen>
+- **JetBrains Mono** — © 2020 The JetBrains Mono Project Authors.
+  <https://fonts.google.com/specimen/JetBrains+Mono>
 
 Files are the Google Fonts `latin` subsets, self-hosted so the game has no
 network dependency at runtime (technical design §1).
